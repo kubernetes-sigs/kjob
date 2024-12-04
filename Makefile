@@ -139,7 +139,7 @@ test-integration: gomod-download envtest ginkgo embeded-manifest ray-operator-cr
 
 CREATE_KIND_CLUSTER ?= true
 .PHONY: test-e2e
-test-e2e: kind kubectl-kjob
+test-e2e: ginkgo kind kubectl-kjob
 	@echo Running e2e for k8s ${K8S_VERSION}
 	E2E_KIND_VERSION=$(E2E_KIND_VERSION) KIND_CLUSTER_NAME=$(KIND_CLUSTER_NAME) CREATE_KIND_CLUSTER=$(CREATE_KIND_CLUSTER) ARTIFACTS="$(ARTIFACTS)/$@" GINKGO_ARGS="$(GINKGO_ARGS)" ./hack/e2e-test.sh
 
