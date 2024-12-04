@@ -1,4 +1,4 @@
-module sigs.k8s.io/kueue/cmd/experimental/kjobctl/hack/tools
+module sigs.k8s.io/kjob/hack/tools
 
 go 1.23
 

@@ -27,7 +27,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/client-go/clientset/versioned/scheme"
+	"sigs.k8s.io/kjob/client-go/clientset/versioned/scheme"
 )
 
 // setKubernetesDefaults sets default values on the provided client config for accessing the

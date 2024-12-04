@@ -36,9 +36,9 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/kubectl/pkg/util/templates"
 
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/apis/v1alpha1"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/cmd/util"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/constants"
+	"sigs.k8s.io/kjob/apis/v1alpha1"
+	"sigs.k8s.io/kjob/pkg/cmd/util"
+	"sigs.k8s.io/kjob/pkg/constants"
 )
 
 var (

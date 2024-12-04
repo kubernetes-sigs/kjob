@@ -31,9 +31,9 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	kueueversioned "sigs.k8s.io/kueue/client-go/clientset/versioned"
 
-	kjobctlversioned "sigs.k8s.io/kueue/cmd/experimental/kjobctl/client-go/clientset/versioned"
-	kjobctlfake "sigs.k8s.io/kueue/cmd/experimental/kjobctl/client-go/clientset/versioned/fake"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/cmd/util"
+	kjobctlversioned "sigs.k8s.io/kjob/client-go/clientset/versioned"
+	kjobctlfake "sigs.k8s.io/kjob/client-go/clientset/versioned/fake"
+	"sigs.k8s.io/kjob/pkg/cmd/util"
 )
 
 type TestClientGetter struct {

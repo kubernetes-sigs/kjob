@@ -19,7 +19,7 @@ package main
 import (
 	"os"
 
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/cmd"
+	"sigs.k8s.io/kjob/pkg/cmd"
 )
 
 func main() {

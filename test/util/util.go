@@ -38,7 +38,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 
-	kjob "sigs.k8s.io/kueue/cmd/experimental/kjobctl/apis/v1alpha1"
+	kjob "sigs.k8s.io/kjob/apis/v1alpha1"
 )
 
 // DeleteNamespace deletes all objects the tests typically create in the namespace.

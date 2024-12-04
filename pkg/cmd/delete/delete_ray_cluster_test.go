@@ -29,8 +29,8 @@ import (
 	"k8s.io/cli-runtime/pkg/genericiooptions"
 	kubetesting "k8s.io/client-go/testing"
 
-	cmdtesting "sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/cmd/testing"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/testing/wrappers"
+	cmdtesting "sigs.k8s.io/kjob/pkg/cmd/testing"
+	"sigs.k8s.io/kjob/pkg/testing/wrappers"
 )
 
 func TestRayClusterCmd(t *testing.T) {

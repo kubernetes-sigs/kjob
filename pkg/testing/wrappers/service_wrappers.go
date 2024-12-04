@@ -21,8 +21,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kueueconstants "sigs.k8s.io/kueue/pkg/controller/constants"
 
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/apis/v1alpha1"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/constants"
+	"sigs.k8s.io/kjob/apis/v1alpha1"
+	"sigs.k8s.io/kjob/pkg/constants"
 )
 
 // ServiceWrapper wraps a Service.

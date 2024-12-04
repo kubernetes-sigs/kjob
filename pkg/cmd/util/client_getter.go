@@ -25,7 +25,7 @@ import (
 	k8s "k8s.io/client-go/kubernetes"
 	kueueversioned "sigs.k8s.io/kueue/client-go/clientset/versioned"
 
-	kjobctlversioned "sigs.k8s.io/kueue/cmd/experimental/kjobctl/client-go/clientset/versioned"
+	kjobctlversioned "sigs.k8s.io/kjob/client-go/clientset/versioned"
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )

@@ -23,7 +23,7 @@ import (
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	serializer "k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	kjobctlv1alpha1 "sigs.k8s.io/kueue/cmd/experimental/kjobctl/apis/v1alpha1"
+	kjobctlv1alpha1 "sigs.k8s.io/kjob/apis/v1alpha1"
 )
 
 var scheme = runtime.NewScheme()

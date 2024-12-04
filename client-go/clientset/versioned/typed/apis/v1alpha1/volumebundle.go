@@ -24,8 +24,8 @@ import (
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	gentype "k8s.io/client-go/gentype"
-	v1alpha1 "sigs.k8s.io/kueue/cmd/experimental/kjobctl/apis/v1alpha1"
-	scheme "sigs.k8s.io/kueue/cmd/experimental/kjobctl/client-go/clientset/versioned/scheme"
+	v1alpha1 "sigs.k8s.io/kjob/apis/v1alpha1"
+	scheme "sigs.k8s.io/kjob/client-go/clientset/versioned/scheme"
 )
 
 // VolumeBundlesGetter has a method to return a VolumeBundleInterface.

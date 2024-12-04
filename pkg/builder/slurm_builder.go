@@ -35,9 +35,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/apis/v1alpha1"
-	kjobctlconstants "sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/constants"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/parser"
+	"sigs.k8s.io/kjob/apis/v1alpha1"
+	kjobctlconstants "sigs.k8s.io/kjob/pkg/constants"
+	"sigs.k8s.io/kjob/pkg/parser"
 )
 
 //go:embed templates/slurm_*

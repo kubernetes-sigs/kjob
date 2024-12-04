@@ -36,11 +36,11 @@ import (
 	kueueversioned "sigs.k8s.io/kueue/client-go/clientset/versioned"
 	kueueconstants "sigs.k8s.io/kueue/pkg/controller/constants"
 
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/apis/v1alpha1"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/client-go/clientset/versioned"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/cmd/util"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/constants"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/parser"
+	"sigs.k8s.io/kjob/apis/v1alpha1"
+	"sigs.k8s.io/kjob/client-go/clientset/versioned"
+	"sigs.k8s.io/kjob/pkg/cmd/util"
+	"sigs.k8s.io/kjob/pkg/constants"
+	"sigs.k8s.io/kjob/pkg/parser"
 )
 
 var (

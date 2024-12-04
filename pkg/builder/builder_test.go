@@ -29,10 +29,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/apis/v1alpha1"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/client-go/clientset/versioned/fake"
-	cmdtesting "sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/cmd/testing"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/testing/wrappers"
+	"sigs.k8s.io/kjob/apis/v1alpha1"
+	"sigs.k8s.io/kjob/client-go/clientset/versioned/fake"
+	cmdtesting "sigs.k8s.io/kjob/pkg/cmd/testing"
+	"sigs.k8s.io/kjob/pkg/testing/wrappers"
 )
 
 func TestBuilder(t *testing.T) {

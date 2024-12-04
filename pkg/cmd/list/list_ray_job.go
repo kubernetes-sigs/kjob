@@ -31,9 +31,9 @@ import (
 	"k8s.io/utils/clock"
 	kueueconstants "sigs.k8s.io/kueue/pkg/controller/constants"
 
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/cmd/completion"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/cmd/util"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/constants"
+	"sigs.k8s.io/kjob/pkg/cmd/completion"
+	"sigs.k8s.io/kjob/pkg/cmd/util"
+	"sigs.k8s.io/kjob/pkg/constants"
 )
 
 var (

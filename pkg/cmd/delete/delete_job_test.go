@@ -29,9 +29,9 @@ import (
 	k8sfake "k8s.io/client-go/kubernetes/fake"
 	kubetesting "k8s.io/client-go/testing"
 
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/apis/v1alpha1"
-	cmdtesting "sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/cmd/testing"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/testing/wrappers"
+	"sigs.k8s.io/kjob/apis/v1alpha1"
+	cmdtesting "sigs.k8s.io/kjob/pkg/cmd/testing"
+	"sigs.k8s.io/kjob/pkg/testing/wrappers"
 )
 
 func TestJobCmd(t *testing.T) {

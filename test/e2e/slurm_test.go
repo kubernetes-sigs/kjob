@@ -35,10 +35,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/kueue/pkg/util/maps"
 
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/apis/v1alpha1"
-	kjobctlconstants "sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/constants"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/testing/wrappers"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/test/util"
+	"sigs.k8s.io/kjob/apis/v1alpha1"
+	kjobctlconstants "sigs.k8s.io/kjob/pkg/constants"
+	"sigs.k8s.io/kjob/pkg/testing/wrappers"
+	"sigs.k8s.io/kjob/test/util"
 )
 
 const (

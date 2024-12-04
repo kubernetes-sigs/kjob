@@ -17,7 +17,7 @@ limitations under the License.
 package wrappers
 
 import (
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/apis/v1alpha1"
+	"sigs.k8s.io/kjob/apis/v1alpha1"
 )
 
 // SupportedModeWrapper wraps a SupportedMode.

@@ -27,8 +27,8 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/constants"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/test/framework"
+	"sigs.k8s.io/kjob/pkg/constants"
+	"sigs.k8s.io/kjob/test/framework"
 )
 
 var (

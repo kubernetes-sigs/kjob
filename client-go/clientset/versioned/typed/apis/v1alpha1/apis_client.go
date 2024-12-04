@@ -21,8 +21,8 @@ import (
 	"net/http"
 
 	rest "k8s.io/client-go/rest"
-	v1alpha1 "sigs.k8s.io/kueue/cmd/experimental/kjobctl/apis/v1alpha1"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/client-go/clientset/versioned/scheme"
+	v1alpha1 "sigs.k8s.io/kjob/apis/v1alpha1"
+	"sigs.k8s.io/kjob/client-go/clientset/versioned/scheme"
 )
 
 type KjobctlV1alpha1Interface interface {

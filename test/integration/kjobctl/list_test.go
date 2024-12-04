@@ -31,11 +31,11 @@ import (
 	"k8s.io/cli-runtime/pkg/genericiooptions"
 	testingclock "k8s.io/utils/clock/testing"
 
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/apis/v1alpha1"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/cmd"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/cmd/list"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/testing/wrappers"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/test/util"
+	"sigs.k8s.io/kjob/apis/v1alpha1"
+	"sigs.k8s.io/kjob/pkg/cmd"
+	"sigs.k8s.io/kjob/pkg/cmd/list"
+	"sigs.k8s.io/kjob/pkg/testing/wrappers"
+	"sigs.k8s.io/kjob/test/util"
 )
 
 var _ = ginkgo.Describe("Kjobctl List", ginkgo.Ordered, ginkgo.ContinueOnFailure, func() {

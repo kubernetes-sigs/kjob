@@ -44,11 +44,11 @@ import (
 	"k8s.io/utils/clock"
 	"k8s.io/utils/ptr"
 
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/apis/v1alpha1"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/builder"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/cmd/completion"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/cmd/util"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/parser"
+	"sigs.k8s.io/kjob/apis/v1alpha1"
+	"sigs.k8s.io/kjob/pkg/builder"
+	"sigs.k8s.io/kjob/pkg/cmd/completion"
+	"sigs.k8s.io/kjob/pkg/cmd/util"
+	"sigs.k8s.io/kjob/pkg/parser"
 )
 
 const (

@@ -23,7 +23,7 @@ import (
 	"k8s.io/cli-runtime/pkg/genericiooptions"
 	"k8s.io/kubectl/pkg/util/templates"
 
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/cmd/util"
+	"sigs.k8s.io/kjob/pkg/cmd/util"
 )
 
 var (

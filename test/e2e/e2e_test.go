@@ -24,7 +24,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/test/util"
+	"sigs.k8s.io/kjob/test/util"
 )
 
 var _ = ginkgo.Describe("kjobctl", ginkgo.Ordered, func() {

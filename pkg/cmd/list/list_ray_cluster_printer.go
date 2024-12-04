@@ -28,7 +28,7 @@ import (
 	"k8s.io/utils/clock"
 	kueueconstants "sigs.k8s.io/kueue/pkg/controller/constants"
 
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/constants"
+	"sigs.k8s.io/kjob/pkg/constants"
 )
 
 type listRayClusterPrinter struct {

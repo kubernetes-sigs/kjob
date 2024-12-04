@@ -31,9 +31,9 @@ import (
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/cmd/completion"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/cmd/util"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/constants"
+	"sigs.k8s.io/kjob/pkg/cmd/completion"
+	"sigs.k8s.io/kjob/pkg/cmd/util"
+	"sigs.k8s.io/kjob/pkg/constants"
 )
 
 var (

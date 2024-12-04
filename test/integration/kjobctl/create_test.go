@@ -32,11 +32,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	kueueconstants "sigs.k8s.io/kueue/pkg/controller/constants"
 
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/apis/v1alpha1"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/cmd"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/constants"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/testing/wrappers"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/test/util"
+	"sigs.k8s.io/kjob/apis/v1alpha1"
+	"sigs.k8s.io/kjob/pkg/cmd"
+	"sigs.k8s.io/kjob/pkg/constants"
+	"sigs.k8s.io/kjob/pkg/testing/wrappers"
+	"sigs.k8s.io/kjob/test/util"
 )
 
 var _ = ginkgo.Describe("Kjobctl Create", ginkgo.Ordered, ginkgo.ContinueOnFailure, func() {

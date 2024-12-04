@@ -26,7 +26,7 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/test/util"
+	"sigs.k8s.io/kjob/test/util"
 )
 
 var (

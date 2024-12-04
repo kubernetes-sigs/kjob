@@ -40,10 +40,10 @@ import (
 	restfake "k8s.io/client-go/rest/fake"
 	"k8s.io/utils/ptr"
 
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/apis/v1alpha1"
-	cmdtesting "sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/cmd/testing"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/constants"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/testing/wrappers"
+	"sigs.k8s.io/kjob/apis/v1alpha1"
+	cmdtesting "sigs.k8s.io/kjob/pkg/cmd/testing"
+	"sigs.k8s.io/kjob/pkg/constants"
+	"sigs.k8s.io/kjob/pkg/testing/wrappers"
 )
 
 func TestDescribeCmd(t *testing.T) {

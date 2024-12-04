@@ -37,7 +37,7 @@ import (
 	resourcehelper "k8s.io/kubectl/pkg/util/resource"
 	storageutil "k8s.io/kubectl/pkg/util/storage"
 
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/apis/v1alpha1"
+	"sigs.k8s.io/kjob/apis/v1alpha1"
 )
 
 // Each level has 2 spaces for describehelper.PrefixWriter

@@ -29,10 +29,10 @@ import (
 	"sigs.k8s.io/kueue/apis/kueue/v1beta1"
 	kueuefake "sigs.k8s.io/kueue/client-go/clientset/versioned/fake"
 
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/apis/v1alpha1"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/client-go/clientset/versioned/fake"
-	cmdtesting "sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/cmd/testing"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/testing/wrappers"
+	"sigs.k8s.io/kjob/apis/v1alpha1"
+	"sigs.k8s.io/kjob/client-go/clientset/versioned/fake"
+	cmdtesting "sigs.k8s.io/kjob/pkg/cmd/testing"
+	"sigs.k8s.io/kjob/pkg/testing/wrappers"
 )
 
 func TestNamespaceNameFunc(t *testing.T) {

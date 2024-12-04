@@ -24,13 +24,13 @@ import (
 	"k8s.io/cli-runtime/pkg/genericiooptions"
 	"k8s.io/utils/clock"
 
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/cmd/completion"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/cmd/create"
-	deletecmd "sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/cmd/delete"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/cmd/describe"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/cmd/list"
-	crds "sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/cmd/printcrds"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/cmd/util"
+	"sigs.k8s.io/kjob/pkg/cmd/completion"
+	"sigs.k8s.io/kjob/pkg/cmd/create"
+	deletecmd "sigs.k8s.io/kjob/pkg/cmd/delete"
+	"sigs.k8s.io/kjob/pkg/cmd/describe"
+	"sigs.k8s.io/kjob/pkg/cmd/list"
+	crds "sigs.k8s.io/kjob/pkg/cmd/printcrds"
+	"sigs.k8s.io/kjob/pkg/cmd/util"
 )
 
 type KjobctlOptions struct {

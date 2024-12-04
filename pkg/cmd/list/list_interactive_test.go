@@ -32,8 +32,8 @@ import (
 	kubetesting "k8s.io/client-go/testing"
 	testingclock "k8s.io/utils/clock/testing"
 
-	cmdtesting "sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/cmd/testing"
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/testing/wrappers"
+	cmdtesting "sigs.k8s.io/kjob/pkg/cmd/testing"
+	"sigs.k8s.io/kjob/pkg/testing/wrappers"
 )
 
 func TestInteractiveCmd(t *testing.T) {

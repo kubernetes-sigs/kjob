@@ -1,4 +1,4 @@
-module sigs.k8s.io/kueue/cmd/experimental/kjobctl
+module sigs.k8s.io/kjob
 
 go 1.23.0
 

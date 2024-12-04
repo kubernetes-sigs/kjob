@@ -22,7 +22,7 @@ import (
 	"k8s.io/kubectl/pkg/util/templates"
 	"k8s.io/utils/clock"
 
-	"sigs.k8s.io/kueue/cmd/experimental/kjobctl/pkg/cmd/util"
+	"sigs.k8s.io/kjob/pkg/cmd/util"
 )
 
 var (
