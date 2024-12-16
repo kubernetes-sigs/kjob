@@ -31,6 +31,7 @@ import (
 	"sigs.k8s.io/kjob/pkg/cmd/list"
 	crds "sigs.k8s.io/kjob/pkg/cmd/printcrds"
 	"sigs.k8s.io/kjob/pkg/cmd/util"
+	"sigs.k8s.io/kjob/pkg/cmd/version"
 )
 
 type KjobctlOptions struct {
@@ -82,6 +83,7 @@ func NewKjobctlCmd(o KjobctlOptions) *cobra.Command {
 	cmd.AddCommand(list.NewListCmd(clientGetter, o.IOStreams, o.Clock))
 	cmd.AddCommand(deletecmd.NewDeleteCmd(clientGetter, o.IOStreams))
 	cmd.AddCommand(crds.NewCmd())
+	cmd.AddCommand(version.NewVersionCmd(o.IOStreams))
 
 	return cmd
 }
