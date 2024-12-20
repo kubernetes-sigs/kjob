@@ -56,6 +56,10 @@ KIND_CLUSTER_NAME ?= kind
 E2E_KIND_VERSION ?= kindest/node:v1.31.0
 K8S_VERSION = $(E2E_KIND_VERSION:kindest/node:v%=%)
 
+GIT_TAG ?= $(shell git describe --tags --dirty --always)
+VERSION_PKG = sigs.k8s.io/kjob/pkg/version
+LD_FLAGS += -X '$(VERSION_PKG).GitVersion=$(GIT_TAG)'
+
 ##@ General
 
 # The help target prints out all targets with their descriptions organized
