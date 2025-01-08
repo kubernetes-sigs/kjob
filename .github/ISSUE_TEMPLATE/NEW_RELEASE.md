@@ -18,7 +18,7 @@ Please do not remove items from the checklist
   - [ ] An OWNER creates a vanilla release branch with `git branch release-$MAJ.$MIN main`
   - [ ] An OWNER pushes the new release branch with `git push release-$MAJ.$MIN`
 - [ ] Update the release branch:
-  - [ ] Update `RELEASE_BRANCH` and `RELEASE_VERSION` in `Makefile` and run `make prepare-release-branch`
+  - [ ] Update <!--`RELEASE_BRANCH` and --> `RELEASE_VERSION` in `Makefile` and run `make prepare-release-branch`
   - [ ] Update the `CHANGELOG`
   - [ ] Submit a pull request with the changes: <!-- example #211 #214 -->
 - [ ] An OWNER creates a signed tag running
@@ -32,8 +32,10 @@ Please do not remove items from the checklist
   - [ ] Run `make artifacts` to generate the artifacts in the `artifacts` folder.
   - [ ] Upload the files in the `artifacts` folder to the draft release - either
     via UI or `gh release --repo kubernetes-sigs/kjob upload <tag> artifacts/*`.
+<!--
 - [ ] Submit a PR against [k8s.io](https://github.com/kubernetes/k8s.io)
 - [ ] Wait for the PR to be merged.
+-->
 - [ ] Publish the draft release prepared at the [GitHub releases page](https://github.com/kubernetes-sigs/kjob/releases).
   Link: <!-- example https://github.com/kubernetes-sigs/kjob/releases/tag/v0.1.0 -->
 <!--
@@ -49,7 +51,7 @@ Please do not remove items from the checklist
 - [ ] Run the [SBOM action](https://github.com/kubernetes-sigs/kjob/actions/workflows/sbom.yaml) to generate the SBOM and add it to the release.
 - [ ] For major or minor releases, merge the `main` branch into the `website` branch to publish the updated documentation.
 -->
-- [ ] Send an announcement email to `sig-scheduling@kubernetes.io` and `wg-batch@kubernetes.io` with the subject `[ANNOUNCE] kjob $VERSION is released`.   <!--Link: example https://groups.google.com/a/kubernetes.io/g/wg-batch/c/-gZOrSnwDV4 -->
+- [ ] Send an announcement email to `sig-apps@kubernetes.io` and `wg-batch@kubernetes.io` with the subject `[ANNOUNCE] kjob $VERSION is released`.   <!--Link: example https://groups.google.com/a/kubernetes.io/g/wg-batch/c/-gZOrSnwDV4 -->
 - [ ] For a major or minor release, prepare the repo for the next version:
   - [ ] Create an unannotated _devel_ tag in the
     `main` branch, on the first commit that gets merged after the release
