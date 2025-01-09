@@ -133,8 +133,16 @@ func (b *slurmBuilder) complete() error {
 		return err
 	}
 
+	nTasks := ptr.Deref(b.nTasks, 1)
+
+	replacedScriptContent, err := parser.SlurmValidateAndReplaceScript(b.scriptContent, nTasks)
+	if err != nil {
+		return err
+	}
+	b.scriptContent = replacedScriptContent
+
 	if b.array == "" {
-		b.arrayIndexes = parser.GenerateArrayIndexes(ptr.Deref(b.nodes, 1) * ptr.Deref(b.nTasks, 1))
+		b.arrayIndexes = parser.GenerateArrayIndexes(ptr.Deref(b.nodes, 1) * nTasks)
 	} else {
 		b.arrayIndexes, err = parser.ParseArrayIndexes(b.array)
 		if err != nil {

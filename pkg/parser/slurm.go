@@ -24,16 +24,31 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/utils/ptr"
 
 	"sigs.k8s.io/kjob/apis/v1alpha1"
 )
 
-const slurmDirective = "#SBATCH"
+const (
+	slurmDirective  = "#SBATCH"
+	srunCommand     = "srun"
+	sbatchCommand   = "sbatch"
+	sallocCommand   = "salloc"
+	waitCommand     = "wait"
+	sinfoCommand    = "sinfo"
+	scontrolCommand = "scontrol"
+	squeueCommand   = "squeue"
+	scancelCommand  = "scancel"
+)
 
-var longFlagFormat = regexp.MustCompile(`(\w+[\w+-]*)=(\S+)`)
-var shortFlagFormat = regexp.MustCompile(`-(\w)\s+(\S+)`)
+var (
+	longFlagFormat       = regexp.MustCompile(`(\w+[\w+-]*)=(\S+)`)
+	shortFlagFormat      = regexp.MustCompile(`-(\w)\s+(\S+)`)
+	envVarFormat         = regexp.MustCompile(`^([A-Z0-9_]+)=(?:"([^"]*)"|([^"\s]+))$`)
+	notSupportedCommands = []string{sbatchCommand, sallocCommand, waitCommand, sinfoCommand, scontrolCommand, squeueCommand, scancelCommand}
+)
 
 type ParsedSlurmFlags struct {
 	Array       string
@@ -182,4 +197,197 @@ func GpusFlag(val string) (map[string]*resource.Quantity, error) {
 	}
 
 	return gpus, nil
+}
+
+func SlurmValidateAndReplaceScript(script string, nTasks int32) (string, error) {
+	if nTasks < 1 {
+		return "", fmt.Errorf("invalid number of tasks: %d", nTasks)
+	}
+
+	var (
+		sb          strings.Builder
+		srunCount   int
+		line        string
+		needNewLine bool
+	)
+
+	lines := strings.Split(script, "\n")
+
+	for i := 0; i < len(lines); i++ {
+		line = ""
+
+		// Convert multiline command to one line
+		for i < len(lines) {
+			if len(line) > 0 {
+				line += " "
+			}
+			line += strings.TrimSpace(lines[i])
+			if !strings.HasSuffix(line, " \\") {
+				break
+			}
+			line = strings.TrimRight(line[:len(line)-2], " ")
+			i++
+		}
+
+		if line == "" {
+			sb.WriteByte('\n')
+			continue
+		}
+
+		if nTasks > 1 && srunCount > 0 {
+			return "", errors.New("multiple parallel tasks with a task count greater than 1 are not supported yet")
+		}
+
+		if index := findCommand(line, srunCommand); index != -1 {
+			srunCount++
+
+			args := strings.Split(line[index:], " ")[1:]
+
+			srunFlagSet := pflag.NewFlagSet(srunCommand, pflag.ContinueOnError)
+			srunFlagSet.ParseErrorsWhitelist.UnknownFlags = true
+
+			err := srunFlagSet.Parse(args)
+			if err != nil {
+				return "", fmt.Errorf("invalid %q command: %w", line, err)
+			}
+
+			srunArgs := srunFlagSet.Args()
+			if len(srunArgs) == 0 {
+				return "", fmt.Errorf("invalid %q command: %s", line, "must specified at least one argument")
+			}
+
+			var envVars string
+			if index > 0 {
+				envVars = line[:index]
+				// For now, we should only allow environment variables before srun command.
+				err = validateEnvVars(envVars, srunCommand)
+				if err != nil {
+					return "", fmt.Errorf("invalid %q command: %w", line, err)
+				}
+			}
+
+			line = fmt.Sprintf("%s%s", envVars, strings.Join(srunArgs, " "))
+		}
+
+		for _, command := range notSupportedCommands {
+			if index := findCommand(line, command); index != -1 {
+				return "", fmt.Errorf("%q command is not supported", command)
+			}
+		}
+
+		if needNewLine {
+			sb.WriteByte('\n')
+		}
+		sb.WriteString(line)
+		needNewLine = true
+	}
+
+	return sb.String(), nil
+}
+
+func findCommand(input string, command string) int {
+	input = strings.TrimSpace(input)
+
+	index := strings.Index(input, command)
+	if index == -1 {
+		return -1
+	}
+
+	if index > 0 && input[index-1] != ' ' {
+		return -1
+	}
+
+	withoutPrefix := input[index:]
+	if withoutPrefix != command && !strings.HasPrefix(withoutPrefix, fmt.Sprintf("%s ", command)) {
+		return -1
+	}
+
+	return index
+}
+
+// validateEnvVars validate environment variables before command.
+// Possible values `FOO="bar"` and `export FOO="bar" && ` or `export FOO="bar"; `
+func validateEnvVars(input string, command string) error {
+	parts := splitBySpaceWithIgnoreInQuotes(input)
+
+	var export bool
+
+	for _, part := range parts {
+		if part == "" {
+			continue
+		}
+
+		length := len(part)
+
+		if part == "export" {
+			if export {
+				return errors.New("missed ';' or '&&' before \"export\" command")
+			}
+			export = true
+			continue
+		}
+
+		if part == "&&" {
+			export = false
+			continue
+		}
+
+		if strings.HasSuffix(part, ";") && !isEscaped(part, length-1) {
+			if length > 1 {
+				if part[length-2] == ';' {
+					return errors.New("parse error near ';;'")
+				}
+			}
+			export = false
+			continue
+		}
+
+		matches := envVarFormat.FindStringSubmatch(part)
+		if len(matches) == 0 {
+			return fmt.Errorf("invalid %q environment variable", part)
+		}
+	}
+
+	if export {
+		return fmt.Errorf("missed ';' or '&&' before %q command", command)
+	}
+
+	return nil
+}
+
+func splitBySpaceWithIgnoreInQuotes(str string) []string {
+	var (
+		parts    []string
+		current  strings.Builder
+		inQuotes bool
+	)
+
+	for i := 0; i < len(str); i++ {
+		char := str[i]
+
+		if char == '"' && !isEscaped(str, i) {
+			inQuotes = !inQuotes
+		}
+
+		if char != ' ' || inQuotes {
+			current.WriteByte(char)
+			if i < len(str)-1 {
+				continue
+			}
+		}
+
+		parts = append(parts, current.String())
+		current.Reset()
+	}
+
+	return parts
+}
+
+func isEscaped(str string, index int) bool {
+	var count int
+	for index > 0 && str[index-1] == '\\' {
+		count++
+		index--
+	}
+	return count%2 != 0
 }

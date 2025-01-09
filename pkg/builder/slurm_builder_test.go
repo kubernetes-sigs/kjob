@@ -83,7 +83,7 @@ func beforeSlurmTest(t *testing.T, tc *slurmBuilderTestCase) {
 		}
 	})
 
-	if _, err := file.WriteString("#!/bin/bash\nsleep 300'"); err != nil {
+	if _, err := file.WriteString("#!/bin/bash\nsrun sleep 300'"); err != nil {
 		t.Fatal(err)
 	}
 
