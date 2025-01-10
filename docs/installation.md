@@ -4,6 +4,42 @@ Installing the `kubectl-kjob` plugin, `kjobctl`.
 
 ## Installing 
 
+### From Release Binaries
+
+#### 1. Download the latest release:
+
+On Linux (AMD64 / x86_64):
+```bash
+curl -Lo ./kubectl-kjob https://github.com/kubernetes-sigs/kjob/releases/download/v0.1.0/kubectl-kjob-linux-amd64
+```
+
+On Linux (ARM64):
+```bash
+curl -Lo ./kubectl-kjob https://github.com/kubernetes-sigs/kjob/releases/download/v0.1.0/kubectl-kjob-linux-arm64
+```
+
+On Mac (AMD64 / x86_64):
+```bash
+curl -Lo ./kubectl-kjob https://github.com/kubernetes-sigs/kjob/releases/download/v0.1.0/kubectl-kjob-darwin-amd64
+```
+
+On Mac (ARM64):
+```bash
+curl -Lo ./kubectl-kjob https://github.com/kubernetes-sigs/kjob/releases/download/v0.1.0/kubectl-kjob-darwin-arm64
+```
+
+### 2. Make the kubectl-kjob binary executable.
+
+```shell
+chmod +x ./kubectl-kjob
+```
+
+### 3. Move the kubectl-kjob binary to a file location on your system PATH.
+
+```shell
+sudo mv ./kubectl-kjob /usr/local/bin/kubectl-kjob
+```
+
 ### From source
 
 ```bash
