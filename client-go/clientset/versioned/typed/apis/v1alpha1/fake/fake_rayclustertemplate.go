@@ -18,116 +18,34 @@ limitations under the License.
 package fake
 
 import (
-	"context"
-
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	labels "k8s.io/apimachinery/pkg/labels"
-	types "k8s.io/apimachinery/pkg/types"
-	watch "k8s.io/apimachinery/pkg/watch"
-	testing "k8s.io/client-go/testing"
+	gentype "k8s.io/client-go/gentype"
 	v1alpha1 "sigs.k8s.io/kjob/apis/v1alpha1"
+	apisv1alpha1 "sigs.k8s.io/kjob/client-go/clientset/versioned/typed/apis/v1alpha1"
 )
 
-// FakeRayClusterTemplates implements RayClusterTemplateInterface
-type FakeRayClusterTemplates struct {
+// fakeRayClusterTemplates implements RayClusterTemplateInterface
+type fakeRayClusterTemplates struct {
+	*gentype.FakeClientWithList[*v1alpha1.RayClusterTemplate, *v1alpha1.RayClusterTemplateList]
 	Fake *FakeKjobctlV1alpha1
-	ns   string
 }
 
-var rayclustertemplatesResource = v1alpha1.SchemeGroupVersion.WithResource("rayclustertemplates")
-
-var rayclustertemplatesKind = v1alpha1.SchemeGroupVersion.WithKind("RayClusterTemplate")
-
-// Get takes name of the rayClusterTemplate, and returns the corresponding rayClusterTemplate object, and an error if there is any.
-func (c *FakeRayClusterTemplates) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.RayClusterTemplate, err error) {
-	emptyResult := &v1alpha1.RayClusterTemplate{}
-	obj, err := c.Fake.
-		Invokes(testing.NewGetActionWithOptions(rayclustertemplatesResource, c.ns, name, options), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
+func newFakeRayClusterTemplates(fake *FakeKjobctlV1alpha1, namespace string) apisv1alpha1.RayClusterTemplateInterface {
+	return &fakeRayClusterTemplates{
+		gentype.NewFakeClientWithList[*v1alpha1.RayClusterTemplate, *v1alpha1.RayClusterTemplateList](
+			fake.Fake,
+			namespace,
+			v1alpha1.SchemeGroupVersion.WithResource("rayclustertemplates"),
+			v1alpha1.SchemeGroupVersion.WithKind("RayClusterTemplate"),
+			func() *v1alpha1.RayClusterTemplate { return &v1alpha1.RayClusterTemplate{} },
+			func() *v1alpha1.RayClusterTemplateList { return &v1alpha1.RayClusterTemplateList{} },
+			func(dst, src *v1alpha1.RayClusterTemplateList) { dst.ListMeta = src.ListMeta },
+			func(list *v1alpha1.RayClusterTemplateList) []*v1alpha1.RayClusterTemplate {
+				return gentype.ToPointerSlice(list.Items)
+			},
+			func(list *v1alpha1.RayClusterTemplateList, items []*v1alpha1.RayClusterTemplate) {
+				list.Items = gentype.FromPointerSlice(items)
+			},
+		),
+		fake,
 	}
-	return obj.(*v1alpha1.RayClusterTemplate), err
-}
-
-// List takes label and field selectors, and returns the list of RayClusterTemplates that match those selectors.
-func (c *FakeRayClusterTemplates) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.RayClusterTemplateList, err error) {
-	emptyResult := &v1alpha1.RayClusterTemplateList{}
-	obj, err := c.Fake.
-		Invokes(testing.NewListActionWithOptions(rayclustertemplatesResource, rayclustertemplatesKind, c.ns, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-
-	label, _, _ := testing.ExtractFromListOptions(opts)
-	if label == nil {
-		label = labels.Everything()
-	}
-	list := &v1alpha1.RayClusterTemplateList{ListMeta: obj.(*v1alpha1.RayClusterTemplateList).ListMeta}
-	for _, item := range obj.(*v1alpha1.RayClusterTemplateList).Items {
-		if label.Matches(labels.Set(item.Labels)) {
-			list.Items = append(list.Items, item)
-		}
-	}
-	return list, err
-}
-
-// Watch returns a watch.Interface that watches the requested rayClusterTemplates.
-func (c *FakeRayClusterTemplates) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
-	return c.Fake.
-		InvokesWatch(testing.NewWatchActionWithOptions(rayclustertemplatesResource, c.ns, opts))
-
-}
-
-// Create takes the representation of a rayClusterTemplate and creates it.  Returns the server's representation of the rayClusterTemplate, and an error, if there is any.
-func (c *FakeRayClusterTemplates) Create(ctx context.Context, rayClusterTemplate *v1alpha1.RayClusterTemplate, opts v1.CreateOptions) (result *v1alpha1.RayClusterTemplate, err error) {
-	emptyResult := &v1alpha1.RayClusterTemplate{}
-	obj, err := c.Fake.
-		Invokes(testing.NewCreateActionWithOptions(rayclustertemplatesResource, c.ns, rayClusterTemplate, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.RayClusterTemplate), err
-}
-
-// Update takes the representation of a rayClusterTemplate and updates it. Returns the server's representation of the rayClusterTemplate, and an error, if there is any.
-func (c *FakeRayClusterTemplates) Update(ctx context.Context, rayClusterTemplate *v1alpha1.RayClusterTemplate, opts v1.UpdateOptions) (result *v1alpha1.RayClusterTemplate, err error) {
-	emptyResult := &v1alpha1.RayClusterTemplate{}
-	obj, err := c.Fake.
-		Invokes(testing.NewUpdateActionWithOptions(rayclustertemplatesResource, c.ns, rayClusterTemplate, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.RayClusterTemplate), err
-}
-
-// Delete takes name of the rayClusterTemplate and deletes it. Returns an error if one occurs.
-func (c *FakeRayClusterTemplates) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	_, err := c.Fake.
-		Invokes(testing.NewDeleteActionWithOptions(rayclustertemplatesResource, c.ns, name, opts), &v1alpha1.RayClusterTemplate{})
-
-	return err
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *FakeRayClusterTemplates) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewDeleteCollectionActionWithOptions(rayclustertemplatesResource, c.ns, opts, listOpts)
-
-	_, err := c.Fake.Invokes(action, &v1alpha1.RayClusterTemplateList{})
-	return err
-}
-
-// Patch applies the patch and returns the patched rayClusterTemplate.
-func (c *FakeRayClusterTemplates) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.RayClusterTemplate, err error) {
-	emptyResult := &v1alpha1.RayClusterTemplate{}
-	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceActionWithOptions(rayclustertemplatesResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.RayClusterTemplate), err
 }

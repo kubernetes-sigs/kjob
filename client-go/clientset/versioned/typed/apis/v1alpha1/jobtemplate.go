@@ -18,13 +18,13 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	gentype "k8s.io/client-go/gentype"
-	v1alpha1 "sigs.k8s.io/kjob/apis/v1alpha1"
+	apisv1alpha1 "sigs.k8s.io/kjob/apis/v1alpha1"
 	scheme "sigs.k8s.io/kjob/client-go/clientset/versioned/scheme"
 )
 
@@ -36,31 +36,32 @@ type JobTemplatesGetter interface {
 
 // JobTemplateInterface has methods to work with JobTemplate resources.
 type JobTemplateInterface interface {
-	Create(ctx context.Context, jobTemplate *v1alpha1.JobTemplate, opts v1.CreateOptions) (*v1alpha1.JobTemplate, error)
-	Update(ctx context.Context, jobTemplate *v1alpha1.JobTemplate, opts v1.UpdateOptions) (*v1alpha1.JobTemplate, error)
+	Create(ctx context.Context, jobTemplate *apisv1alpha1.JobTemplate, opts v1.CreateOptions) (*apisv1alpha1.JobTemplate, error)
+	Update(ctx context.Context, jobTemplate *apisv1alpha1.JobTemplate, opts v1.UpdateOptions) (*apisv1alpha1.JobTemplate, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.JobTemplate, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.JobTemplateList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*apisv1alpha1.JobTemplate, error)
+	List(ctx context.Context, opts v1.ListOptions) (*apisv1alpha1.JobTemplateList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.JobTemplate, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *apisv1alpha1.JobTemplate, err error)
 	JobTemplateExpansion
 }
 
 // jobTemplates implements JobTemplateInterface
 type jobTemplates struct {
-	*gentype.ClientWithList[*v1alpha1.JobTemplate, *v1alpha1.JobTemplateList]
+	*gentype.ClientWithList[*apisv1alpha1.JobTemplate, *apisv1alpha1.JobTemplateList]
 }
 
 // newJobTemplates returns a JobTemplates
 func newJobTemplates(c *KjobctlV1alpha1Client, namespace string) *jobTemplates {
 	return &jobTemplates{
-		gentype.NewClientWithList[*v1alpha1.JobTemplate, *v1alpha1.JobTemplateList](
+		gentype.NewClientWithList[*apisv1alpha1.JobTemplate, *apisv1alpha1.JobTemplateList](
 			"jobtemplates",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *v1alpha1.JobTemplate { return &v1alpha1.JobTemplate{} },
-			func() *v1alpha1.JobTemplateList { return &v1alpha1.JobTemplateList{} }),
+			func() *apisv1alpha1.JobTemplate { return &apisv1alpha1.JobTemplate{} },
+			func() *apisv1alpha1.JobTemplateList { return &apisv1alpha1.JobTemplateList{} },
+		),
 	}
 }

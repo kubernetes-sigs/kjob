@@ -9,7 +9,7 @@ else
 endif
 
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
-ENVTEST_K8S_VERSION = 1.31.0
+ENVTEST_K8S_VERSION = 1.32
 
 ifeq ($(shell uname),Darwin)
     GOFLAGS ?= -ldflags=-linkmode=internal
@@ -53,7 +53,7 @@ SHELL = /usr/bin/env bash -o pipefail
 # For local testing, we should allow user to use different kind cluster name
 # Default will delete default kind cluster
 KIND_CLUSTER_NAME ?= kind
-E2E_KIND_VERSION ?= kindest/node:v1.31.0
+E2E_KIND_VERSION ?= kindest/node:v1.32.0
 K8S_VERSION = $(E2E_KIND_VERSION:kindest/node:v%=%)
 
 GIT_TAG ?= $(shell git describe --tags --dirty --always)

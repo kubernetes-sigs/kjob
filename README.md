@@ -14,8 +14,8 @@ Read the [overview](docs/_index.md) to learn more.
 
 ### Prerequisites
 - go version v1.23+
-- kubectl version v1.27+.
-- Access to a Kubernetes v1.27+ cluster.
+- kubectl version v1.29+.
+- Access to a Kubernetes v1.29+ cluster.
 
 ### To Install
 

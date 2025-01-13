@@ -18,13 +18,13 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	gentype "k8s.io/client-go/gentype"
-	v1alpha1 "sigs.k8s.io/kjob/apis/v1alpha1"
+	apisv1alpha1 "sigs.k8s.io/kjob/apis/v1alpha1"
 	scheme "sigs.k8s.io/kjob/client-go/clientset/versioned/scheme"
 )
 
@@ -36,31 +36,32 @@ type RayClusterTemplatesGetter interface {
 
 // RayClusterTemplateInterface has methods to work with RayClusterTemplate resources.
 type RayClusterTemplateInterface interface {
-	Create(ctx context.Context, rayClusterTemplate *v1alpha1.RayClusterTemplate, opts v1.CreateOptions) (*v1alpha1.RayClusterTemplate, error)
-	Update(ctx context.Context, rayClusterTemplate *v1alpha1.RayClusterTemplate, opts v1.UpdateOptions) (*v1alpha1.RayClusterTemplate, error)
+	Create(ctx context.Context, rayClusterTemplate *apisv1alpha1.RayClusterTemplate, opts v1.CreateOptions) (*apisv1alpha1.RayClusterTemplate, error)
+	Update(ctx context.Context, rayClusterTemplate *apisv1alpha1.RayClusterTemplate, opts v1.UpdateOptions) (*apisv1alpha1.RayClusterTemplate, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.RayClusterTemplate, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.RayClusterTemplateList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*apisv1alpha1.RayClusterTemplate, error)
+	List(ctx context.Context, opts v1.ListOptions) (*apisv1alpha1.RayClusterTemplateList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.RayClusterTemplate, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *apisv1alpha1.RayClusterTemplate, err error)
 	RayClusterTemplateExpansion
 }
 
 // rayClusterTemplates implements RayClusterTemplateInterface
 type rayClusterTemplates struct {
-	*gentype.ClientWithList[*v1alpha1.RayClusterTemplate, *v1alpha1.RayClusterTemplateList]
+	*gentype.ClientWithList[*apisv1alpha1.RayClusterTemplate, *apisv1alpha1.RayClusterTemplateList]
 }
 
 // newRayClusterTemplates returns a RayClusterTemplates
 func newRayClusterTemplates(c *KjobctlV1alpha1Client, namespace string) *rayClusterTemplates {
 	return &rayClusterTemplates{
-		gentype.NewClientWithList[*v1alpha1.RayClusterTemplate, *v1alpha1.RayClusterTemplateList](
+		gentype.NewClientWithList[*apisv1alpha1.RayClusterTemplate, *apisv1alpha1.RayClusterTemplateList](
 			"rayclustertemplates",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *v1alpha1.RayClusterTemplate { return &v1alpha1.RayClusterTemplate{} },
-			func() *v1alpha1.RayClusterTemplateList { return &v1alpha1.RayClusterTemplateList{} }),
+			func() *apisv1alpha1.RayClusterTemplate { return &apisv1alpha1.RayClusterTemplate{} },
+			func() *apisv1alpha1.RayClusterTemplateList { return &apisv1alpha1.RayClusterTemplateList{} },
+		),
 	}
 }

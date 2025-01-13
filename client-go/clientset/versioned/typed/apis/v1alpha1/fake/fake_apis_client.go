@@ -28,23 +28,23 @@ type FakeKjobctlV1alpha1 struct {
 }
 
 func (c *FakeKjobctlV1alpha1) ApplicationProfiles(namespace string) v1alpha1.ApplicationProfileInterface {
-	return &FakeApplicationProfiles{c, namespace}
+	return newFakeApplicationProfiles(c, namespace)
 }
 
 func (c *FakeKjobctlV1alpha1) JobTemplates(namespace string) v1alpha1.JobTemplateInterface {
-	return &FakeJobTemplates{c, namespace}
+	return newFakeJobTemplates(c, namespace)
 }
 
 func (c *FakeKjobctlV1alpha1) RayClusterTemplates(namespace string) v1alpha1.RayClusterTemplateInterface {
-	return &FakeRayClusterTemplates{c, namespace}
+	return newFakeRayClusterTemplates(c, namespace)
 }
 
 func (c *FakeKjobctlV1alpha1) RayJobTemplates(namespace string) v1alpha1.RayJobTemplateInterface {
-	return &FakeRayJobTemplates{c, namespace}
+	return newFakeRayJobTemplates(c, namespace)
 }
 
 func (c *FakeKjobctlV1alpha1) VolumeBundles(namespace string) v1alpha1.VolumeBundleInterface {
-	return &FakeVolumeBundles{c, namespace}
+	return newFakeVolumeBundles(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

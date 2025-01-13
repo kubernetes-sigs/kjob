@@ -18,13 +18,13 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	gentype "k8s.io/client-go/gentype"
-	v1alpha1 "sigs.k8s.io/kjob/apis/v1alpha1"
+	apisv1alpha1 "sigs.k8s.io/kjob/apis/v1alpha1"
 	scheme "sigs.k8s.io/kjob/client-go/clientset/versioned/scheme"
 )
 
@@ -36,31 +36,32 @@ type ApplicationProfilesGetter interface {
 
 // ApplicationProfileInterface has methods to work with ApplicationProfile resources.
 type ApplicationProfileInterface interface {
-	Create(ctx context.Context, applicationProfile *v1alpha1.ApplicationProfile, opts v1.CreateOptions) (*v1alpha1.ApplicationProfile, error)
-	Update(ctx context.Context, applicationProfile *v1alpha1.ApplicationProfile, opts v1.UpdateOptions) (*v1alpha1.ApplicationProfile, error)
+	Create(ctx context.Context, applicationProfile *apisv1alpha1.ApplicationProfile, opts v1.CreateOptions) (*apisv1alpha1.ApplicationProfile, error)
+	Update(ctx context.Context, applicationProfile *apisv1alpha1.ApplicationProfile, opts v1.UpdateOptions) (*apisv1alpha1.ApplicationProfile, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.ApplicationProfile, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.ApplicationProfileList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*apisv1alpha1.ApplicationProfile, error)
+	List(ctx context.Context, opts v1.ListOptions) (*apisv1alpha1.ApplicationProfileList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.ApplicationProfile, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *apisv1alpha1.ApplicationProfile, err error)
 	ApplicationProfileExpansion
 }
 
 // applicationProfiles implements ApplicationProfileInterface
 type applicationProfiles struct {
-	*gentype.ClientWithList[*v1alpha1.ApplicationProfile, *v1alpha1.ApplicationProfileList]
+	*gentype.ClientWithList[*apisv1alpha1.ApplicationProfile, *apisv1alpha1.ApplicationProfileList]
 }
 
 // newApplicationProfiles returns a ApplicationProfiles
 func newApplicationProfiles(c *KjobctlV1alpha1Client, namespace string) *applicationProfiles {
 	return &applicationProfiles{
-		gentype.NewClientWithList[*v1alpha1.ApplicationProfile, *v1alpha1.ApplicationProfileList](
+		gentype.NewClientWithList[*apisv1alpha1.ApplicationProfile, *apisv1alpha1.ApplicationProfileList](
 			"applicationprofiles",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *v1alpha1.ApplicationProfile { return &v1alpha1.ApplicationProfile{} },
-			func() *v1alpha1.ApplicationProfileList { return &v1alpha1.ApplicationProfileList{} }),
+			func() *apisv1alpha1.ApplicationProfile { return &apisv1alpha1.ApplicationProfile{} },
+			func() *apisv1alpha1.ApplicationProfileList { return &apisv1alpha1.ApplicationProfileList{} },
+		),
 	}
 }

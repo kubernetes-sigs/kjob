@@ -18,13 +18,13 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	gentype "k8s.io/client-go/gentype"
-	v1alpha1 "sigs.k8s.io/kjob/apis/v1alpha1"
+	apisv1alpha1 "sigs.k8s.io/kjob/apis/v1alpha1"
 	scheme "sigs.k8s.io/kjob/client-go/clientset/versioned/scheme"
 )
 
@@ -36,31 +36,32 @@ type VolumeBundlesGetter interface {
 
 // VolumeBundleInterface has methods to work with VolumeBundle resources.
 type VolumeBundleInterface interface {
-	Create(ctx context.Context, volumeBundle *v1alpha1.VolumeBundle, opts v1.CreateOptions) (*v1alpha1.VolumeBundle, error)
-	Update(ctx context.Context, volumeBundle *v1alpha1.VolumeBundle, opts v1.UpdateOptions) (*v1alpha1.VolumeBundle, error)
+	Create(ctx context.Context, volumeBundle *apisv1alpha1.VolumeBundle, opts v1.CreateOptions) (*apisv1alpha1.VolumeBundle, error)
+	Update(ctx context.Context, volumeBundle *apisv1alpha1.VolumeBundle, opts v1.UpdateOptions) (*apisv1alpha1.VolumeBundle, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.VolumeBundle, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.VolumeBundleList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*apisv1alpha1.VolumeBundle, error)
+	List(ctx context.Context, opts v1.ListOptions) (*apisv1alpha1.VolumeBundleList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.VolumeBundle, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *apisv1alpha1.VolumeBundle, err error)
 	VolumeBundleExpansion
 }
 
 // volumeBundles implements VolumeBundleInterface
 type volumeBundles struct {
-	*gentype.ClientWithList[*v1alpha1.VolumeBundle, *v1alpha1.VolumeBundleList]
+	*gentype.ClientWithList[*apisv1alpha1.VolumeBundle, *apisv1alpha1.VolumeBundleList]
 }
 
 // newVolumeBundles returns a VolumeBundles
 func newVolumeBundles(c *KjobctlV1alpha1Client, namespace string) *volumeBundles {
 	return &volumeBundles{
-		gentype.NewClientWithList[*v1alpha1.VolumeBundle, *v1alpha1.VolumeBundleList](
+		gentype.NewClientWithList[*apisv1alpha1.VolumeBundle, *apisv1alpha1.VolumeBundleList](
 			"volumebundles",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *v1alpha1.VolumeBundle { return &v1alpha1.VolumeBundle{} },
-			func() *v1alpha1.VolumeBundleList { return &v1alpha1.VolumeBundleList{} }),
+			func() *apisv1alpha1.VolumeBundle { return &apisv1alpha1.VolumeBundle{} },
+			func() *apisv1alpha1.VolumeBundleList { return &apisv1alpha1.VolumeBundleList{} },
+		),
 	}
 }

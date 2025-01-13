@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.16.5
+    controller-gen.kubebuilder.io/version: v0.17.1
   name: rayclustertemplates.kjobctl.x-k8s.io
 spec:
   group: kjobctl.x-k8s.io
@@ -932,7 +932,7 @@ spec:
                                   not set, the implementation will apply its default routing strategy. If set
                                   to "PreferClose", implementations should prioritize endpoints that are
                                   topologically close (e.g., same zone).
-                                  This is an alpha field and requires enabling ServiceTrafficDistribution feature.
+                                  This is a beta field and requires enabling ServiceTrafficDistribution feature.
                                 type: string
                               type:
                                 description: |-
@@ -1061,6 +1061,8 @@ spec:
                                             Ports is a list of records of service ports
                                             If used, every port defined in the service should have an entry in it
                                           items:
+                                            description: PortStatus represents the
+                                              error condition of a service port
                                             properties:
                                               error:
                                                 description: |-
@@ -2335,8 +2337,8 @@ spec:
                                             More info: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#container-hooks
                                           properties:
                                             exec:
-                                              description: Exec specifies the action
-                                                to take.
+                                              description: Exec specifies a command
+                                                to execute in the container.
                                               properties:
                                                 command:
                                                   description: |-
@@ -2351,8 +2353,8 @@ spec:
                                                   x-kubernetes-list-type: atomic
                                               type: object
                                             httpGet:
-                                              description: HTTPGet specifies the http
-                                                request to perform.
+                                              description: HTTPGet specifies an HTTP
+                                                GET request to perform.
                                               properties:
                                                 host:
                                                   description: |-
@@ -2405,9 +2407,8 @@ spec:
                                               - port
                                               type: object
                                             sleep:
-                                              description: Sleep represents the duration
-                                                that the container should sleep before
-                                                being terminated.
+                                              description: Sleep represents a duration
+                                                that the container should sleep.
                                               properties:
                                                 seconds:
                                                   description: Seconds is the number
@@ -2420,8 +2421,8 @@ spec:
                                             tcpSocket:
                                               description: |-
                                                 Deprecated. TCPSocket is NOT supported as a LifecycleHandler and kept
-                                                for the backward compatibility. There are no validation of this field and
-                                                lifecycle hooks will fail in runtime when tcp handler is specified.
+                                                for backward compatibility. There is no validation of this field and
+                                                lifecycle hooks will fail at runtime when it is specified.
                                               properties:
                                                 host:
                                                   description: 'Optional: Host name
@@ -2454,8 +2455,8 @@ spec:
                                             More info: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#container-hooks
                                           properties:
                                             exec:
-                                              description: Exec specifies the action
-                                                to take.
+                                              description: Exec specifies a command
+                                                to execute in the container.
                                               properties:
                                                 command:
                                                   description: |-
@@ -2470,8 +2471,8 @@ spec:
                                                   x-kubernetes-list-type: atomic
                                               type: object
                                             httpGet:
-                                              description: HTTPGet specifies the http
-                                                request to perform.
+                                              description: HTTPGet specifies an HTTP
+                                                GET request to perform.
                                               properties:
                                                 host:
                                                   description: |-
@@ -2524,9 +2525,8 @@ spec:
                                               - port
                                               type: object
                                             sleep:
-                                              description: Sleep represents the duration
-                                                that the container should sleep before
-                                                being terminated.
+                                              description: Sleep represents a duration
+                                                that the container should sleep.
                                               properties:
                                                 seconds:
                                                   description: Seconds is the number
@@ -2539,8 +2539,8 @@ spec:
                                             tcpSocket:
                                               description: |-
                                                 Deprecated. TCPSocket is NOT supported as a LifecycleHandler and kept
-                                                for the backward compatibility. There are no validation of this field and
-                                                lifecycle hooks will fail in runtime when tcp handler is specified.
+                                                for backward compatibility. There is no validation of this field and
+                                                lifecycle hooks will fail at runtime when it is specified.
                                               properties:
                                                 host:
                                                   description: 'Optional: Host name
@@ -2569,8 +2569,8 @@ spec:
                                         More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes
                                       properties:
                                         exec:
-                                          description: Exec specifies the action to
-                                            take.
+                                          description: Exec specifies a command to
+                                            execute in the container.
                                           properties:
                                             command:
                                               description: |-
@@ -2591,8 +2591,7 @@ spec:
                                           format: int32
                                           type: integer
                                         grpc:
-                                          description: GRPC specifies an action involving
-                                            a GRPC port.
+                                          description: GRPC specifies a GRPC HealthCheckRequest.
                                           properties:
                                             port:
                                               description: Port number of the gRPC
@@ -2612,7 +2611,7 @@ spec:
                                           - port
                                           type: object
                                         httpGet:
-                                          description: HTTPGet specifies the http
+                                          description: HTTPGet specifies an HTTP GET
                                             request to perform.
                                           properties:
                                             host:
@@ -2684,8 +2683,8 @@ spec:
                                           format: int32
                                           type: integer
                                         tcpSocket:
-                                          description: TCPSocket specifies an action
-                                            involving a TCP port.
+                                          description: TCPSocket specifies a connection
+                                            to a TCP port.
                                           properties:
                                             host:
                                               description: 'Optional: Host name to
@@ -2790,8 +2789,8 @@ spec:
                                         More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes
                                       properties:
                                         exec:
-                                          description: Exec specifies the action to
-                                            take.
+                                          description: Exec specifies a command to
+                                            execute in the container.
                                           properties:
                                             command:
                                               description: |-
@@ -2812,8 +2811,7 @@ spec:
                                           format: int32
                                           type: integer
                                         grpc:
-                                          description: GRPC specifies an action involving
-                                            a GRPC port.
+                                          description: GRPC specifies a GRPC HealthCheckRequest.
                                           properties:
                                             port:
                                               description: Port number of the gRPC
@@ -2833,7 +2831,7 @@ spec:
                                           - port
                                           type: object
                                         httpGet:
-                                          description: HTTPGet specifies the http
+                                          description: HTTPGet specifies an HTTP GET
                                             request to perform.
                                           properties:
                                             host:
@@ -2905,8 +2903,8 @@ spec:
                                           format: int32
                                           type: integer
                                         tcpSocket:
-                                          description: TCPSocket specifies an action
-                                            involving a TCP port.
+                                          description: TCPSocket specifies a connection
+                                            to a TCP port.
                                           properties:
                                             host:
                                               description: 'Optional: Host name to
@@ -3257,8 +3255,8 @@ spec:
                                         More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes
                                       properties:
                                         exec:
-                                          description: Exec specifies the action to
-                                            take.
+                                          description: Exec specifies a command to
+                                            execute in the container.
                                           properties:
                                             command:
                                               description: |-
@@ -3279,8 +3277,7 @@ spec:
                                           format: int32
                                           type: integer
                                         grpc:
-                                          description: GRPC specifies an action involving
-                                            a GRPC port.
+                                          description: GRPC specifies a GRPC HealthCheckRequest.
                                           properties:
                                             port:
                                               description: Port number of the gRPC
@@ -3300,7 +3297,7 @@ spec:
                                           - port
                                           type: object
                                         httpGet:
-                                          description: HTTPGet specifies the http
+                                          description: HTTPGet specifies an HTTP GET
                                             request to perform.
                                           properties:
                                             host:
@@ -3372,8 +3369,8 @@ spec:
                                           format: int32
                                           type: integer
                                         tcpSocket:
-                                          description: TCPSocket specifies an action
-                                            involving a TCP port.
+                                          description: TCPSocket specifies a connection
+                                            to a TCP port.
                                           properties:
                                             host:
                                               description: 'Optional: Host name to
@@ -3588,9 +3585,13 @@ spec:
                                         resolver options of a pod.
                                       properties:
                                         name:
-                                          description: Required.
+                                          description: |-
+                                            Name is this DNS resolver option's name.
+                                            Required.
                                           type: string
                                         value:
+                                          description: Value is this DNS resolver
+                                            option's value.
                                           type: string
                                       type: object
                                     type: array
@@ -3879,8 +3880,8 @@ spec:
                                             More info: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#container-hooks
                                           properties:
                                             exec:
-                                              description: Exec specifies the action
-                                                to take.
+                                              description: Exec specifies a command
+                                                to execute in the container.
                                               properties:
                                                 command:
                                                   description: |-
@@ -3895,8 +3896,8 @@ spec:
                                                   x-kubernetes-list-type: atomic
                                               type: object
                                             httpGet:
-                                              description: HTTPGet specifies the http
-                                                request to perform.
+                                              description: HTTPGet specifies an HTTP
+                                                GET request to perform.
                                               properties:
                                                 host:
                                                   description: |-
@@ -3949,9 +3950,8 @@ spec:
                                               - port
                                               type: object
                                             sleep:
-                                              description: Sleep represents the duration
-                                                that the container should sleep before
-                                                being terminated.
+                                              description: Sleep represents a duration
+                                                that the container should sleep.
                                               properties:
                                                 seconds:
                                                   description: Seconds is the number
@@ -3964,8 +3964,8 @@ spec:
                                             tcpSocket:
                                               description: |-
                                                 Deprecated. TCPSocket is NOT supported as a LifecycleHandler and kept
-                                                for the backward compatibility. There are no validation of this field and
-                                                lifecycle hooks will fail in runtime when tcp handler is specified.
+                                                for backward compatibility. There is no validation of this field and
+                                                lifecycle hooks will fail at runtime when it is specified.
                                               properties:
                                                 host:
                                                   description: 'Optional: Host name
@@ -3998,8 +3998,8 @@ spec:
                                             More info: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#container-hooks
                                           properties:
                                             exec:
-                                              description: Exec specifies the action
-                                                to take.
+                                              description: Exec specifies a command
+                                                to execute in the container.
                                               properties:
                                                 command:
                                                   description: |-
@@ -4014,8 +4014,8 @@ spec:
                                                   x-kubernetes-list-type: atomic
                                               type: object
                                             httpGet:
-                                              description: HTTPGet specifies the http
-                                                request to perform.
+                                              description: HTTPGet specifies an HTTP
+                                                GET request to perform.
                                               properties:
                                                 host:
                                                   description: |-
@@ -4068,9 +4068,8 @@ spec:
                                               - port
                                               type: object
                                             sleep:
-                                              description: Sleep represents the duration
-                                                that the container should sleep before
-                                                being terminated.
+                                              description: Sleep represents a duration
+                                                that the container should sleep.
                                               properties:
                                                 seconds:
                                                   description: Seconds is the number
@@ -4083,8 +4082,8 @@ spec:
                                             tcpSocket:
                                               description: |-
                                                 Deprecated. TCPSocket is NOT supported as a LifecycleHandler and kept
-                                                for the backward compatibility. There are no validation of this field and
-                                                lifecycle hooks will fail in runtime when tcp handler is specified.
+                                                for backward compatibility. There is no validation of this field and
+                                                lifecycle hooks will fail at runtime when it is specified.
                                               properties:
                                                 host:
                                                   description: 'Optional: Host name
@@ -4110,8 +4109,8 @@ spec:
                                         containers.
                                       properties:
                                         exec:
-                                          description: Exec specifies the action to
-                                            take.
+                                          description: Exec specifies a command to
+                                            execute in the container.
                                           properties:
                                             command:
                                               description: |-
@@ -4132,8 +4131,7 @@ spec:
                                           format: int32
                                           type: integer
                                         grpc:
-                                          description: GRPC specifies an action involving
-                                            a GRPC port.
+                                          description: GRPC specifies a GRPC HealthCheckRequest.
                                           properties:
                                             port:
                                               description: Port number of the gRPC
@@ -4153,7 +4151,7 @@ spec:
                                           - port
                                           type: object
                                         httpGet:
-                                          description: HTTPGet specifies the http
+                                          description: HTTPGet specifies an HTTP GET
                                             request to perform.
                                           properties:
                                             host:
@@ -4225,8 +4223,8 @@ spec:
                                           format: int32
                                           type: integer
                                         tcpSocket:
-                                          description: TCPSocket specifies an action
-                                            involving a TCP port.
+                                          description: TCPSocket specifies a connection
+                                            to a TCP port.
                                           properties:
                                             host:
                                               description: 'Optional: Host name to
@@ -4321,8 +4319,8 @@ spec:
                                         containers.
                                       properties:
                                         exec:
-                                          description: Exec specifies the action to
-                                            take.
+                                          description: Exec specifies a command to
+                                            execute in the container.
                                           properties:
                                             command:
                                               description: |-
@@ -4343,8 +4341,7 @@ spec:
                                           format: int32
                                           type: integer
                                         grpc:
-                                          description: GRPC specifies an action involving
-                                            a GRPC port.
+                                          description: GRPC specifies a GRPC HealthCheckRequest.
                                           properties:
                                             port:
                                               description: Port number of the gRPC
@@ -4364,7 +4361,7 @@ spec:
                                           - port
                                           type: object
                                         httpGet:
-                                          description: HTTPGet specifies the http
+                                          description: HTTPGet specifies an HTTP GET
                                             request to perform.
                                           properties:
                                             host:
@@ -4436,8 +4433,8 @@ spec:
                                           format: int32
                                           type: integer
                                         tcpSocket:
-                                          description: TCPSocket specifies an action
-                                            involving a TCP port.
+                                          description: TCPSocket specifies a connection
+                                            to a TCP port.
                                           properties:
                                             host:
                                               description: 'Optional: Host name to
@@ -4769,8 +4766,8 @@ spec:
                                         containers.
                                       properties:
                                         exec:
-                                          description: Exec specifies the action to
-                                            take.
+                                          description: Exec specifies a command to
+                                            execute in the container.
                                           properties:
                                             command:
                                               description: |-
@@ -4791,8 +4788,7 @@ spec:
                                           format: int32
                                           type: integer
                                         grpc:
-                                          description: GRPC specifies an action involving
-                                            a GRPC port.
+                                          description: GRPC specifies a GRPC HealthCheckRequest.
                                           properties:
                                             port:
                                               description: Port number of the gRPC
@@ -4812,7 +4808,7 @@ spec:
                                           - port
                                           type: object
                                         httpGet:
-                                          description: HTTPGet specifies the http
+                                          description: HTTPGet specifies an HTTP GET
                                             request to perform.
                                           properties:
                                             host:
@@ -4884,8 +4880,8 @@ spec:
                                           format: int32
                                           type: integer
                                         tcpSocket:
-                                          description: TCPSocket specifies an action
-                                            involving a TCP port.
+                                          description: TCPSocket specifies a connection
+                                            to a TCP port.
                                           properties:
                                             host:
                                               description: 'Optional: Host name to
@@ -5430,8 +5426,8 @@ spec:
                                             More info: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#container-hooks
                                           properties:
                                             exec:
-                                              description: Exec specifies the action
-                                                to take.
+                                              description: Exec specifies a command
+                                                to execute in the container.
                                               properties:
                                                 command:
                                                   description: |-
@@ -5446,8 +5442,8 @@ spec:
                                                   x-kubernetes-list-type: atomic
                                               type: object
                                             httpGet:
-                                              description: HTTPGet specifies the http
-                                                request to perform.
+                                              description: HTTPGet specifies an HTTP
+                                                GET request to perform.
                                               properties:
                                                 host:
                                                   description: |-
@@ -5500,9 +5496,8 @@ spec:
                                               - port
                                               type: object
                                             sleep:
-                                              description: Sleep represents the duration
-                                                that the container should sleep before
-                                                being terminated.
+                                              description: Sleep represents a duration
+                                                that the container should sleep.
                                               properties:
                                                 seconds:
                                                   description: Seconds is the number
@@ -5515,8 +5510,8 @@ spec:
                                             tcpSocket:
                                               description: |-
                                                 Deprecated. TCPSocket is NOT supported as a LifecycleHandler and kept
-                                                for the backward compatibility. There are no validation of this field and
-                                                lifecycle hooks will fail in runtime when tcp handler is specified.
+                                                for backward compatibility. There is no validation of this field and
+                                                lifecycle hooks will fail at runtime when it is specified.
                                               properties:
                                                 host:
                                                   description: 'Optional: Host name
@@ -5549,8 +5544,8 @@ spec:
                                             More info: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#container-hooks
                                           properties:
                                             exec:
-                                              description: Exec specifies the action
-                                                to take.
+                                              description: Exec specifies a command
+                                                to execute in the container.
                                               properties:
                                                 command:
                                                   description: |-
@@ -5565,8 +5560,8 @@ spec:
                                                   x-kubernetes-list-type: atomic
                                               type: object
                                             httpGet:
-                                              description: HTTPGet specifies the http
-                                                request to perform.
+                                              description: HTTPGet specifies an HTTP
+                                                GET request to perform.
                                               properties:
                                                 host:
                                                   description: |-
@@ -5619,9 +5614,8 @@ spec:
                                               - port
                                               type: object
                                             sleep:
-                                              description: Sleep represents the duration
-                                                that the container should sleep before
-                                                being terminated.
+                                              description: Sleep represents a duration
+                                                that the container should sleep.
                                               properties:
                                                 seconds:
                                                   description: Seconds is the number
@@ -5634,8 +5628,8 @@ spec:
                                             tcpSocket:
                                               description: |-
                                                 Deprecated. TCPSocket is NOT supported as a LifecycleHandler and kept
-                                                for the backward compatibility. There are no validation of this field and
-                                                lifecycle hooks will fail in runtime when tcp handler is specified.
+                                                for backward compatibility. There is no validation of this field and
+                                                lifecycle hooks will fail at runtime when it is specified.
                                               properties:
                                                 host:
                                                   description: 'Optional: Host name
@@ -5664,8 +5658,8 @@ spec:
                                         More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes
                                       properties:
                                         exec:
-                                          description: Exec specifies the action to
-                                            take.
+                                          description: Exec specifies a command to
+                                            execute in the container.
                                           properties:
                                             command:
                                               description: |-
@@ -5686,8 +5680,7 @@ spec:
                                           format: int32
                                           type: integer
                                         grpc:
-                                          description: GRPC specifies an action involving
-                                            a GRPC port.
+                                          description: GRPC specifies a GRPC HealthCheckRequest.
                                           properties:
                                             port:
                                               description: Port number of the gRPC
@@ -5707,7 +5700,7 @@ spec:
                                           - port
                                           type: object
                                         httpGet:
-                                          description: HTTPGet specifies the http
+                                          description: HTTPGet specifies an HTTP GET
                                             request to perform.
                                           properties:
                                             host:
@@ -5779,8 +5772,8 @@ spec:
                                           format: int32
                                           type: integer
                                         tcpSocket:
-                                          description: TCPSocket specifies an action
-                                            involving a TCP port.
+                                          description: TCPSocket specifies a connection
+                                            to a TCP port.
                                           properties:
                                             host:
                                               description: 'Optional: Host name to
@@ -5885,8 +5878,8 @@ spec:
                                         More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes
                                       properties:
                                         exec:
-                                          description: Exec specifies the action to
-                                            take.
+                                          description: Exec specifies a command to
+                                            execute in the container.
                                           properties:
                                             command:
                                               description: |-
@@ -5907,8 +5900,7 @@ spec:
                                           format: int32
                                           type: integer
                                         grpc:
-                                          description: GRPC specifies an action involving
-                                            a GRPC port.
+                                          description: GRPC specifies a GRPC HealthCheckRequest.
                                           properties:
                                             port:
                                               description: Port number of the gRPC
@@ -5928,7 +5920,7 @@ spec:
                                           - port
                                           type: object
                                         httpGet:
-                                          description: HTTPGet specifies the http
+                                          description: HTTPGet specifies an HTTP GET
                                             request to perform.
                                           properties:
                                             host:
@@ -6000,8 +5992,8 @@ spec:
                                           format: int32
                                           type: integer
                                         tcpSocket:
-                                          description: TCPSocket specifies an action
-                                            involving a TCP port.
+                                          description: TCPSocket specifies a connection
+                                            to a TCP port.
                                           properties:
                                             host:
                                               description: 'Optional: Host name to
@@ -6352,8 +6344,8 @@ spec:
                                         More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes
                                       properties:
                                         exec:
-                                          description: Exec specifies the action to
-                                            take.
+                                          description: Exec specifies a command to
+                                            execute in the container.
                                           properties:
                                             command:
                                               description: |-
@@ -6374,8 +6366,7 @@ spec:
                                           format: int32
                                           type: integer
                                         grpc:
-                                          description: GRPC specifies an action involving
-                                            a GRPC port.
+                                          description: GRPC specifies a GRPC HealthCheckRequest.
                                           properties:
                                             port:
                                               description: Port number of the gRPC
@@ -6395,7 +6386,7 @@ spec:
                                           - port
                                           type: object
                                         httpGet:
-                                          description: HTTPGet specifies the http
+                                          description: HTTPGet specifies an HTTP GET
                                             request to perform.
                                           properties:
                                             host:
@@ -6467,8 +6458,8 @@ spec:
                                           format: int32
                                           type: integer
                                         tcpSocket:
-                                          description: TCPSocket specifies an action
-                                            involving a TCP port.
+                                          description: TCPSocket specifies a connection
+                                            to a TCP port.
                                           properties:
                                             host:
                                               description: 'Optional: Host name to
@@ -6836,6 +6827,75 @@ spec:
                                 x-kubernetes-list-map-keys:
                                 - name
                                 x-kubernetes-list-type: map
+                              resources:
+                                description: |-
+                                  Resources is the total amount of CPU and Memory resources required by all
+                                  containers in the pod. It supports specifying Requests and Limits for
+                                  "cpu" and "memory" resource names only. ResourceClaims are not supported.
+
+                                  This field enables fine-grained control over resource allocation for the
+                                  entire pod, allowing resource sharing among containers in a pod.
+
+                                  This is an alpha field and requires enabling the PodLevelResources feature
+                                  gate.
+                                properties:
+                                  claims:
+                                    description: |-
+                                      Claims lists the names of resources, defined in spec.resourceClaims,
+                                      that are used by this container.
+
+                                      This is an alpha field and requires enabling the
+                                      DynamicResourceAllocation feature gate.
+
+                                      This field is immutable. It can only be set for containers.
+                                    items:
+                                      description: ResourceClaim references one entry
+                                        in PodSpec.ResourceClaims.
+                                      properties:
+                                        name:
+                                          description: |-
+                                            Name must match the name of one entry in pod.spec.resourceClaims of
+                                            the Pod where this field is used. It makes that resource available
+                                            inside a container.
+                                          type: string
+                                        request:
+                                          description: |-
+                                            Request is the name chosen for a request in the referenced claim.
+                                            If empty, everything from the claim is made available, otherwise
+                                            only the result of this request.
+                                          type: string
+                                      required:
+                                      - name
+                                      type: object
+                                    type: array
+                                    x-kubernetes-list-map-keys:
+                                    - name
+                                    x-kubernetes-list-type: map
+                                  limits:
+                                    additionalProperties:
+                                      anyOf:
+                                      - type: integer
+                                      - type: string
+                                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                      x-kubernetes-int-or-string: true
+                                    description: |-
+                                      Limits describes the maximum amount of compute resources allowed.
+                                      More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                                    type: object
+                                  requests:
+                                    additionalProperties:
+                                      anyOf:
+                                      - type: integer
+                                      - type: string
+                                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                      x-kubernetes-int-or-string: true
+                                    description: |-
+                                      Requests describes the minimum amount of compute resources required.
+                                      If Requests is omitted for a container, it defaults to Limits if that is explicitly specified,
+                                      otherwise to an implementation-defined value. Requests cannot exceed Limits.
+                                      More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                                    type: object
+                                type: object
                               restartPolicy:
                                 description: |-
                                   Restart policy for all containers within the pod.
@@ -6960,6 +7020,32 @@ spec:
                                       Note that this field cannot be set when spec.os.name is windows.
                                     format: int64
                                     type: integer
+                                  seLinuxChangePolicy:
+                                    description: |-
+                                      seLinuxChangePolicy defines how the container's SELinux label is applied to all volumes used by the Pod.
+                                      It has no effect on nodes that do not support SELinux or to volumes does not support SELinux.
+                                      Valid values are "MountOption" and "Recursive".
+
+                                      "Recursive" means relabeling of all files on all Pod volumes by the container runtime.
+                                      This may be slow for large volumes, but allows mixing privileged and unprivileged Pods sharing the same volume on the same node.
+
+                                      "MountOption" mounts all eligible Pod volumes with `-o context` mount option.
+                                      This requires all Pods that share the same volume to use the same SELinux label.
+                                      It is not possible to share the same volume among privileged and unprivileged Pods.
+                                      Eligible volumes are in-tree FibreChannel and iSCSI volumes, and all CSI volumes
+                                      whose CSI driver announces SELinux support by setting spec.seLinuxMount: true in their
+                                      CSIDriver instance. Other volumes are always re-labelled recursively.
+                                      "MountOption" value is allowed only when SELinuxMount feature gate is enabled.
+
+                                      If not specified and SELinuxMount feature gate is enabled, "MountOption" is used.
+                                      If not specified and SELinuxMount feature gate is disabled, "MountOption" is used for ReadWriteOncePod volumes
+                                      and "Recursive" for all other volumes.
+
+                                      This field affects only Pods that have SELinux label set, either in PodSecurityContext or in SecurityContext of all containers.
+
+                                      All Pods that use the same volume should use the same seLinuxChangePolicy, otherwise some pods can get stuck in ContainerCreating state.
+                                      Note that this field cannot be set when spec.os.name is windows.
+                                    type: string
                                   seLinuxOptions:
                                     description: |-
                                       The SELinux context to be applied to all containers.
@@ -7368,6 +7454,8 @@ spec:
                                       description: |-
                                         awsElasticBlockStore represents an AWS Disk resource that is attached to a
                                         kubelet's host machine and then exposed to the pod.
+                                        Deprecated: AWSElasticBlockStore is deprecated. All operations for the in-tree
+                                        awsElasticBlockStore type are redirected to the ebs.csi.aws.com CSI driver.
                                         More info: https://kubernetes.io/docs/concepts/storage/volumes#awselasticblockstore
                                       properties:
                                         fsType:
@@ -7399,9 +7487,10 @@ spec:
                                       - volumeID
                                       type: object
                                     azureDisk:
-                                      description: azureDisk represents an Azure Data
-                                        Disk mount on the host and bind mount to the
-                                        pod.
+                                      description: |-
+                                        azureDisk represents an Azure Data Disk mount on the host and bind mount to the pod.
+                                        Deprecated: AzureDisk is deprecated. All operations for the in-tree azureDisk type
+                                        are redirected to the disk.csi.azure.com CSI driver.
                                       properties:
                                         cachingMode:
                                           description: 'cachingMode is the Host Caching
@@ -7440,9 +7529,10 @@ spec:
                                       - diskURI
                                       type: object
                                     azureFile:
-                                      description: azureFile represents an Azure File
-                                        Service mount on the host and bind mount to
-                                        the pod.
+                                      description: |-
+                                        azureFile represents an Azure File Service mount on the host and bind mount to the pod.
+                                        Deprecated: AzureFile is deprecated. All operations for the in-tree azureFile type
+                                        are redirected to the file.csi.azure.com CSI driver.
                                       properties:
                                         readOnly:
                                           description: |-
@@ -7463,8 +7553,9 @@ spec:
                                       - shareName
                                       type: object
                                     cephfs:
-                                      description: cephFS represents a Ceph FS mount
-                                        on the host that shares a pod's lifetime
+                                      description: |-
+                                        cephFS represents a Ceph FS mount on the host that shares a pod's lifetime.
+                                        Deprecated: CephFS is deprecated and the in-tree cephfs type is no longer supported.
                                       properties:
                                         monitors:
                                           description: |-
@@ -7517,6 +7608,8 @@ spec:
                                     cinder:
                                       description: |-
                                         cinder represents a cinder volume attached and mounted on kubelets host machine.
+                                        Deprecated: Cinder is deprecated. All operations for the in-tree cinder type
+                                        are redirected to the cinder.csi.openstack.org CSI driver.
                                         More info: https://examples.k8s.io/mysql-cinder-pd/README.md
                                       properties:
                                         fsType:
@@ -7628,7 +7721,7 @@ spec:
                                     csi:
                                       description: csi (Container Storage Interface)
                                         represents ephemeral storage that is handled
-                                        by certain external CSI drivers (Beta feature).
+                                        by certain external CSI drivers.
                                       properties:
                                         driver:
                                           description: |-
@@ -8110,6 +8203,7 @@ spec:
                                       description: |-
                                         flexVolume represents a generic volume resource that is
                                         provisioned/attached using an exec based plugin.
+                                        Deprecated: FlexVolume is deprecated. Consider using a CSIDriver instead.
                                       properties:
                                         driver:
                                           description: driver is the name of the driver
@@ -8155,10 +8249,9 @@ spec:
                                       - driver
                                       type: object
                                     flocker:
-                                      description: flocker represents a Flocker volume
-                                        attached to a kubelet's host machine. This
-                                        depends on the Flocker control service being
-                                        running
+                                      description: |-
+                                        flocker represents a Flocker volume attached to a kubelet's host machine. This depends on the Flocker control service being running.
+                                        Deprecated: Flocker is deprecated and the in-tree flocker type is no longer supported.
                                       properties:
                                         datasetName:
                                           description: |-
@@ -8175,6 +8268,8 @@ spec:
                                       description: |-
                                         gcePersistentDisk represents a GCE Disk resource that is attached to a
                                         kubelet's host machine and then exposed to the pod.
+                                        Deprecated: GCEPersistentDisk is deprecated. All operations for the in-tree
+                                        gcePersistentDisk type are redirected to the pd.csi.storage.gke.io CSI driver.
                                         More info: https://kubernetes.io/docs/concepts/storage/volumes#gcepersistentdisk
                                       properties:
                                         fsType:
@@ -8210,7 +8305,7 @@ spec:
                                     gitRepo:
                                       description: |-
                                         gitRepo represents a git repository at a particular revision.
-                                        DEPRECATED: GitRepo is deprecated. To provision a container with a git repo, mount an
+                                        Deprecated: GitRepo is deprecated. To provision a container with a git repo, mount an
                                         EmptyDir into an InitContainer that clones the repo using git, then mount the EmptyDir
                                         into the Pod's container.
                                       properties:
@@ -8234,6 +8329,7 @@ spec:
                                     glusterfs:
                                       description: |-
                                         glusterfs represents a Glusterfs mount on the host that shares a pod's lifetime.
+                                        Deprecated: Glusterfs is deprecated and the in-tree glusterfs type is no longer supported.
                                         More info: https://examples.k8s.io/volumes/glusterfs/README.md
                                       properties:
                                         endpoints:
@@ -8445,9 +8541,9 @@ spec:
                                       - claimName
                                       type: object
                                     photonPersistentDisk:
-                                      description: photonPersistentDisk represents
-                                        a PhotonController persistent disk attached
-                                        and mounted on kubelets host machine
+                                      description: |-
+                                        photonPersistentDisk represents a PhotonController persistent disk attached and mounted on kubelets host machine.
+                                        Deprecated: PhotonPersistentDisk is deprecated and the in-tree photonPersistentDisk type is no longer supported.
                                       properties:
                                         fsType:
                                           description: |-
@@ -8463,9 +8559,11 @@ spec:
                                       - pdID
                                       type: object
                                     portworxVolume:
-                                      description: portworxVolume represents a portworx
-                                        volume attached and mounted on kubelets host
-                                        machine
+                                      description: |-
+                                        portworxVolume represents a portworx volume attached and mounted on kubelets host machine.
+                                        Deprecated: PortworxVolume is deprecated. All operations for the in-tree portworxVolume type
+                                        are redirected to the pxd.portworx.com CSI driver when the CSIMigrationPortworx feature-gate
+                                        is on.
                                       properties:
                                         fsType:
                                           description: |-
@@ -8855,8 +8953,9 @@ spec:
                                           x-kubernetes-list-type: atomic
                                       type: object
                                     quobyte:
-                                      description: quobyte represents a Quobyte mount
-                                        on the host that shares a pod's lifetime
+                                      description: |-
+                                        quobyte represents a Quobyte mount on the host that shares a pod's lifetime.
+                                        Deprecated: Quobyte is deprecated and the in-tree quobyte type is no longer supported.
                                       properties:
                                         group:
                                           description: |-
@@ -8895,6 +8994,7 @@ spec:
                                     rbd:
                                       description: |-
                                         rbd represents a Rados Block Device mount on the host that shares a pod's lifetime.
+                                        Deprecated: RBD is deprecated and the in-tree rbd type is no longer supported.
                                         More info: https://examples.k8s.io/volumes/rbd/README.md
                                       properties:
                                         fsType:
@@ -8967,9 +9067,9 @@ spec:
                                       - monitors
                                       type: object
                                     scaleIO:
-                                      description: scaleIO represents a ScaleIO persistent
-                                        volume attached and mounted on Kubernetes
-                                        nodes.
+                                      description: |-
+                                        scaleIO represents a ScaleIO persistent volume attached and mounted on Kubernetes nodes.
+                                        Deprecated: ScaleIO is deprecated and the in-tree scaleIO type is no longer supported.
                                       properties:
                                         fsType:
                                           default: xfs
@@ -9105,9 +9205,9 @@ spec:
                                           type: string
                                       type: object
                                     storageos:
-                                      description: storageOS represents a StorageOS
-                                        volume attached and mounted on Kubernetes
-                                        nodes.
+                                      description: |-
+                                        storageOS represents a StorageOS volume attached and mounted on Kubernetes nodes.
+                                        Deprecated: StorageOS is deprecated and the in-tree storageos type is no longer supported.
                                       properties:
                                         fsType:
                                           description: |-
@@ -9152,9 +9252,10 @@ spec:
                                           type: string
                                       type: object
                                     vsphereVolume:
-                                      description: vsphereVolume represents a vSphere
-                                        volume attached and mounted on kubelets host
-                                        machine
+                                      description: |-
+                                        vsphereVolume represents a vSphere volume attached and mounted on kubelets host machine.
+                                        Deprecated: VsphereVolume is deprecated. All operations for the in-tree vsphereVolume type
+                                        are redirected to the csi.vsphere.vmware.com CSI driver.
                                       properties:
                                         fsType:
                                           description: |-
@@ -10498,8 +10599,8 @@ spec:
                                               More info: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#container-hooks
                                             properties:
                                               exec:
-                                                description: Exec specifies the action
-                                                  to take.
+                                                description: Exec specifies a command
+                                                  to execute in the container.
                                                 properties:
                                                   command:
                                                     description: |-
@@ -10514,8 +10615,8 @@ spec:
                                                     x-kubernetes-list-type: atomic
                                                 type: object
                                               httpGet:
-                                                description: HTTPGet specifies the
-                                                  http request to perform.
+                                                description: HTTPGet specifies an
+                                                  HTTP GET request to perform.
                                                 properties:
                                                   host:
                                                     description: |-
@@ -10568,9 +10669,8 @@ spec:
                                                 - port
                                                 type: object
                                               sleep:
-                                                description: Sleep represents the
-                                                  duration that the container should
-                                                  sleep before being terminated.
+                                                description: Sleep represents a duration
+                                                  that the container should sleep.
                                                 properties:
                                                   seconds:
                                                     description: Seconds is the number
@@ -10583,8 +10683,8 @@ spec:
                                               tcpSocket:
                                                 description: |-
                                                   Deprecated. TCPSocket is NOT supported as a LifecycleHandler and kept
-                                                  for the backward compatibility. There are no validation of this field and
-                                                  lifecycle hooks will fail in runtime when tcp handler is specified.
+                                                  for backward compatibility. There is no validation of this field and
+                                                  lifecycle hooks will fail at runtime when it is specified.
                                                 properties:
                                                   host:
                                                     description: 'Optional: Host name
@@ -10617,8 +10717,8 @@ spec:
                                               More info: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#container-hooks
                                             properties:
                                               exec:
-                                                description: Exec specifies the action
-                                                  to take.
+                                                description: Exec specifies a command
+                                                  to execute in the container.
                                                 properties:
                                                   command:
                                                     description: |-
@@ -10633,8 +10733,8 @@ spec:
                                                     x-kubernetes-list-type: atomic
                                                 type: object
                                               httpGet:
-                                                description: HTTPGet specifies the
-                                                  http request to perform.
+                                                description: HTTPGet specifies an
+                                                  HTTP GET request to perform.
                                                 properties:
                                                   host:
                                                     description: |-
@@ -10687,9 +10787,8 @@ spec:
                                                 - port
                                                 type: object
                                               sleep:
-                                                description: Sleep represents the
-                                                  duration that the container should
-                                                  sleep before being terminated.
+                                                description: Sleep represents a duration
+                                                  that the container should sleep.
                                                 properties:
                                                   seconds:
                                                     description: Seconds is the number
@@ -10702,8 +10801,8 @@ spec:
                                               tcpSocket:
                                                 description: |-
                                                   Deprecated. TCPSocket is NOT supported as a LifecycleHandler and kept
-                                                  for the backward compatibility. There are no validation of this field and
-                                                  lifecycle hooks will fail in runtime when tcp handler is specified.
+                                                  for backward compatibility. There is no validation of this field and
+                                                  lifecycle hooks will fail at runtime when it is specified.
                                                 properties:
                                                   host:
                                                     description: 'Optional: Host name
@@ -10732,8 +10831,8 @@ spec:
                                           More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes
                                         properties:
                                           exec:
-                                            description: Exec specifies the action
-                                              to take.
+                                            description: Exec specifies a command
+                                              to execute in the container.
                                             properties:
                                               command:
                                                 description: |-
@@ -10754,8 +10853,7 @@ spec:
                                             format: int32
                                             type: integer
                                           grpc:
-                                            description: GRPC specifies an action
-                                              involving a GRPC port.
+                                            description: GRPC specifies a GRPC HealthCheckRequest.
                                             properties:
                                               port:
                                                 description: Port number of the gRPC
@@ -10775,8 +10873,8 @@ spec:
                                             - port
                                             type: object
                                           httpGet:
-                                            description: HTTPGet specifies the http
-                                              request to perform.
+                                            description: HTTPGet specifies an HTTP
+                                              GET request to perform.
                                             properties:
                                               host:
                                                 description: |-
@@ -10847,8 +10945,8 @@ spec:
                                             format: int32
                                             type: integer
                                           tcpSocket:
-                                            description: TCPSocket specifies an action
-                                              involving a TCP port.
+                                            description: TCPSocket specifies a connection
+                                              to a TCP port.
                                             properties:
                                               host:
                                                 description: 'Optional: Host name
@@ -10954,8 +11052,8 @@ spec:
                                           More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes
                                         properties:
                                           exec:
-                                            description: Exec specifies the action
-                                              to take.
+                                            description: Exec specifies a command
+                                              to execute in the container.
                                             properties:
                                               command:
                                                 description: |-
@@ -10976,8 +11074,7 @@ spec:
                                             format: int32
                                             type: integer
                                           grpc:
-                                            description: GRPC specifies an action
-                                              involving a GRPC port.
+                                            description: GRPC specifies a GRPC HealthCheckRequest.
                                             properties:
                                               port:
                                                 description: Port number of the gRPC
@@ -10997,8 +11094,8 @@ spec:
                                             - port
                                             type: object
                                           httpGet:
-                                            description: HTTPGet specifies the http
-                                              request to perform.
+                                            description: HTTPGet specifies an HTTP
+                                              GET request to perform.
                                             properties:
                                               host:
                                                 description: |-
@@ -11069,8 +11166,8 @@ spec:
                                             format: int32
                                             type: integer
                                           tcpSocket:
-                                            description: TCPSocket specifies an action
-                                              involving a TCP port.
+                                            description: TCPSocket specifies a connection
+                                              to a TCP port.
                                             properties:
                                               host:
                                                 description: 'Optional: Host name
@@ -11422,8 +11519,8 @@ spec:
                                           More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes
                                         properties:
                                           exec:
-                                            description: Exec specifies the action
-                                              to take.
+                                            description: Exec specifies a command
+                                              to execute in the container.
                                             properties:
                                               command:
                                                 description: |-
@@ -11444,8 +11541,7 @@ spec:
                                             format: int32
                                             type: integer
                                           grpc:
-                                            description: GRPC specifies an action
-                                              involving a GRPC port.
+                                            description: GRPC specifies a GRPC HealthCheckRequest.
                                             properties:
                                               port:
                                                 description: Port number of the gRPC
@@ -11465,8 +11561,8 @@ spec:
                                             - port
                                             type: object
                                           httpGet:
-                                            description: HTTPGet specifies the http
-                                              request to perform.
+                                            description: HTTPGet specifies an HTTP
+                                              GET request to perform.
                                             properties:
                                               host:
                                                 description: |-
@@ -11537,8 +11633,8 @@ spec:
                                             format: int32
                                             type: integer
                                           tcpSocket:
-                                            description: TCPSocket specifies an action
-                                              involving a TCP port.
+                                            description: TCPSocket specifies a connection
+                                              to a TCP port.
                                             properties:
                                               host:
                                                 description: 'Optional: Host name
@@ -11755,9 +11851,13 @@ spec:
                                           resolver options of a pod.
                                         properties:
                                           name:
-                                            description: Required.
+                                            description: |-
+                                              Name is this DNS resolver option's name.
+                                              Required.
                                             type: string
                                           value:
+                                            description: Value is this DNS resolver
+                                              option's value.
                                             type: string
                                         type: object
                                       type: array
@@ -12049,8 +12149,8 @@ spec:
                                               More info: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#container-hooks
                                             properties:
                                               exec:
-                                                description: Exec specifies the action
-                                                  to take.
+                                                description: Exec specifies a command
+                                                  to execute in the container.
                                                 properties:
                                                   command:
                                                     description: |-
@@ -12065,8 +12165,8 @@ spec:
                                                     x-kubernetes-list-type: atomic
                                                 type: object
                                               httpGet:
-                                                description: HTTPGet specifies the
-                                                  http request to perform.
+                                                description: HTTPGet specifies an
+                                                  HTTP GET request to perform.
                                                 properties:
                                                   host:
                                                     description: |-
@@ -12119,9 +12219,8 @@ spec:
                                                 - port
                                                 type: object
                                               sleep:
-                                                description: Sleep represents the
-                                                  duration that the container should
-                                                  sleep before being terminated.
+                                                description: Sleep represents a duration
+                                                  that the container should sleep.
                                                 properties:
                                                   seconds:
                                                     description: Seconds is the number
@@ -12134,8 +12233,8 @@ spec:
                                               tcpSocket:
                                                 description: |-
                                                   Deprecated. TCPSocket is NOT supported as a LifecycleHandler and kept
-                                                  for the backward compatibility. There are no validation of this field and
-                                                  lifecycle hooks will fail in runtime when tcp handler is specified.
+                                                  for backward compatibility. There is no validation of this field and
+                                                  lifecycle hooks will fail at runtime when it is specified.
                                                 properties:
                                                   host:
                                                     description: 'Optional: Host name
@@ -12168,8 +12267,8 @@ spec:
                                               More info: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#container-hooks
                                             properties:
                                               exec:
-                                                description: Exec specifies the action
-                                                  to take.
+                                                description: Exec specifies a command
+                                                  to execute in the container.
                                                 properties:
                                                   command:
                                                     description: |-
@@ -12184,8 +12283,8 @@ spec:
                                                     x-kubernetes-list-type: atomic
                                                 type: object
                                               httpGet:
-                                                description: HTTPGet specifies the
-                                                  http request to perform.
+                                                description: HTTPGet specifies an
+                                                  HTTP GET request to perform.
                                                 properties:
                                                   host:
                                                     description: |-
@@ -12238,9 +12337,8 @@ spec:
                                                 - port
                                                 type: object
                                               sleep:
-                                                description: Sleep represents the
-                                                  duration that the container should
-                                                  sleep before being terminated.
+                                                description: Sleep represents a duration
+                                                  that the container should sleep.
                                                 properties:
                                                   seconds:
                                                     description: Seconds is the number
@@ -12253,8 +12351,8 @@ spec:
                                               tcpSocket:
                                                 description: |-
                                                   Deprecated. TCPSocket is NOT supported as a LifecycleHandler and kept
-                                                  for the backward compatibility. There are no validation of this field and
-                                                  lifecycle hooks will fail in runtime when tcp handler is specified.
+                                                  for backward compatibility. There is no validation of this field and
+                                                  lifecycle hooks will fail at runtime when it is specified.
                                                 properties:
                                                   host:
                                                     description: 'Optional: Host name
@@ -12280,8 +12378,8 @@ spec:
                                           containers.
                                         properties:
                                           exec:
-                                            description: Exec specifies the action
-                                              to take.
+                                            description: Exec specifies a command
+                                              to execute in the container.
                                             properties:
                                               command:
                                                 description: |-
@@ -12302,8 +12400,7 @@ spec:
                                             format: int32
                                             type: integer
                                           grpc:
-                                            description: GRPC specifies an action
-                                              involving a GRPC port.
+                                            description: GRPC specifies a GRPC HealthCheckRequest.
                                             properties:
                                               port:
                                                 description: Port number of the gRPC
@@ -12323,8 +12420,8 @@ spec:
                                             - port
                                             type: object
                                           httpGet:
-                                            description: HTTPGet specifies the http
-                                              request to perform.
+                                            description: HTTPGet specifies an HTTP
+                                              GET request to perform.
                                             properties:
                                               host:
                                                 description: |-
@@ -12395,8 +12492,8 @@ spec:
                                             format: int32
                                             type: integer
                                           tcpSocket:
-                                            description: TCPSocket specifies an action
-                                              involving a TCP port.
+                                            description: TCPSocket specifies a connection
+                                              to a TCP port.
                                             properties:
                                               host:
                                                 description: 'Optional: Host name
@@ -12492,8 +12589,8 @@ spec:
                                           containers.
                                         properties:
                                           exec:
-                                            description: Exec specifies the action
-                                              to take.
+                                            description: Exec specifies a command
+                                              to execute in the container.
                                             properties:
                                               command:
                                                 description: |-
@@ -12514,8 +12611,7 @@ spec:
                                             format: int32
                                             type: integer
                                           grpc:
-                                            description: GRPC specifies an action
-                                              involving a GRPC port.
+                                            description: GRPC specifies a GRPC HealthCheckRequest.
                                             properties:
                                               port:
                                                 description: Port number of the gRPC
@@ -12535,8 +12631,8 @@ spec:
                                             - port
                                             type: object
                                           httpGet:
-                                            description: HTTPGet specifies the http
-                                              request to perform.
+                                            description: HTTPGet specifies an HTTP
+                                              GET request to perform.
                                             properties:
                                               host:
                                                 description: |-
@@ -12607,8 +12703,8 @@ spec:
                                             format: int32
                                             type: integer
                                           tcpSocket:
-                                            description: TCPSocket specifies an action
-                                              involving a TCP port.
+                                            description: TCPSocket specifies a connection
+                                              to a TCP port.
                                             properties:
                                               host:
                                                 description: 'Optional: Host name
@@ -12941,8 +13037,8 @@ spec:
                                           containers.
                                         properties:
                                           exec:
-                                            description: Exec specifies the action
-                                              to take.
+                                            description: Exec specifies a command
+                                              to execute in the container.
                                             properties:
                                               command:
                                                 description: |-
@@ -12963,8 +13059,7 @@ spec:
                                             format: int32
                                             type: integer
                                           grpc:
-                                            description: GRPC specifies an action
-                                              involving a GRPC port.
+                                            description: GRPC specifies a GRPC HealthCheckRequest.
                                             properties:
                                               port:
                                                 description: Port number of the gRPC
@@ -12984,8 +13079,8 @@ spec:
                                             - port
                                             type: object
                                           httpGet:
-                                            description: HTTPGet specifies the http
-                                              request to perform.
+                                            description: HTTPGet specifies an HTTP
+                                              GET request to perform.
                                             properties:
                                               host:
                                                 description: |-
@@ -13056,8 +13151,8 @@ spec:
                                             format: int32
                                             type: integer
                                           tcpSocket:
-                                            description: TCPSocket specifies an action
-                                              involving a TCP port.
+                                            description: TCPSocket specifies a connection
+                                              to a TCP port.
                                             properties:
                                               host:
                                                 description: 'Optional: Host name
@@ -13607,8 +13702,8 @@ spec:
                                               More info: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#container-hooks
                                             properties:
                                               exec:
-                                                description: Exec specifies the action
-                                                  to take.
+                                                description: Exec specifies a command
+                                                  to execute in the container.
                                                 properties:
                                                   command:
                                                     description: |-
@@ -13623,8 +13718,8 @@ spec:
                                                     x-kubernetes-list-type: atomic
                                                 type: object
                                               httpGet:
-                                                description: HTTPGet specifies the
-                                                  http request to perform.
+                                                description: HTTPGet specifies an
+                                                  HTTP GET request to perform.
                                                 properties:
                                                   host:
                                                     description: |-
@@ -13677,9 +13772,8 @@ spec:
                                                 - port
                                                 type: object
                                               sleep:
-                                                description: Sleep represents the
-                                                  duration that the container should
-                                                  sleep before being terminated.
+                                                description: Sleep represents a duration
+                                                  that the container should sleep.
                                                 properties:
                                                   seconds:
                                                     description: Seconds is the number
@@ -13692,8 +13786,8 @@ spec:
                                               tcpSocket:
                                                 description: |-
                                                   Deprecated. TCPSocket is NOT supported as a LifecycleHandler and kept
-                                                  for the backward compatibility. There are no validation of this field and
-                                                  lifecycle hooks will fail in runtime when tcp handler is specified.
+                                                  for backward compatibility. There is no validation of this field and
+                                                  lifecycle hooks will fail at runtime when it is specified.
                                                 properties:
                                                   host:
                                                     description: 'Optional: Host name
@@ -13726,8 +13820,8 @@ spec:
                                               More info: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#container-hooks
                                             properties:
                                               exec:
-                                                description: Exec specifies the action
-                                                  to take.
+                                                description: Exec specifies a command
+                                                  to execute in the container.
                                                 properties:
                                                   command:
                                                     description: |-
@@ -13742,8 +13836,8 @@ spec:
                                                     x-kubernetes-list-type: atomic
                                                 type: object
                                               httpGet:
-                                                description: HTTPGet specifies the
-                                                  http request to perform.
+                                                description: HTTPGet specifies an
+                                                  HTTP GET request to perform.
                                                 properties:
                                                   host:
                                                     description: |-
@@ -13796,9 +13890,8 @@ spec:
                                                 - port
                                                 type: object
                                               sleep:
-                                                description: Sleep represents the
-                                                  duration that the container should
-                                                  sleep before being terminated.
+                                                description: Sleep represents a duration
+                                                  that the container should sleep.
                                                 properties:
                                                   seconds:
                                                     description: Seconds is the number
@@ -13811,8 +13904,8 @@ spec:
                                               tcpSocket:
                                                 description: |-
                                                   Deprecated. TCPSocket is NOT supported as a LifecycleHandler and kept
-                                                  for the backward compatibility. There are no validation of this field and
-                                                  lifecycle hooks will fail in runtime when tcp handler is specified.
+                                                  for backward compatibility. There is no validation of this field and
+                                                  lifecycle hooks will fail at runtime when it is specified.
                                                 properties:
                                                   host:
                                                     description: 'Optional: Host name
@@ -13841,8 +13934,8 @@ spec:
                                           More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes
                                         properties:
                                           exec:
-                                            description: Exec specifies the action
-                                              to take.
+                                            description: Exec specifies a command
+                                              to execute in the container.
                                             properties:
                                               command:
                                                 description: |-
@@ -13863,8 +13956,7 @@ spec:
                                             format: int32
                                             type: integer
                                           grpc:
-                                            description: GRPC specifies an action
-                                              involving a GRPC port.
+                                            description: GRPC specifies a GRPC HealthCheckRequest.
                                             properties:
                                               port:
                                                 description: Port number of the gRPC
@@ -13884,8 +13976,8 @@ spec:
                                             - port
                                             type: object
                                           httpGet:
-                                            description: HTTPGet specifies the http
-                                              request to perform.
+                                            description: HTTPGet specifies an HTTP
+                                              GET request to perform.
                                             properties:
                                               host:
                                                 description: |-
@@ -13956,8 +14048,8 @@ spec:
                                             format: int32
                                             type: integer
                                           tcpSocket:
-                                            description: TCPSocket specifies an action
-                                              involving a TCP port.
+                                            description: TCPSocket specifies a connection
+                                              to a TCP port.
                                             properties:
                                               host:
                                                 description: 'Optional: Host name
@@ -14063,8 +14155,8 @@ spec:
                                           More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes
                                         properties:
                                           exec:
-                                            description: Exec specifies the action
-                                              to take.
+                                            description: Exec specifies a command
+                                              to execute in the container.
                                             properties:
                                               command:
                                                 description: |-
@@ -14085,8 +14177,7 @@ spec:
                                             format: int32
                                             type: integer
                                           grpc:
-                                            description: GRPC specifies an action
-                                              involving a GRPC port.
+                                            description: GRPC specifies a GRPC HealthCheckRequest.
                                             properties:
                                               port:
                                                 description: Port number of the gRPC
@@ -14106,8 +14197,8 @@ spec:
                                             - port
                                             type: object
                                           httpGet:
-                                            description: HTTPGet specifies the http
-                                              request to perform.
+                                            description: HTTPGet specifies an HTTP
+                                              GET request to perform.
                                             properties:
                                               host:
                                                 description: |-
@@ -14178,8 +14269,8 @@ spec:
                                             format: int32
                                             type: integer
                                           tcpSocket:
-                                            description: TCPSocket specifies an action
-                                              involving a TCP port.
+                                            description: TCPSocket specifies a connection
+                                              to a TCP port.
                                             properties:
                                               host:
                                                 description: 'Optional: Host name
@@ -14531,8 +14622,8 @@ spec:
                                           More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes
                                         properties:
                                           exec:
-                                            description: Exec specifies the action
-                                              to take.
+                                            description: Exec specifies a command
+                                              to execute in the container.
                                             properties:
                                               command:
                                                 description: |-
@@ -14553,8 +14644,7 @@ spec:
                                             format: int32
                                             type: integer
                                           grpc:
-                                            description: GRPC specifies an action
-                                              involving a GRPC port.
+                                            description: GRPC specifies a GRPC HealthCheckRequest.
                                             properties:
                                               port:
                                                 description: Port number of the gRPC
@@ -14574,8 +14664,8 @@ spec:
                                             - port
                                             type: object
                                           httpGet:
-                                            description: HTTPGet specifies the http
-                                              request to perform.
+                                            description: HTTPGet specifies an HTTP
+                                              GET request to perform.
                                             properties:
                                               host:
                                                 description: |-
@@ -14646,8 +14736,8 @@ spec:
                                             format: int32
                                             type: integer
                                           tcpSocket:
-                                            description: TCPSocket specifies an action
-                                              involving a TCP port.
+                                            description: TCPSocket specifies a connection
+                                              to a TCP port.
                                             properties:
                                               host:
                                                 description: 'Optional: Host name
@@ -15017,6 +15107,75 @@ spec:
                                   x-kubernetes-list-map-keys:
                                   - name
                                   x-kubernetes-list-type: map
+                                resources:
+                                  description: |-
+                                    Resources is the total amount of CPU and Memory resources required by all
+                                    containers in the pod. It supports specifying Requests and Limits for
+                                    "cpu" and "memory" resource names only. ResourceClaims are not supported.
+
+                                    This field enables fine-grained control over resource allocation for the
+                                    entire pod, allowing resource sharing among containers in a pod.
+
+                                    This is an alpha field and requires enabling the PodLevelResources feature
+                                    gate.
+                                  properties:
+                                    claims:
+                                      description: |-
+                                        Claims lists the names of resources, defined in spec.resourceClaims,
+                                        that are used by this container.
+
+                                        This is an alpha field and requires enabling the
+                                        DynamicResourceAllocation feature gate.
+
+                                        This field is immutable. It can only be set for containers.
+                                      items:
+                                        description: ResourceClaim references one
+                                          entry in PodSpec.ResourceClaims.
+                                        properties:
+                                          name:
+                                            description: |-
+                                              Name must match the name of one entry in pod.spec.resourceClaims of
+                                              the Pod where this field is used. It makes that resource available
+                                              inside a container.
+                                            type: string
+                                          request:
+                                            description: |-
+                                              Request is the name chosen for a request in the referenced claim.
+                                              If empty, everything from the claim is made available, otherwise
+                                              only the result of this request.
+                                            type: string
+                                        required:
+                                        - name
+                                        type: object
+                                      type: array
+                                      x-kubernetes-list-map-keys:
+                                      - name
+                                      x-kubernetes-list-type: map
+                                    limits:
+                                      additionalProperties:
+                                        anyOf:
+                                        - type: integer
+                                        - type: string
+                                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                        x-kubernetes-int-or-string: true
+                                      description: |-
+                                        Limits describes the maximum amount of compute resources allowed.
+                                        More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                                      type: object
+                                    requests:
+                                      additionalProperties:
+                                        anyOf:
+                                        - type: integer
+                                        - type: string
+                                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                        x-kubernetes-int-or-string: true
+                                      description: |-
+                                        Requests describes the minimum amount of compute resources required.
+                                        If Requests is omitted for a container, it defaults to Limits if that is explicitly specified,
+                                        otherwise to an implementation-defined value. Requests cannot exceed Limits.
+                                        More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                                      type: object
+                                  type: object
                                 restartPolicy:
                                   description: |-
                                     Restart policy for all containers within the pod.
@@ -15141,6 +15300,32 @@ spec:
                                         Note that this field cannot be set when spec.os.name is windows.
                                       format: int64
                                       type: integer
+                                    seLinuxChangePolicy:
+                                      description: |-
+                                        seLinuxChangePolicy defines how the container's SELinux label is applied to all volumes used by the Pod.
+                                        It has no effect on nodes that do not support SELinux or to volumes does not support SELinux.
+                                        Valid values are "MountOption" and "Recursive".
+
+                                        "Recursive" means relabeling of all files on all Pod volumes by the container runtime.
+                                        This may be slow for large volumes, but allows mixing privileged and unprivileged Pods sharing the same volume on the same node.
+
+                                        "MountOption" mounts all eligible Pod volumes with `-o context` mount option.
+                                        This requires all Pods that share the same volume to use the same SELinux label.
+                                        It is not possible to share the same volume among privileged and unprivileged Pods.
+                                        Eligible volumes are in-tree FibreChannel and iSCSI volumes, and all CSI volumes
+                                        whose CSI driver announces SELinux support by setting spec.seLinuxMount: true in their
+                                        CSIDriver instance. Other volumes are always re-labelled recursively.
+                                        "MountOption" value is allowed only when SELinuxMount feature gate is enabled.
+
+                                        If not specified and SELinuxMount feature gate is enabled, "MountOption" is used.
+                                        If not specified and SELinuxMount feature gate is disabled, "MountOption" is used for ReadWriteOncePod volumes
+                                        and "Recursive" for all other volumes.
+
+                                        This field affects only Pods that have SELinux label set, either in PodSecurityContext or in SecurityContext of all containers.
+
+                                        All Pods that use the same volume should use the same seLinuxChangePolicy, otherwise some pods can get stuck in ContainerCreating state.
+                                        Note that this field cannot be set when spec.os.name is windows.
+                                      type: string
                                     seLinuxOptions:
                                       description: |-
                                         The SELinux context to be applied to all containers.
@@ -15550,6 +15735,8 @@ spec:
                                         description: |-
                                           awsElasticBlockStore represents an AWS Disk resource that is attached to a
                                           kubelet's host machine and then exposed to the pod.
+                                          Deprecated: AWSElasticBlockStore is deprecated. All operations for the in-tree
+                                          awsElasticBlockStore type are redirected to the ebs.csi.aws.com CSI driver.
                                           More info: https://kubernetes.io/docs/concepts/storage/volumes#awselasticblockstore
                                         properties:
                                           fsType:
@@ -15581,9 +15768,10 @@ spec:
                                         - volumeID
                                         type: object
                                       azureDisk:
-                                        description: azureDisk represents an Azure
-                                          Data Disk mount on the host and bind mount
-                                          to the pod.
+                                        description: |-
+                                          azureDisk represents an Azure Data Disk mount on the host and bind mount to the pod.
+                                          Deprecated: AzureDisk is deprecated. All operations for the in-tree azureDisk type
+                                          are redirected to the disk.csi.azure.com CSI driver.
                                         properties:
                                           cachingMode:
                                             description: 'cachingMode is the Host
@@ -15624,9 +15812,10 @@ spec:
                                         - diskURI
                                         type: object
                                       azureFile:
-                                        description: azureFile represents an Azure
-                                          File Service mount on the host and bind
-                                          mount to the pod.
+                                        description: |-
+                                          azureFile represents an Azure File Service mount on the host and bind mount to the pod.
+                                          Deprecated: AzureFile is deprecated. All operations for the in-tree azureFile type
+                                          are redirected to the file.csi.azure.com CSI driver.
                                         properties:
                                           readOnly:
                                             description: |-
@@ -15647,8 +15836,9 @@ spec:
                                         - shareName
                                         type: object
                                       cephfs:
-                                        description: cephFS represents a Ceph FS mount
-                                          on the host that shares a pod's lifetime
+                                        description: |-
+                                          cephFS represents a Ceph FS mount on the host that shares a pod's lifetime.
+                                          Deprecated: CephFS is deprecated and the in-tree cephfs type is no longer supported.
                                         properties:
                                           monitors:
                                             description: |-
@@ -15701,6 +15891,8 @@ spec:
                                       cinder:
                                         description: |-
                                           cinder represents a cinder volume attached and mounted on kubelets host machine.
+                                          Deprecated: Cinder is deprecated. All operations for the in-tree cinder type
+                                          are redirected to the cinder.csi.openstack.org CSI driver.
                                           More info: https://examples.k8s.io/mysql-cinder-pd/README.md
                                         properties:
                                           fsType:
@@ -15812,7 +16004,7 @@ spec:
                                       csi:
                                         description: csi (Container Storage Interface)
                                           represents ephemeral storage that is handled
-                                          by certain external CSI drivers (Beta feature).
+                                          by certain external CSI drivers.
                                         properties:
                                           driver:
                                             description: |-
@@ -16295,6 +16487,7 @@ spec:
                                         description: |-
                                           flexVolume represents a generic volume resource that is
                                           provisioned/attached using an exec based plugin.
+                                          Deprecated: FlexVolume is deprecated. Consider using a CSIDriver instead.
                                         properties:
                                           driver:
                                             description: driver is the name of the
@@ -16341,10 +16534,9 @@ spec:
                                         - driver
                                         type: object
                                       flocker:
-                                        description: flocker represents a Flocker
-                                          volume attached to a kubelet's host machine.
-                                          This depends on the Flocker control service
-                                          being running
+                                        description: |-
+                                          flocker represents a Flocker volume attached to a kubelet's host machine. This depends on the Flocker control service being running.
+                                          Deprecated: Flocker is deprecated and the in-tree flocker type is no longer supported.
                                         properties:
                                           datasetName:
                                             description: |-
@@ -16361,6 +16553,8 @@ spec:
                                         description: |-
                                           gcePersistentDisk represents a GCE Disk resource that is attached to a
                                           kubelet's host machine and then exposed to the pod.
+                                          Deprecated: GCEPersistentDisk is deprecated. All operations for the in-tree
+                                          gcePersistentDisk type are redirected to the pd.csi.storage.gke.io CSI driver.
                                           More info: https://kubernetes.io/docs/concepts/storage/volumes#gcepersistentdisk
                                         properties:
                                           fsType:
@@ -16396,7 +16590,7 @@ spec:
                                       gitRepo:
                                         description: |-
                                           gitRepo represents a git repository at a particular revision.
-                                          DEPRECATED: GitRepo is deprecated. To provision a container with a git repo, mount an
+                                          Deprecated: GitRepo is deprecated. To provision a container with a git repo, mount an
                                           EmptyDir into an InitContainer that clones the repo using git, then mount the EmptyDir
                                           into the Pod's container.
                                         properties:
@@ -16420,6 +16614,7 @@ spec:
                                       glusterfs:
                                         description: |-
                                           glusterfs represents a Glusterfs mount on the host that shares a pod's lifetime.
+                                          Deprecated: Glusterfs is deprecated and the in-tree glusterfs type is no longer supported.
                                           More info: https://examples.k8s.io/volumes/glusterfs/README.md
                                         properties:
                                           endpoints:
@@ -16632,9 +16827,9 @@ spec:
                                         - claimName
                                         type: object
                                       photonPersistentDisk:
-                                        description: photonPersistentDisk represents
-                                          a PhotonController persistent disk attached
-                                          and mounted on kubelets host machine
+                                        description: |-
+                                          photonPersistentDisk represents a PhotonController persistent disk attached and mounted on kubelets host machine.
+                                          Deprecated: PhotonPersistentDisk is deprecated and the in-tree photonPersistentDisk type is no longer supported.
                                         properties:
                                           fsType:
                                             description: |-
@@ -16650,9 +16845,11 @@ spec:
                                         - pdID
                                         type: object
                                       portworxVolume:
-                                        description: portworxVolume represents a portworx
-                                          volume attached and mounted on kubelets
-                                          host machine
+                                        description: |-
+                                          portworxVolume represents a portworx volume attached and mounted on kubelets host machine.
+                                          Deprecated: PortworxVolume is deprecated. All operations for the in-tree portworxVolume type
+                                          are redirected to the pxd.portworx.com CSI driver when the CSIMigrationPortworx feature-gate
+                                          is on.
                                         properties:
                                           fsType:
                                             description: |-
@@ -17043,8 +17240,9 @@ spec:
                                             x-kubernetes-list-type: atomic
                                         type: object
                                       quobyte:
-                                        description: quobyte represents a Quobyte
-                                          mount on the host that shares a pod's lifetime
+                                        description: |-
+                                          quobyte represents a Quobyte mount on the host that shares a pod's lifetime.
+                                          Deprecated: Quobyte is deprecated and the in-tree quobyte type is no longer supported.
                                         properties:
                                           group:
                                             description: |-
@@ -17084,6 +17282,7 @@ spec:
                                       rbd:
                                         description: |-
                                           rbd represents a Rados Block Device mount on the host that shares a pod's lifetime.
+                                          Deprecated: RBD is deprecated and the in-tree rbd type is no longer supported.
                                           More info: https://examples.k8s.io/volumes/rbd/README.md
                                         properties:
                                           fsType:
@@ -17156,9 +17355,9 @@ spec:
                                         - monitors
                                         type: object
                                       scaleIO:
-                                        description: scaleIO represents a ScaleIO
-                                          persistent volume attached and mounted on
-                                          Kubernetes nodes.
+                                        description: |-
+                                          scaleIO represents a ScaleIO persistent volume attached and mounted on Kubernetes nodes.
+                                          Deprecated: ScaleIO is deprecated and the in-tree scaleIO type is no longer supported.
                                         properties:
                                           fsType:
                                             default: xfs
@@ -17294,9 +17493,9 @@ spec:
                                             type: string
                                         type: object
                                       storageos:
-                                        description: storageOS represents a StorageOS
-                                          volume attached and mounted on Kubernetes
-                                          nodes.
+                                        description: |-
+                                          storageOS represents a StorageOS volume attached and mounted on Kubernetes nodes.
+                                          Deprecated: StorageOS is deprecated and the in-tree storageos type is no longer supported.
                                         properties:
                                           fsType:
                                             description: |-
@@ -17341,9 +17540,10 @@ spec:
                                             type: string
                                         type: object
                                       vsphereVolume:
-                                        description: vsphereVolume represents a vSphere
-                                          volume attached and mounted on kubelets
-                                          host machine
+                                        description: |-
+                                          vsphereVolume represents a vSphere volume attached and mounted on kubelets host machine.
+                                          Deprecated: VsphereVolume is deprecated. All operations for the in-tree vsphereVolume type
+                                          are redirected to the csi.vsphere.vmware.com CSI driver.
                                         properties:
                                           fsType:
                                             description: |-

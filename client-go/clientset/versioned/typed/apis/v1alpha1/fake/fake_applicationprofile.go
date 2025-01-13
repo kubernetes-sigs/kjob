@@ -18,116 +18,34 @@ limitations under the License.
 package fake
 
 import (
-	"context"
-
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	labels "k8s.io/apimachinery/pkg/labels"
-	types "k8s.io/apimachinery/pkg/types"
-	watch "k8s.io/apimachinery/pkg/watch"
-	testing "k8s.io/client-go/testing"
+	gentype "k8s.io/client-go/gentype"
 	v1alpha1 "sigs.k8s.io/kjob/apis/v1alpha1"
+	apisv1alpha1 "sigs.k8s.io/kjob/client-go/clientset/versioned/typed/apis/v1alpha1"
 )
 
-// FakeApplicationProfiles implements ApplicationProfileInterface
-type FakeApplicationProfiles struct {
+// fakeApplicationProfiles implements ApplicationProfileInterface
+type fakeApplicationProfiles struct {
+	*gentype.FakeClientWithList[*v1alpha1.ApplicationProfile, *v1alpha1.ApplicationProfileList]
 	Fake *FakeKjobctlV1alpha1
-	ns   string
 }
 
-var applicationprofilesResource = v1alpha1.SchemeGroupVersion.WithResource("applicationprofiles")
-
-var applicationprofilesKind = v1alpha1.SchemeGroupVersion.WithKind("ApplicationProfile")
-
-// Get takes name of the applicationProfile, and returns the corresponding applicationProfile object, and an error if there is any.
-func (c *FakeApplicationProfiles) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.ApplicationProfile, err error) {
-	emptyResult := &v1alpha1.ApplicationProfile{}
-	obj, err := c.Fake.
-		Invokes(testing.NewGetActionWithOptions(applicationprofilesResource, c.ns, name, options), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
+func newFakeApplicationProfiles(fake *FakeKjobctlV1alpha1, namespace string) apisv1alpha1.ApplicationProfileInterface {
+	return &fakeApplicationProfiles{
+		gentype.NewFakeClientWithList[*v1alpha1.ApplicationProfile, *v1alpha1.ApplicationProfileList](
+			fake.Fake,
+			namespace,
+			v1alpha1.SchemeGroupVersion.WithResource("applicationprofiles"),
+			v1alpha1.SchemeGroupVersion.WithKind("ApplicationProfile"),
+			func() *v1alpha1.ApplicationProfile { return &v1alpha1.ApplicationProfile{} },
+			func() *v1alpha1.ApplicationProfileList { return &v1alpha1.ApplicationProfileList{} },
+			func(dst, src *v1alpha1.ApplicationProfileList) { dst.ListMeta = src.ListMeta },
+			func(list *v1alpha1.ApplicationProfileList) []*v1alpha1.ApplicationProfile {
+				return gentype.ToPointerSlice(list.Items)
+			},
+			func(list *v1alpha1.ApplicationProfileList, items []*v1alpha1.ApplicationProfile) {
+				list.Items = gentype.FromPointerSlice(items)
+			},
+		),
+		fake,
 	}
-	return obj.(*v1alpha1.ApplicationProfile), err
-}
-
-// List takes label and field selectors, and returns the list of ApplicationProfiles that match those selectors.
-func (c *FakeApplicationProfiles) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.ApplicationProfileList, err error) {
-	emptyResult := &v1alpha1.ApplicationProfileList{}
-	obj, err := c.Fake.
-		Invokes(testing.NewListActionWithOptions(applicationprofilesResource, applicationprofilesKind, c.ns, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-
-	label, _, _ := testing.ExtractFromListOptions(opts)
-	if label == nil {
-		label = labels.Everything()
-	}
-	list := &v1alpha1.ApplicationProfileList{ListMeta: obj.(*v1alpha1.ApplicationProfileList).ListMeta}
-	for _, item := range obj.(*v1alpha1.ApplicationProfileList).Items {
-		if label.Matches(labels.Set(item.Labels)) {
-			list.Items = append(list.Items, item)
-		}
-	}
-	return list, err
-}
-
-// Watch returns a watch.Interface that watches the requested applicationProfiles.
-func (c *FakeApplicationProfiles) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
-	return c.Fake.
-		InvokesWatch(testing.NewWatchActionWithOptions(applicationprofilesResource, c.ns, opts))
-
-}
-
-// Create takes the representation of a applicationProfile and creates it.  Returns the server's representation of the applicationProfile, and an error, if there is any.
-func (c *FakeApplicationProfiles) Create(ctx context.Context, applicationProfile *v1alpha1.ApplicationProfile, opts v1.CreateOptions) (result *v1alpha1.ApplicationProfile, err error) {
-	emptyResult := &v1alpha1.ApplicationProfile{}
-	obj, err := c.Fake.
-		Invokes(testing.NewCreateActionWithOptions(applicationprofilesResource, c.ns, applicationProfile, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.ApplicationProfile), err
-}
-
-// Update takes the representation of a applicationProfile and updates it. Returns the server's representation of the applicationProfile, and an error, if there is any.
-func (c *FakeApplicationProfiles) Update(ctx context.Context, applicationProfile *v1alpha1.ApplicationProfile, opts v1.UpdateOptions) (result *v1alpha1.ApplicationProfile, err error) {
-	emptyResult := &v1alpha1.ApplicationProfile{}
-	obj, err := c.Fake.
-		Invokes(testing.NewUpdateActionWithOptions(applicationprofilesResource, c.ns, applicationProfile, opts), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.ApplicationProfile), err
-}
-
-// Delete takes name of the applicationProfile and deletes it. Returns an error if one occurs.
-func (c *FakeApplicationProfiles) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	_, err := c.Fake.
-		Invokes(testing.NewDeleteActionWithOptions(applicationprofilesResource, c.ns, name, opts), &v1alpha1.ApplicationProfile{})
-
-	return err
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *FakeApplicationProfiles) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewDeleteCollectionActionWithOptions(applicationprofilesResource, c.ns, opts, listOpts)
-
-	_, err := c.Fake.Invokes(action, &v1alpha1.ApplicationProfileList{})
-	return err
-}
-
-// Patch applies the patch and returns the patched applicationProfile.
-func (c *FakeApplicationProfiles) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.ApplicationProfile, err error) {
-	emptyResult := &v1alpha1.ApplicationProfile{}
-	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceActionWithOptions(applicationprofilesResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.ApplicationProfile), err
 }
