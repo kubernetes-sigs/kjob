@@ -357,6 +357,16 @@ wait
 			nTasks:  1,
 			wantErr: "invalid \"\\\"ENV1=test1\\\" srun -n 1 my_program\" command: invalid \"\\\"ENV1=test1\\\"\" environment variable",
 		},
+		"srun with double quotes": {
+			script: "srun -flag1 \"arguments for flag 1\" my_program",
+			nTasks: 1,
+			want:   "my_program",
+		},
+		"srun with single quotes": {
+			script: "srun -flag1 'arguments for flag 1' my_program",
+			nTasks: 1,
+			want:   "my_program",
+		},
 	}
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
@@ -388,7 +398,7 @@ func TestValidateEnvVars(t *testing.T) {
 			wantErr: "missed ';' or '&&' before \"test\" command",
 		},
 		"invalid export not closed first export": {
-			str:     "FOO=foo export BAR=\"bar\" export BAZ=baz; ",
+			str:     "FOO=foo export BAR='bar' export BAZ=baz; ",
 			wantErr: "missed ';' or '&&' before \"export\" command",
 		},
 		"escape semicolon": {
@@ -435,13 +445,25 @@ func TestSplitBySpaceWithIgnoreInQuotes(t *testing.T) {
 			str:  "a b c",
 			want: []string{"a", "b", "c"},
 		},
-		"with quotes": {
+		"with double quotes": {
 			str:  "a \"b c\"",
 			want: []string{"a", "\"b c\""},
 		},
-		"with escaped quotes": {
+		"with single quotes": {
+			str:  "a 'b c'",
+			want: []string{"a", "'b c'"},
+		},
+		"with single and double quotes": {
+			str:  "a '\"b\" \"c\"' \"'d' 'e'\"",
+			want: []string{"a", "'\"b\" \"c\"'", "\"'d' 'e'\""},
+		},
+		"with escaped double quotes": {
 			str:  "a \\\"b c\\\"",
 			want: []string{"a", "\\\"b", "c\\\""},
+		},
+		"with escaped single quotes": {
+			str:  "a \\'b c\\'",
+			want: []string{"a", "\\'b", "c\\'"},
 		},
 	}
 	for name, tc := range testCases {

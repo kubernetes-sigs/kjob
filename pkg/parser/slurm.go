@@ -241,7 +241,7 @@ func SlurmValidateAndReplaceScript(script string, nTasks int32) (string, error) 
 		if index := findCommand(line, srunCommand); index != -1 {
 			srunCount++
 
-			args := strings.Split(line[index:], " ")[1:]
+			args := splitBySpaceWithIgnoreInQuotes(line[index:])[1:]
 
 			srunFlagSet := pflag.NewFlagSet(srunCommand, pflag.ContinueOnError)
 			srunFlagSet.ParseErrorsWhitelist.UnknownFlags = true
@@ -346,19 +346,24 @@ func validateEnvVars(input string, command string) error {
 
 func splitBySpaceWithIgnoreInQuotes(str string) []string {
 	var (
-		parts    []string
-		current  strings.Builder
-		inQuotes bool
+		parts          []string
+		current        strings.Builder
+		inSingleQuotes bool
+		inDoubleQuotes bool
 	)
 
 	for i := 0; i < len(str); i++ {
 		char := str[i]
 
-		if char == '"' && !isEscaped(str, i) {
-			inQuotes = !inQuotes
+		if !inSingleQuotes && char == '"' && !isEscaped(str, i) {
+			inDoubleQuotes = !inDoubleQuotes
 		}
 
-		if char != ' ' || inQuotes {
+		if !inDoubleQuotes && char == '\'' && !isEscaped(str, i) {
+			inSingleQuotes = !inSingleQuotes
+		}
+
+		if char != ' ' || inSingleQuotes || inDoubleQuotes {
 			current.WriteByte(char)
 			if i < len(str)-1 {
 				continue
