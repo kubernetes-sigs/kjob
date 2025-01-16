@@ -253,7 +253,7 @@ func SlurmValidateAndReplaceScript(script string, nTasks int32) (string, error) 
 
 			srunArgs := srunFlagSet.Args()
 			if len(srunArgs) == 0 {
-				return "", fmt.Errorf("invalid %q command: %s", line, "must specified at least one argument")
+				return "", fmt.Errorf("invalid %q command: %s", line, "must specify at least one argument")
 			}
 
 			var envVars string

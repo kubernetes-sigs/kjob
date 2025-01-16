@@ -275,7 +275,7 @@ wait
 		"srun must specified at lease one argument": {
 			script:  "#!/bin/bash\nsrun",
 			nTasks:  1,
-			wantErr: "invalid \"srun\" command: must specified at least one argument",
+			wantErr: "invalid \"srun\" command: must specify at least one argument",
 		},
 		"unsupported wait command": {
 			script:  "#!/bin/bash\nsrun my_program &\nwait",
