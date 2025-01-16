@@ -306,45 +306,34 @@ func findCommand(input string, command string) int {
 }
 
 // validateEnvVars validate environment variables before command.
-// Possible values `FOO="bar"` and `export FOO="bar" && ` or `export FOO="bar"; `
+// Possible values `FOO="bar" ` and `export FOO="bar" && ` or `export FOO="bar"; `
 func validateEnvVars(input string, command string) error {
 	parts := splitBySpaceWithIgnoreInQuotes(input)
 
 	var export bool
 
 	for _, part := range parts {
-		if part == "" {
-			continue
-		}
-
 		length := len(part)
 
-		if part == "export" {
+		switch {
+		case part == "":
+		case part == "export":
 			if export {
 				return errors.New("missed ';' or '&&' before \"export\" command")
 			}
 			export = true
-			continue
-		}
-
-		if part == "&&" {
+		case part == "&&":
 			export = false
-			continue
-		}
-
-		if strings.HasSuffix(part, ";") && !isEscaped(part, length-1) {
-			if length > 1 {
-				if part[length-2] == ';' {
-					return errors.New("parse error near ';;'")
-				}
+		case strings.HasSuffix(part, ";") && !isEscaped(part, length-1):
+			if length > 1 && part[length-2] == ';' {
+				return errors.New("parse error near ';;'")
 			}
 			export = false
-			continue
-		}
-
-		matches := envVarFormat.FindStringSubmatch(part)
-		if len(matches) == 0 {
-			return fmt.Errorf("invalid %q environment variable", part)
+		default:
+			matches := envVarFormat.FindStringSubmatch(part)
+			if len(matches) == 0 {
+				return fmt.Errorf("invalid %q environment variable", part)
+			}
 		}
 	}
 
