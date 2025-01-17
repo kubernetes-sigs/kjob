@@ -213,20 +213,17 @@ func SlurmValidateAndReplaceScript(script string, nTasks int32) (string, error) 
 
 	lines := strings.Split(script, "\n")
 
+	line = ""
 	for i := 0; i < len(lines); i++ {
-		line = ""
+		if len(line) > 0 {
+			line += " "
+		}
+		line += strings.TrimSpace(lines[i])
 
 		// Convert multiline command to one line
-		for i < len(lines) {
-			if len(line) > 0 {
-				line += " "
-			}
-			line += strings.TrimSpace(lines[i])
-			if !strings.HasSuffix(line, " \\") {
-				break
-			}
+		if strings.HasSuffix(line, " \\") {
 			line = strings.TrimRight(line[:len(line)-2], " ")
-			i++
+			continue
 		}
 
 		if line == "" {
@@ -280,6 +277,8 @@ func SlurmValidateAndReplaceScript(script string, nTasks int32) (string, error) 
 		}
 		sb.WriteString(line)
 		needNewLine = true
+
+		line = ""
 	}
 
 	return sb.String(), nil
