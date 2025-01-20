@@ -18,14 +18,17 @@ package framework
 
 import (
 	"context"
+	"sync"
 
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 	rayv1 "github.com/ray-project/kuberay/ray-operator/apis/ray/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
+	"sigs.k8s.io/kueue/test/util"
 
 	"sigs.k8s.io/kjob/apis/v1alpha1"
 )
@@ -37,7 +40,13 @@ type Framework struct {
 	cancel      context.CancelFunc
 }
 
+var setupLogger = sync.OnceFunc(func() {
+	ctrl.SetLogger(util.NewTestingLogger(ginkgo.GinkgoWriter, -3))
+})
+
 func (f *Framework) Init() *rest.Config {
+	setupLogger()
+
 	ginkgo.By("bootstrapping test environment")
 
 	f.testEnv = &envtest.Environment{
