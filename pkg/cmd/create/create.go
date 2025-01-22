@@ -20,21 +20,30 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"os"
+	"os/signal"
+	"slices"
 	"strings"
+	"sync"
+	"syscall"
 	"time"
 
 	rayv1 "github.com/ray-project/kuberay/ray-operator/apis/ray/v1"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiresource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/cli-runtime/pkg/genericiooptions"
 	"k8s.io/cli-runtime/pkg/printers"
+	"k8s.io/client-go/kubernetes"
 	k8sscheme "k8s.io/client-go/kubernetes/scheme"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
@@ -62,6 +71,7 @@ const (
 	changeDirFlagName                = "chdir"
 	firstNodeIPFlagName              = "first-node-ip"
 	firstNodeIPTimeoutFlagName       = "first-node-ip-timeout"
+	waitFlagName                     = "wait"
 
 	commandFlagName     = string(v1alpha1.CmdFlag)
 	parallelismFlagName = string(v1alpha1.ParallelismFlag)
@@ -169,18 +179,19 @@ type CreateOptions struct {
 
 	DryRunStrategy util.DryRunStrategy
 
-	Namespace            string
-	ProfileName          string
-	ModeName             v1alpha1.ApplicationProfileMode
-	Script               string
-	InitImage            string
-	PodRunningTimeout    time.Duration
-	FirstNodeIPTimeout   time.Duration
-	FirstNodeIP          bool
-	RemoveInteractivePod bool
-	ChangeDir            string
+	Namespace          string
+	ProfileName        string
+	ModeName           v1alpha1.ApplicationProfileMode
+	Script             string
+	InitImage          string
+	PodRunningTimeout  time.Duration
+	FirstNodeIPTimeout time.Duration
+	FirstNodeIP        bool
+	RemoveObject       bool
+	ChangeDir          string
 
-	SlurmFlagSet *pflag.FlagSet
+	SlurmFlagSet  *pflag.FlagSet
+	activeStreams sync.Map
 
 	Command                  []string
 	Parallelism              *int32
@@ -208,6 +219,7 @@ type CreateOptions struct {
 	Priority                 string
 	TimeLimit                string
 	IgnoreUnknown            bool
+	Wait                     bool
 	SkipLocalQueueValidation bool
 	SkipPriorityValidation   bool
 
@@ -291,7 +303,7 @@ var createModeSubcommands = map[string]modeSubcommand{
 				"Request is a set of (resource name, quantity) pairs.")
 			subcmd.Flags().DurationVar(&o.PodRunningTimeout, podRunningTimeoutFlagName, podRunningTimeoutDefault,
 				"The length of time (like 5s, 2m, or 3h, higher than zero) to wait until at least one pod is running.")
-			subcmd.Flags().BoolVar(&o.RemoveInteractivePod, removeFlagName, false,
+			subcmd.Flags().BoolVar(&o.RemoveObject, removeFlagName, false,
 				"Remove pod when interactive session exits.")
 
 			withTimeFlag(subcmd.Flags(), &o.TimeLimit)
@@ -353,9 +365,11 @@ var createModeSubcommands = map[string]modeSubcommand{
 		ModeName: v1alpha1.SlurmMode,
 		Setup: func(clientGetter util.ClientGetter, subcmd *cobra.Command, o *CreateOptions) {
 			subcmd.Use += " [--ignore-unknown-flags]" +
+				" [--wait]" +
 				" [--init-image IMAGE]" +
 				" [--first-node-ip]" +
 				" [--first-node-ip-timeout DURATION]" +
+				" [--rm]" +
 				" -- " +
 				" [--array ARRAY]" +
 				" [--cpus-per-task QUANTITY]" +
@@ -379,12 +393,16 @@ var createModeSubcommands = map[string]modeSubcommand{
 
 			subcmd.Flags().BoolVar(&o.IgnoreUnknown, ignoreUnknownFlagName, false,
 				"Ignore all the unsupported flags in the bash script.")
+			subcmd.Flags().BoolVar(&o.Wait, waitFlagName, false,
+				"Wait for the Job to complete and stream its Pod logs")
 			subcmd.Flags().StringVar(&o.InitImage, initImageFlagName, "registry.k8s.io/busybox:1.27.2",
 				"The image used for the init container.")
 			subcmd.Flags().BoolVar(&o.FirstNodeIP, firstNodeIPFlagName, false,
 				"Enable the retrieval of the first node's IP address.")
 			subcmd.Flags().DurationVar(&o.FirstNodeIPTimeout, firstNodeIPTimeoutFlagName, time.Minute,
 				"The timeout for the retrieval of the first node's IP address.")
+			subcmd.Flags().BoolVar(&o.RemoveObject, removeFlagName, false,
+				"Remove the job when it is canceled while running with the wait flag.")
 
 			o.SlurmFlagSet = pflag.NewFlagSet("slurm", pflag.ExitOnError)
 			o.SlurmFlagSet.StringVarP(&o.Array, arrayFlagName, "a", "",
@@ -517,6 +535,10 @@ func (o *CreateOptions) Complete(clientGetter util.ClientGetter, cmd *cobra.Comm
 
 		if len(slurmArgs) > 1 {
 			return errors.New("must specify only one script")
+		}
+
+		if o.RemoveObject && !o.Wait {
+			return errors.New("the --wait flag is required when --rm is set")
 		}
 
 		o.Script = slurmArgs[0]
@@ -718,6 +740,11 @@ func (o *CreateOptions) Run(ctx context.Context, clientGetter util.ClientGetter,
 		return o.RunInteractivePod(ctx, clientGetter, pod.Name)
 	}
 
+	if o.ModeName == v1alpha1.SlurmMode && o.Wait {
+		job := rootObj.(*batchv1.Job)
+		return o.watchJobAndStreamLogs(ctx, clientGetter, job.GetName())
+	}
+
 	return nil
 }
 
@@ -780,14 +807,14 @@ func (o *CreateOptions) createObject(ctx context.Context, clientGetter util.Clie
 }
 
 func (o *CreateOptions) RunInteractivePod(ctx context.Context, clientGetter util.ClientGetter, podName string) error {
-	k8sclient, err := clientGetter.K8sClientset()
+	k8sClient, err := clientGetter.K8sClientset()
 	if err != nil {
 		return err
 	}
 
-	if o.RemoveInteractivePod {
+	if o.RemoveObject {
 		defer func() {
-			err = k8sclient.CoreV1().Pods(o.Namespace).Delete(ctx, podName, metav1.DeleteOptions{})
+			err = k8sClient.CoreV1().Pods(o.Namespace).Delete(ctx, podName, metav1.DeleteOptions{})
 			if err != nil {
 				fmt.Fprintln(o.ErrOut, err.Error())
 			}
@@ -796,12 +823,12 @@ func (o *CreateOptions) RunInteractivePod(ctx context.Context, clientGetter util
 	}
 
 	fmt.Fprintf(o.Out, "waiting for pod \"%s\" to be running...\n", podName)
-	err = waitForPodRunning(ctx, k8sclient, o.Namespace, podName, o.PodRunningTimeout)
+	err = waitForPodRunning(ctx, k8sClient, o.Namespace, podName, o.PodRunningTimeout)
 	if err != nil {
 		return err
 	}
 
-	pod, err := k8sclient.CoreV1().Pods(o.Namespace).Get(ctx, podName, metav1.GetOptions{})
+	pod, err := k8sClient.CoreV1().Pods(o.Namespace).Get(ctx, podName, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -858,4 +885,154 @@ func defaultAttachFunc(o *CreateOptions, containerToAttach *corev1.Container, si
 
 		return o.Attach.Attach(req.URL(), o.Config, o.In, o.Out, o.ErrOut, o.TTY, sizeQueue)
 	}
+}
+
+func (o *CreateOptions) watchJobAndStreamLogs(ctx context.Context, clientGetter util.ClientGetter, jobName string) error {
+	k8sClient, err := clientGetter.K8sClientset()
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	sigChan := make(chan os.Signal, 1)
+	defer close(sigChan)
+
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	defer signal.Stop(sigChan)
+
+	watcherErrChan := make(chan error, 1)
+	defer close(watcherErrChan)
+	go func() {
+		err = o.watchJobPods(ctx, clientGetter, jobName)
+		watcherErrChan <- err
+	}()
+
+	jobCompletionErrChan := make(chan error, 1)
+	defer close(jobCompletionErrChan)
+	go func() {
+		err := o.verifyJobFinished(ctx, k8sClient, jobName)
+		jobCompletionErrChan <- err
+	}()
+
+	select {
+	case sig := <-sigChan:
+		fmt.Fprintf(o.Out, "Received signal: %v\n", sig)
+		if o.RemoveObject {
+			fmt.Fprintf(o.Out, "Stopping the job and cleaning up...\n")
+			err := k8sClient.BatchV1().Jobs(o.Namespace).Delete(ctx, jobName, metav1.DeleteOptions{
+				PropagationPolicy: ptr.To(metav1.DeletePropagationBackground),
+			})
+			if err != nil {
+				return err
+			}
+		}
+	case err := <-watcherErrChan:
+		if err != nil {
+			fmt.Fprintf(o.Out, "Error watching job pods: %v\n", err)
+			return err
+		}
+	case err := <-jobCompletionErrChan:
+		if err != nil {
+			fmt.Fprintf(o.Out, "Error checking job completion: %v\n", err)
+			return err
+		}
+		fmt.Fprint(o.Out, "Job logs streaming finished.")
+	}
+
+	return nil
+}
+
+func (o *CreateOptions) watchJobPods(ctx context.Context, clientGetter util.ClientGetter, jobName string) error {
+	k8sClient, err := clientGetter.K8sClientset()
+	if err != nil {
+		return err
+	}
+
+	listOptions := metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("job-name=%s", jobName),
+	}
+
+	watcher, err := k8sClient.CoreV1().Pods(o.Namespace).Watch(ctx, listOptions)
+	if err != nil {
+		return err
+	}
+	defer watcher.Stop()
+
+	for event := range watcher.ResultChan() {
+		pod, ok := event.Object.(*corev1.Pod)
+		if !ok {
+			continue
+		}
+
+		if event.Type == watch.Added || event.Type == watch.Modified {
+			if pod.Status.Phase == corev1.PodRunning {
+				go func() {
+					err = o.streamLogsFromPod(ctx, clientGetter, pod.Name)
+					if err != nil {
+						fmt.Fprintf(o.Out, "Error streaming logs from pod %q: %v\n", pod.Name, err)
+					}
+				}()
+			}
+		}
+	}
+	return nil
+}
+
+func (o *CreateOptions) streamLogsFromPod(ctx context.Context, clientGetter util.ClientGetter, podName string) error {
+	k8sClient, err := clientGetter.K8sClientset()
+	if err != nil {
+		return err
+	}
+
+	_, loaded := o.activeStreams.LoadOrStore(podName, true)
+	if loaded {
+		// pod is already streaming logs
+		return nil
+	}
+	defer o.activeStreams.Delete(podName)
+
+	fmt.Fprintf(o.Out, "Starting log streaming for pod %s...\n", podName)
+
+	logOptions := &corev1.PodLogOptions{
+		Follow: true,
+	}
+	req := k8sClient.CoreV1().Pods(o.Namespace).GetLogs(podName, logOptions)
+
+	logStream, err := req.Stream(ctx)
+	if err != nil {
+		return err
+	}
+	defer logStream.Close()
+
+	_, err = io.Copy(o.Out, logStream)
+	return err
+}
+
+func (o *CreateOptions) verifyJobFinished(ctx context.Context, clientset kubernetes.Interface, jobName string) error {
+	watchOptions := metav1.ListOptions{
+		FieldSelector: fmt.Sprintf("metadata.name=%s", jobName),
+	}
+
+	watcher, err := clientset.BatchV1().Jobs(o.Namespace).Watch(ctx, watchOptions)
+	if err != nil {
+		return err
+	}
+	defer watcher.Stop()
+
+	for event := range watcher.ResultChan() {
+		job, ok := event.Object.(*batchv1.Job)
+		if !ok {
+			continue
+		}
+
+		isJobFinished := slices.ContainsFunc(job.Status.Conditions, func(c batchv1.JobCondition) bool {
+			return (c.Type == batchv1.JobComplete || c.Type == batchv1.JobFailed) && c.Status == corev1.ConditionTrue
+		})
+		if isJobFinished {
+			break
+		}
+	}
+	return nil
 }

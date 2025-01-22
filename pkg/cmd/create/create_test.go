@@ -2160,12 +2160,12 @@ func TestCreateOptionsRunInteractive(t *testing.T) {
 		},
 		"success with remove interactive pod": {
 			options: &CreateOptions{
-				Namespace:            metav1.NamespaceDefault,
-				ProfileName:          "profile",
-				ModeName:             v1alpha1.InteractiveMode,
-				RemoveInteractivePod: true,
-				Attach:               &fakeRemoteAttach{},
-				AttachFunc:           testAttachFunc,
+				Namespace:    metav1.NamespaceDefault,
+				ProfileName:  "profile",
+				ModeName:     v1alpha1.InteractiveMode,
+				RemoveObject: true,
+				Attach:       &fakeRemoteAttach{},
+				AttachFunc:   testAttachFunc,
 			},
 			k8sObjs: []runtime.Object{
 				wrappers.MakePodTemplate("pod-template", metav1.NamespaceDefault).

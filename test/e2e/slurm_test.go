@@ -108,7 +108,7 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, func() {
 			gomega.Expect(err).NotTo(gomega.HaveOccurred(), "%s: %s", err, out)
 			gomega.Expect(out).NotTo(gomega.BeEmpty())
 
-			jobName, configMapName, serviceName, err = parseSlurmCreateOutput(out, profile.Name)
+			jobName, configMapName, serviceName, _, err = parseSlurmCreateOutput(out, profile.Name)
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			gomega.Expect(jobName).NotTo(gomega.BeEmpty())
 			gomega.Expect(configMapName).NotTo(gomega.BeEmpty())
@@ -309,7 +309,7 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, func() {
 				gomega.Expect(err).NotTo(gomega.HaveOccurred(), "%s: %s", err, out)
 				gomega.Expect(out).NotTo(gomega.BeEmpty())
 
-				jobName, configMapName, serviceName, err = parseSlurmCreateOutput(out, profile.Name)
+				jobName, configMapName, serviceName, _, err = parseSlurmCreateOutput(out, profile.Name)
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 				gomega.Expect(jobName).NotTo(gomega.BeEmpty())
 				gomega.Expect(configMapName).NotTo(gomega.BeEmpty())
@@ -342,18 +342,127 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, func() {
 			})
 		})
 	})
+
+	ginkgo.When("using --wait option", func() {
+		ginkgo.It("should wait for job completion", func() {
+			ginkgo.By("Create temporary file")
+			script, err := os.CreateTemp("", "e2e-slurm-")
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			defer script.Close()
+			defer os.Remove(script.Name())
+
+			ginkgo.By("Prepare script", func() {
+				_, err := script.WriteString("#!/bin/bash\nsleep 10\necho 'Hello world!'")
+				gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			})
+
+			var out []byte
+			ginkgo.By("Create slurm", func() {
+				cmdArgs := []string{"create", "slurm", "-n", ns.Name, "--profile", profile.Name, "--wait"}
+				cmdArgs = append(cmdArgs, "--", script.Name())
+
+				cmd := exec.Command(kjobctlPath, cmdArgs...)
+				out, err = util.Run(cmd)
+				gomega.Expect(err).NotTo(gomega.HaveOccurred(), "%s: %s", err, out)
+				gomega.Expect(out).NotTo(gomega.BeEmpty())
+			})
+
+			var jobName, configMapName, serviceName, logs string
+			ginkgo.By("Check CLI output", func() {
+				jobName, configMapName, serviceName, logs, err = parseSlurmCreateOutput(out, profile.Name)
+				gomega.Expect(err).NotTo(gomega.HaveOccurred())
+				gomega.Expect(jobName).NotTo(gomega.BeEmpty())
+				gomega.Expect(configMapName).NotTo(gomega.BeEmpty())
+				gomega.Expect(serviceName).NotTo(gomega.BeEmpty())
+				gomega.Expect(logs).To(
+					gomega.MatchRegexp(
+						`Starting log streaming for pod profile-slurm-[a-zA-Z0-9]+-[0-9]+-[a-zA-Z0-9]+\.\.\.\nHello world!\nJob logs streaming finished\.`,
+					),
+				)
+			})
+
+			ginkgo.By("Check the job is completed", func() {
+				gomega.Eventually(func(g gomega.Gomega) {
+					job := &batchv1.Job{}
+					g.Expect(k8sClient.Get(ctx, client.ObjectKey{Namespace: ns.Name, Name: jobName}, job)).To(gomega.Succeed())
+					g.Expect(job.Status.Conditions).To(gomega.ContainElement(gomega.BeComparableTo(
+						batchv1.JobCondition{
+							Type:   batchv1.JobComplete,
+							Status: corev1.ConditionTrue,
+						},
+						cmpopts.IgnoreFields(batchv1.JobCondition{}, "LastTransitionTime", "LastProbeTime", "Reason", "Message"))))
+				}, util.Timeout, util.Interval).Should(gomega.Succeed())
+			})
+		})
+
+		ginkgo.It("should interrupt log streaming and removes job after receiving SIGINT", func() {
+			ginkgo.By("Create temporary script file")
+			script, err := os.CreateTemp("", "e2e-slurm-")
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			defer script.Close()
+			defer os.Remove(script.Name())
+
+			ginkgo.By("Write sleep command to script", func() {
+				_, err := script.WriteString("#!/bin/bash\nsleep 60")
+				gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			})
+
+			var cmd *exec.Cmd
+			var out bytes.Buffer
+			ginkgo.By("Create slurm with --rm flag", func() {
+				cmdArgs := []string{"create", "slurm", "-n", ns.Name, "--profile", profile.Name, "--wait", "--rm"}
+				cmdArgs = append(cmdArgs, "--", script.Name())
+				cmd = exec.Command(kjobctlPath, cmdArgs...)
+
+				cmd.Stdout = &out
+				err := cmd.Start()
+				gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			})
+
+			job := &batchv1.Job{}
+			ginkgo.By("Wait for the job to be created", func() {
+				gomega.Eventually(func(g gomega.Gomega) {
+					jobList := &batchv1.JobList{}
+					g.Expect(k8sClient.List(ctx, jobList, client.InNamespace(ns.Name))).To(gomega.Succeed())
+					g.Expect(jobList.Items).To(gomega.HaveLen(1))
+					job = &jobList.Items[0]
+				}, util.Timeout, util.Interval).Should(gomega.Succeed())
+			})
+
+			ginkgo.By("Interrupt execution", func() {
+				err = cmd.Process.Signal(os.Interrupt)
+				gomega.Expect(err).NotTo(gomega.HaveOccurred())
+
+				err = cmd.Wait()
+				gomega.Expect(err).NotTo(gomega.HaveOccurred())
+				gomega.Expect(out.String()).To(gomega.ContainSubstring("Received signal: interrupt"))
+			})
+
+			ginkgo.By("Check job is deleted", func() {
+				gomega.Eventually(func(g gomega.Gomega) {
+					g.Expect(errors.IsNotFound(k8sClient.Get(ctx, client.ObjectKeyFromObject(job), job))).To(gomega.BeTrue())
+				}, util.Timeout, util.Interval).Should(gomega.Succeed())
+			})
+		})
+	})
 })
 
-func parseSlurmCreateOutput(output []byte, profileName string) (string, string, string, error) {
-	output = bytes.ReplaceAll(output, []byte("\n"), []byte(""))
-	re := regexp.MustCompile(fmt.Sprintf(`^job\.batch\/(%[1]s-slurm-.{5}) createdconfigmap\/(%[1]s-slurm-.{5}) createdservice\/(%[1]s-slurm-.{5}) created$`, profileName))
-	matches := re.FindSubmatch(output)
+func parseSlurmCreateOutput(output []byte, profileName string) (string, string, string, string, error) {
+	pattern := fmt.Sprintf(
+		`(?s)job.batch\/(%[1]s-slurm-.{5}) created\n`+
+			`configmap\/(%[1]s-slurm-.{5}) created\n`+
+			`service\/(%[1]s-slurm-.{5}) created\n`+
+			`(.*)`,
+		profileName,
+	)
+	re := regexp.MustCompile(pattern)
 
-	if len(matches) < 4 {
-		return "", "", "", fmt.Errorf("unexpected output format: %s", output)
+	matches := re.FindSubmatch(output)
+	if len(matches) < 5 {
+		return "", "", "", "", fmt.Errorf("unexpected output format: %s", output)
 	}
 
-	return string(matches[1]), string(matches[2]), string(matches[3]), nil
+	return string(matches[1]), string(matches[2]), string(matches[3]), string(matches[4]), nil
 }
 
 func parseSlurmEnvOutput(output []byte) map[string]string {
