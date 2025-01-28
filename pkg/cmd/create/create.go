@@ -995,19 +995,35 @@ func (o *CreateOptions) streamLogsFromPod(ctx context.Context, clientGetter util
 
 	fmt.Fprintf(o.Out, "Starting log streaming for pod %s...\n", podName)
 
-	logOptions := &corev1.PodLogOptions{
-		Follow: true,
-	}
-	req := k8sClient.CoreV1().Pods(o.Namespace).GetLogs(podName, logOptions)
-
-	logStream, err := req.Stream(ctx)
+	pod, err := k8sClient.CoreV1().Pods(o.Namespace).Get(ctx, podName, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
-	defer logStream.Close()
 
-	_, err = io.Copy(o.Out, logStream)
-	return err
+	for _, container := range pod.Spec.Containers {
+		if container.Name == builder.SlurmInitContainerName {
+			continue
+		}
+
+		logOptions := &corev1.PodLogOptions{
+			Container: container.Name,
+			Follow:    true,
+		}
+		req := k8sClient.CoreV1().Pods(o.Namespace).GetLogs(podName, logOptions)
+
+		logStream, err := req.Stream(ctx)
+		if err != nil {
+			return err
+		}
+		defer logStream.Close()
+
+		_, err = io.Copy(o.Out, logStream)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (o *CreateOptions) verifyJobFinished(ctx context.Context, clientset kubernetes.Interface, jobName string) error {

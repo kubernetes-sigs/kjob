@@ -43,6 +43,8 @@ import (
 //go:embed templates/slurm_*
 var slurmTemplates embed.FS
 
+const SlurmInitContainerName = "slurm-init-env"
+
 const (
 	// Note that the first job ID will always be 1.
 	slurmArrayJobID = 1
@@ -258,7 +260,7 @@ func (b *slurmBuilder) build(ctx context.Context) (runtime.Object, []runtime.Obj
 	)
 
 	job.Spec.Template.Spec.InitContainers = append(job.Spec.Template.Spec.InitContainers, corev1.Container{
-		Name:    "slurm-init-env",
+		Name:    SlurmInitContainerName,
 		Image:   b.initImage,
 		Command: []string{"sh", slurmInitEntrypointFilenamePath},
 		Env: []corev1.EnvVar{
