@@ -444,6 +444,58 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, func() {
 				}, util.Timeout, util.Interval).Should(gomega.Succeed())
 			})
 		})
+
+		ginkgo.It("should stream logs from all the containers", func() {
+			ginkgo.By("Create temporary file")
+			script, err := os.CreateTemp("", "e2e-slurm-")
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			defer script.Close()
+			defer os.Remove(script.Name())
+
+			ginkgo.By("Prepare script", func() {
+				_, err := script.WriteString("#!/bin/bash\nsleep 10\necho 'Hello world!'")
+				gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			})
+
+			var out []byte
+			ginkgo.By("Create slurm", func() {
+				cmdArgs := []string{"create", "slurm", "-n", ns.Name, "--profile", profile.Name, "--wait"}
+				// create pod with two containers
+				cmdArgs = append(cmdArgs, "--", "-n=2", script.Name())
+
+				cmd := exec.Command(kjobctlPath, cmdArgs...)
+				out, err = util.Run(cmd)
+				gomega.Expect(err).NotTo(gomega.HaveOccurred(), "%s: %s", err, out)
+				gomega.Expect(out).NotTo(gomega.BeEmpty())
+			})
+
+			var jobName, configMapName, serviceName, logs string
+			ginkgo.By("Check CLI output", func() {
+				jobName, configMapName, serviceName, logs, err = parseSlurmCreateOutput(out, profile.Name)
+				gomega.Expect(err).NotTo(gomega.HaveOccurred())
+				gomega.Expect(jobName).NotTo(gomega.BeEmpty())
+				gomega.Expect(configMapName).NotTo(gomega.BeEmpty())
+				gomega.Expect(serviceName).NotTo(gomega.BeEmpty())
+				gomega.Expect(logs).To(
+					gomega.MatchRegexp(
+						`Starting log streaming for pod profile-slurm-[a-zA-Z0-9]+-[0-9]+-[a-zA-Z0-9]+\.\.\.\nHello world!\nHello world!\nJob logs streaming finished\.`,
+					),
+				)
+			})
+
+			ginkgo.By("Check the job is completed", func() {
+				gomega.Eventually(func(g gomega.Gomega) {
+					job := &batchv1.Job{}
+					g.Expect(k8sClient.Get(ctx, client.ObjectKey{Namespace: ns.Name, Name: jobName}, job)).To(gomega.Succeed())
+					g.Expect(job.Status.Conditions).To(gomega.ContainElement(gomega.BeComparableTo(
+						batchv1.JobCondition{
+							Type:   batchv1.JobComplete,
+							Status: corev1.ConditionTrue,
+						},
+						cmpopts.IgnoreFields(batchv1.JobCondition{}, "LastTransitionTime", "LastProbeTime", "Reason", "Message"))))
+				}, util.Timeout, util.Interval).Should(gomega.Succeed())
+			})
+		})
 	})
 })
 
