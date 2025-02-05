@@ -270,7 +270,7 @@ srun -n 4 -c 1 my_program_4 &
 wait
 `,
 			nTasks:  8,
-			wantErr: "multiple parallel tasks with a task count greater than 1 are not supported yet",
+			wantErr: "multiple parallel tasks with more than one step are not supported yet",
 		},
 		"srun must specified at lease one argument": {
 			script:  "#!/bin/bash\nsrun",

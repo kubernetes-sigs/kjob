@@ -232,7 +232,7 @@ func SlurmValidateAndReplaceScript(script string, nTasks int32) (string, error) 
 		}
 
 		if nTasks > 1 && srunCount > 0 {
-			return "", errors.New("multiple parallel tasks with a task count greater than 1 are not supported yet")
+			return "", errors.New("multiple parallel tasks with more than one step are not supported yet")
 		}
 
 		if index := findCommand(line, srunCommand); index != -1 {
