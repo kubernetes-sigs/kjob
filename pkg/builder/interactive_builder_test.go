@@ -47,8 +47,6 @@ func TestInteractiveBuilder(t *testing.T) {
 	userID := os.Getenv(constants.SystemEnvVarNameUser)
 
 	testPodTemplateWrapper := wrappers.MakePodTemplate("pod-template", metav1.NamespaceDefault).
-		Label("foo", "bar").
-		Annotation("foo", "baz").
 		WithInitContainer(
 			*wrappers.MakeContainer("ic1", "").
 				WithEnvVar(corev1.EnvVar{Name: "e0", Value: "default-value0"}).
@@ -76,16 +74,18 @@ func TestInteractiveBuilder(t *testing.T) {
 		WithVolume("v2", "default-config2")
 
 	testCases := map[string]struct {
-		namespace   string
-		profile     string
-		mode        v1alpha1.ApplicationProfileMode
-		command     []string
-		requests    corev1.ResourceList
-		localQueue  string
-		k8sObjs     []runtime.Object
-		kjobctlObjs []runtime.Object
-		wantRootObj runtime.Object
-		wantErr     error
+		namespace              string
+		profile                string
+		mode                   v1alpha1.ApplicationProfileMode
+		command                []string
+		requests               corev1.ResourceList
+		localQueue             string
+		podTemplateLabels      map[string]string
+		podTemplateAnnotations map[string]string
+		k8sObjs                []runtime.Object
+		kjobctlObjs            []runtime.Object
+		wantRootObj            runtime.Object
+		wantErr                error
 	}{
 		"shouldn't build pod because template not found": {
 			namespace: metav1.NamespaceDefault,
@@ -103,6 +103,37 @@ func TestInteractiveBuilder(t *testing.T) {
 			profile:   "profile",
 			mode:      v1alpha1.InteractiveMode,
 			k8sObjs:   []runtime.Object{testPodTemplateWrapper.Clone().Obj()},
+			kjobctlObjs: []runtime.Object{
+				wrappers.MakeApplicationProfile("profile", metav1.NamespaceDefault).
+					WithSupportedMode(v1alpha1.SupportedMode{Name: v1alpha1.InteractiveMode, Template: "pod-template"}).
+					Obj(),
+			},
+			wantRootObj: wrappers.MakePod("", metav1.NamespaceDefault).GenerateName("profile-interactive-").
+				Profile("profile").
+				Mode(v1alpha1.InteractiveMode).
+				Spec(
+					testPodTemplateWrapper.Clone().
+						WithEnvVar(corev1.EnvVar{Name: constants.EnvVarNameUserID, Value: userID}).
+						WithEnvVar(corev1.EnvVar{Name: constants.EnvVarTaskName, Value: "default_profile"}).
+						WithEnvVar(corev1.EnvVar{
+							Name:  constants.EnvVarTaskID,
+							Value: fmt.Sprintf("%s_%s_default_profile", userID, testStartTime.Format(time.RFC3339)),
+						}).
+						WithEnvVar(corev1.EnvVar{Name: "PROFILE", Value: "default_profile"}).
+						WithEnvVar(corev1.EnvVar{Name: "TIMESTAMP", Value: testStartTime.Format(time.RFC3339)}).
+						TTY().
+						Stdin().
+						Obj().Template.Spec,
+				).
+				Obj(),
+		},
+		"should build job with pod template label and annotation": {
+			namespace:              metav1.NamespaceDefault,
+			profile:                "profile",
+			mode:                   v1alpha1.InteractiveMode,
+			podTemplateLabels:      map[string]string{"foo": "bar"},
+			podTemplateAnnotations: map[string]string{"foo": "baz"},
+			k8sObjs:                []runtime.Object{testPodTemplateWrapper.Clone().Obj()},
 			kjobctlObjs: []runtime.Object{
 				wrappers.MakeApplicationProfile("profile", metav1.NamespaceDefault).
 					WithSupportedMode(v1alpha1.SupportedMode{Name: v1alpha1.InteractiveMode, Template: "pod-template"}).
@@ -150,8 +181,6 @@ func TestInteractiveBuilder(t *testing.T) {
 				wrappers.MakeVolumeBundle("vb2", metav1.NamespaceDefault).Obj(),
 			},
 			wantRootObj: wrappers.MakePod("", metav1.NamespaceDefault).GenerateName("profile-interactive-").
-				Annotation("foo", "baz").
-				Label("foo", "bar").
 				Profile("profile").
 				Mode(v1alpha1.InteractiveMode).
 				Label(kueueconstants.QueueLabel, "lq1").
@@ -194,6 +223,8 @@ func TestInteractiveBuilder(t *testing.T) {
 				WithRequests(tc.requests).
 				WithLocalQueue(tc.localQueue).
 				WithSkipLocalQueueValidation(true).
+				WithPodTemplateLabels(tc.podTemplateLabels).
+				WithPodTemplateAnnotations(tc.podTemplateAnnotations).
 				Do(ctx)
 
 			var opts []cmp.Option

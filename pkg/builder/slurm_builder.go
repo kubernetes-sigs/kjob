@@ -224,6 +224,7 @@ func (b *slurmBuilder) build(ctx context.Context) (runtime.Object, []runtime.Obj
 	job.Spec.CompletionMode = ptr.To(batchv1.IndexedCompletion)
 	job.Spec.Template.Spec.Subdomain = job.Name
 
+	b.buildPodObjectMeta(&job.Spec.Template.ObjectMeta)
 	b.buildPodSpecVolumesAndEnv(&job.Spec.Template.Spec)
 	job.Spec.Template.Spec.Volumes = append(job.Spec.Template.Spec.Volumes,
 		corev1.Volume{

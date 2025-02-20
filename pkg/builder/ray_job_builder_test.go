@@ -46,8 +46,6 @@ func TestRayJobBuilder(t *testing.T) {
 	userID := os.Getenv(constants.SystemEnvVarNameUser)
 
 	testRayJobTemplateWrapper := wrappers.MakeRayJobTemplate("ray-job-template", metav1.NamespaceDefault).
-		Label("foo", "bar").
-		Annotation("foo", "baz").
 		WithRayClusterSpec(wrappers.MakeRayClusterSpec().
 			WithWorkerGroupSpec(
 				*wrappers.MakeWorkerGroupSpec("g1").
@@ -147,8 +145,6 @@ func TestRayJobBuilder(t *testing.T) {
 					Obj(),
 			},
 			wantRootObj: wrappers.MakeRayJob("", metav1.NamespaceDefault).GenerateName("profile-rayjob-").
-				Annotation("foo", "baz").
-				Label("foo", "bar").
 				Profile("profile").
 				Mode(v1alpha1.RayJobMode).
 				Spec(
@@ -193,8 +189,6 @@ func TestRayJobBuilder(t *testing.T) {
 				wrappers.MakeVolumeBundle("vb2", metav1.NamespaceDefault).Obj(),
 			},
 			wantRootObj: wrappers.MakeRayJob("", metav1.NamespaceDefault).GenerateName("profile-rayjob-").
-				Annotation("foo", "baz").
-				Label("foo", "bar").
 				Profile("profile").
 				Mode(v1alpha1.RayJobMode).
 				Label(kueueconstants.QueueLabel, "lq1").
@@ -248,8 +242,6 @@ func TestRayJobBuilder(t *testing.T) {
 				wrappers.MakeVolumeBundle("vb2", metav1.NamespaceDefault).Obj(),
 			},
 			wantRootObj: wrappers.MakeRayJob("", metav1.NamespaceDefault).GenerateName("profile-rayjob-").
-				Annotation("foo", "baz").
-				Label("foo", "bar").
 				Profile("profile").
 				Mode(v1alpha1.RayJobMode).
 				WithRayClusterLabelSelector("rc1").

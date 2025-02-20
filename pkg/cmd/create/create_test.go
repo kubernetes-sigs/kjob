@@ -174,6 +174,39 @@ func TestCreateCmd(t *testing.T) {
 			// Fake dynamic client not generating name. That's why we have <unknown>.
 			wantOut: "job.batch/<unknown> created\n",
 		},
+		"should create job with pod template label and annotation": {
+			args: func(tc *createCmdTestCase) []string {
+				return []string{
+					"job",
+					"--profile", "profile",
+					"--pod-template-label", "foo=bar",
+					"--pod-template-annotation", "foo=baz",
+				}
+			},
+			kjobctlObjs: []runtime.Object{
+				wrappers.MakeJobTemplate("job-template", metav1.NamespaceDefault).Obj(),
+				wrappers.MakeApplicationProfile("profile", metav1.NamespaceDefault).
+					WithSupportedMode(*wrappers.MakeSupportedMode(v1alpha1.JobMode, "job-template").Obj()).
+					Obj(),
+			},
+			gvks: []schema.GroupVersionKind{{Group: "batch", Version: "v1", Kind: "Job"}},
+			wantLists: []runtime.Object{
+				&batchv1.JobList{
+					TypeMeta: metav1.TypeMeta{Kind: "JobList", APIVersion: "batch/v1"},
+					Items: []batchv1.Job{
+						*wrappers.MakeJob("", metav1.NamespaceDefault).
+							GenerateName("profile-job-").
+							Profile("profile").
+							Mode(v1alpha1.JobMode).
+							PodTemplateLabel("foo", "bar").
+							PodTemplateAnnotation("foo", "baz").
+							Obj(),
+					},
+				},
+			},
+			// Fake dynamic client not generating name. That's why we have <unknown>.
+			wantOut: "job.batch/<unknown> created\n",
+		},
 		"should create rayjob": {
 			args: func(tc *createCmdTestCase) []string { return []string{"rayjob", "--profile", "profile"} },
 			kjobctlObjs: []runtime.Object{
@@ -1092,6 +1125,8 @@ export $(cat /slurm/env/$JOB_CONTAINER_INDEX/slurm.env | xargs)
 					"--init-image", "bash:latest",
 					"--first-node-ip",
 					"--first-node-ip-timeout", "29s",
+					"--pod-template-label", "foo=bar",
+					"--pod-template-annotation", "foo=baz",
 					"--",
 					"--array", "0-25",
 					"--nodes", "2",
@@ -1140,6 +1175,8 @@ export $(cat /slurm/env/$JOB_CONTAINER_INDEX/slurm.env | xargs)
 							Mode(v1alpha1.SlurmMode).
 							LocalQueue("lq1").
 							Subdomain("profile-slurm").
+							PodTemplateLabel("foo", "bar").
+							PodTemplateAnnotation("foo", "baz").
 							WithInitContainer(*wrappers.MakeContainer("slurm-init-env", "bash:latest").
 								Command("sh", "/slurm/scripts/init-entrypoint.sh").
 								WithVolumeMount(corev1.VolumeMount{Name: "slurm-scripts", MountPath: "/slurm/scripts"}).

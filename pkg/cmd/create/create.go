@@ -73,31 +73,33 @@ const (
 	firstNodeIPTimeoutFlagName       = "first-node-ip-timeout"
 	waitFlagName                     = "wait"
 
-	commandFlagName     = string(v1alpha1.CmdFlag)
-	parallelismFlagName = string(v1alpha1.ParallelismFlag)
-	completionsFlagName = string(v1alpha1.CompletionsFlag)
-	replicasFlagName    = string(v1alpha1.ReplicasFlag)
-	minReplicasFlagName = string(v1alpha1.MinReplicasFlag)
-	maxReplicasFlagName = string(v1alpha1.MaxReplicasFlag)
-	requestFlagName     = string(v1alpha1.RequestFlag)
-	localQueueFlagName  = string(v1alpha1.LocalQueueFlag)
-	rayClusterFlagName  = string(v1alpha1.RayClusterFlag)
-	arrayFlagName       = string(v1alpha1.ArrayFlag)
-	cpusPerTaskFlagName = string(v1alpha1.CpusPerTaskFlag)
-	gpusPerTaskFlagName = string(v1alpha1.GpusPerTaskFlag)
-	memPerNodeFlagName  = string(v1alpha1.MemPerNodeFlag)
-	memPerTaskFlagName  = string(v1alpha1.MemPerTaskFlag)
-	memPerCPUFlagName   = string(v1alpha1.MemPerCPUFlag)
-	memPerGPUFlagName   = string(v1alpha1.MemPerGPUFlag)
-	nodesFlagName       = string(v1alpha1.NodesFlag)
-	nTasksFlagName      = string(v1alpha1.NTasksFlag)
-	outputFlagName      = string(v1alpha1.OutputFlag)
-	errorFlagName       = string(v1alpha1.ErrorFlag)
-	inputFlagName       = string(v1alpha1.InputFlag)
-	jobNameFlagName     = string(v1alpha1.JobNameFlag)
-	partitionFlagName   = string(v1alpha1.PartitionFlag)
-	priorityFlagName    = string(v1alpha1.PriorityFlag)
-	timeFlagName        = string(v1alpha1.TimeFlag)
+	commandFlagName               = string(v1alpha1.CmdFlag)
+	parallelismFlagName           = string(v1alpha1.ParallelismFlag)
+	completionsFlagName           = string(v1alpha1.CompletionsFlag)
+	replicasFlagName              = string(v1alpha1.ReplicasFlag)
+	minReplicasFlagName           = string(v1alpha1.MinReplicasFlag)
+	maxReplicasFlagName           = string(v1alpha1.MaxReplicasFlag)
+	requestFlagName               = string(v1alpha1.RequestFlag)
+	localQueueFlagName            = string(v1alpha1.LocalQueueFlag)
+	rayClusterFlagName            = string(v1alpha1.RayClusterFlag)
+	arrayFlagName                 = string(v1alpha1.ArrayFlag)
+	cpusPerTaskFlagName           = string(v1alpha1.CpusPerTaskFlag)
+	gpusPerTaskFlagName           = string(v1alpha1.GpusPerTaskFlag)
+	memPerNodeFlagName            = string(v1alpha1.MemPerNodeFlag)
+	memPerTaskFlagName            = string(v1alpha1.MemPerTaskFlag)
+	memPerCPUFlagName             = string(v1alpha1.MemPerCPUFlag)
+	memPerGPUFlagName             = string(v1alpha1.MemPerGPUFlag)
+	nodesFlagName                 = string(v1alpha1.NodesFlag)
+	nTasksFlagName                = string(v1alpha1.NTasksFlag)
+	outputFlagName                = string(v1alpha1.OutputFlag)
+	errorFlagName                 = string(v1alpha1.ErrorFlag)
+	inputFlagName                 = string(v1alpha1.InputFlag)
+	jobNameFlagName               = string(v1alpha1.JobNameFlag)
+	partitionFlagName             = string(v1alpha1.PartitionFlag)
+	priorityFlagName              = string(v1alpha1.PriorityFlag)
+	timeFlagName                  = string(v1alpha1.TimeFlag)
+	podTemplateLabelFlagName      = string(v1alpha1.PodTemplateLabelFlag)
+	podTemplateAnnotationFlagName = string(v1alpha1.PodTemplateAnnotationFlag)
 )
 
 func withTimeFlag(f *pflag.FlagSet, p *string) {
@@ -222,6 +224,8 @@ type CreateOptions struct {
 	Wait                     bool
 	SkipLocalQueueValidation bool
 	SkipPriorityValidation   bool
+	PodTemplateLabels        map[string]string
+	PodTemplateAnnotations   map[string]string
 
 	UserSpecifiedCommand     string
 	UserSpecifiedParallelism int32
@@ -494,6 +498,10 @@ func NewCreateCmd(clientGetter util.ClientGetter, streams genericiooptions.IOStr
 			"Apply priority for the entire workload.")
 		subcmd.Flags().BoolVar(&o.SkipPriorityValidation, skipPriorityValidationFlagName, false,
 			"Skip workload priority class validation. Add priority class label even if the class does not exist.")
+		subcmd.Flags().StringToStringVar(&o.PodTemplateLabels, podTemplateLabelFlagName, make(map[string]string),
+			"Specifies one or more labels for the Pod template.")
+		subcmd.Flags().StringToStringVar(&o.PodTemplateAnnotations, podTemplateAnnotationFlagName, make(map[string]string),
+			"Specifies one or more annotations for the Pod template.")
 
 		modeSubcommand.Setup(clientGetter, subcmd, o)
 
@@ -704,6 +712,8 @@ func (o *CreateOptions) Run(ctx context.Context, clientGetter util.ClientGetter,
 		WithFirstNodeIP(o.FirstNodeIP).
 		WithFirstNodeIPTimeout(o.FirstNodeIPTimeout).
 		WithTimeLimit(o.TimeLimit).
+		WithPodTemplateLabels(o.PodTemplateLabels).
+		WithPodTemplateAnnotations(o.PodTemplateAnnotations).
 		Do(ctx)
 	if err != nil {
 		return err

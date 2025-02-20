@@ -73,6 +73,8 @@ var (
 	noPartitionSpecifiedErr                = errors.New("no partition specified")
 	noPrioritySpecifiedErr                 = errors.New("no priority specified")
 	noTimeSpecifiedErr                     = errors.New("no time specified")
+	noPodTemplateLabelSpecifiedErr         = errors.New("no pod template label specified")
+	noPodTemplateAnnotationSpecifiedErr    = errors.New("no pod template annotation specified")
 )
 
 type builder interface {
@@ -122,6 +124,8 @@ type Builder struct {
 	firstNodeIPTimeout       time.Duration
 	changeDir                string
 	timeLimit                string
+	podTemplateLabels        map[string]string
+	podTemplateAnnotations   map[string]string
 
 	profile       *v1alpha1.ApplicationProfile
 	mode          *v1alpha1.SupportedMode
@@ -314,6 +318,16 @@ func (b *Builder) WithTimeLimit(timeLimit string) *Builder {
 	return b
 }
 
+func (b *Builder) WithPodTemplateLabels(podTemplateLabels map[string]string) *Builder {
+	b.podTemplateLabels = podTemplateLabels
+	return b
+}
+
+func (b *Builder) WithPodTemplateAnnotations(podTemplateAnnotations map[string]string) *Builder {
+	b.podTemplateAnnotations = podTemplateAnnotations
+	return b
+}
+
 func (b *Builder) validateGeneral(ctx context.Context) error {
 	if b.namespace == "" {
 		return noNamespaceSpecifiedErr
@@ -472,6 +486,14 @@ func (b *Builder) validateFlags() error {
 		return noTimeSpecifiedErr
 	}
 
+	if slices.Contains(b.mode.RequiredFlags, v1alpha1.PodTemplateLabelFlag) && b.podTemplateLabels == nil {
+		return noPodTemplateLabelSpecifiedErr
+	}
+
+	if slices.Contains(b.mode.RequiredFlags, v1alpha1.PodTemplateAnnotationFlag) && b.podTemplateAnnotations == nil {
+		return noPodTemplateAnnotationSpecifiedErr
+	}
+
 	return nil
 }
 
@@ -606,11 +628,22 @@ func (b *Builder) withKueueLabels(objectMeta *metav1.ObjectMeta) error {
 	return nil
 }
 
-func (b *Builder) buildPodSpec(templateSpec corev1.PodSpec) corev1.PodSpec {
-	b.buildPodSpecVolumesAndEnv(&templateSpec)
+// buildPodObjectMeta sets user specified pod template labels and annotations
+func (b *Builder) buildPodObjectMeta(templateObjectMeta *metav1.ObjectMeta) {
+	templateObjectMeta.Labels = b.podTemplateLabels
+	templateObjectMeta.Annotations = b.podTemplateAnnotations
+}
 
-	for i := range templateSpec.Containers {
-		container := &templateSpec.Containers[i]
+func (b *Builder) buildPodTemplateSpec(podTemplateSpec *corev1.PodTemplateSpec) {
+	b.buildPodObjectMeta(&podTemplateSpec.ObjectMeta)
+	b.buildPodSpec(&podTemplateSpec.Spec)
+}
+
+func (b *Builder) buildPodSpec(podSpec *corev1.PodSpec) {
+	b.buildPodSpecVolumesAndEnv(podSpec)
+
+	for i := range podSpec.Containers {
+		container := &podSpec.Containers[i]
 
 		if i == 0 && len(b.command) > 0 {
 			container.Command = b.command
@@ -620,8 +653,6 @@ func (b *Builder) buildPodSpec(templateSpec corev1.PodSpec) corev1.PodSpec {
 			container.Resources.Requests = b.requests
 		}
 	}
-
-	return templateSpec
 }
 
 func (b *Builder) buildPodSpecVolumesAndEnv(templateSpec *corev1.PodSpec) {

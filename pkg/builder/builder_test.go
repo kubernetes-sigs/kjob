@@ -413,14 +413,40 @@ func TestBuilder(t *testing.T) {
 			},
 			wantErr: noPrioritySpecifiedErr,
 		},
+		"shouldn't build job because pod template label not specified with required flags": {
+			namespace: metav1.NamespaceDefault,
+			profile:   "profile",
+			mode:      v1alpha1.JobMode,
+			kjobctlObjs: []runtime.Object{
+				wrappers.MakeApplicationProfile("profile", metav1.NamespaceDefault).
+					WithSupportedMode(v1alpha1.SupportedMode{
+						Name:          v1alpha1.JobMode,
+						RequiredFlags: []v1alpha1.Flag{v1alpha1.PodTemplateLabelFlag},
+					}).
+					Obj(),
+			},
+			wantErr: noPodTemplateLabelSpecifiedErr,
+		},
+		"shouldn't build job because pod template annotation not specified with required flags": {
+			namespace: metav1.NamespaceDefault,
+			profile:   "profile",
+			mode:      v1alpha1.JobMode,
+			kjobctlObjs: []runtime.Object{
+				wrappers.MakeApplicationProfile("profile", metav1.NamespaceDefault).
+					WithSupportedMode(v1alpha1.SupportedMode{
+						Name:          v1alpha1.JobMode,
+						RequiredFlags: []v1alpha1.Flag{v1alpha1.PodTemplateAnnotationFlag},
+					}).
+					Obj(),
+			},
+			wantErr: noPodTemplateAnnotationSpecifiedErr,
+		},
 		"should build job": {
 			namespace: metav1.NamespaceDefault,
 			profile:   "profile",
 			mode:      v1alpha1.JobMode,
 			kjobctlObjs: []runtime.Object{
 				wrappers.MakeJobTemplate("job-template", metav1.NamespaceDefault).
-					Label("foo", "bar").
-					Annotation("foo", "baz").
 					Obj(),
 				wrappers.MakeApplicationProfile("profile", metav1.NamespaceDefault).
 					WithSupportedMode(v1alpha1.SupportedMode{
@@ -430,8 +456,6 @@ func TestBuilder(t *testing.T) {
 					Obj(),
 			},
 			wantRootObj: wrappers.MakeJob("", metav1.NamespaceDefault).GenerateName("profile-job-").
-				Annotation("foo", "baz").
-				Label("foo", "bar").
 				Profile("profile").
 				Mode(v1alpha1.JobMode).
 				Obj(),

@@ -36,6 +36,8 @@ func (b *interactiveBuilder) build(ctx context.Context) (runtime.Object, []runti
 		return nil, nil, err
 	}
 
+	b.buildPodObjectMeta(&template.Template.ObjectMeta)
+
 	objectMeta, err := b.buildObjectMeta(template.Template.ObjectMeta, false)
 	if err != nil {
 		return nil, nil, err
@@ -50,7 +52,7 @@ func (b *interactiveBuilder) build(ctx context.Context) (runtime.Object, []runti
 		Spec:       template.Template.Spec,
 	}
 
-	pod.Spec = b.buildPodSpec(pod.Spec)
+	b.buildPodSpec(&pod.Spec)
 
 	if len(pod.Spec.Containers) > 0 {
 		pod.Spec.Containers[0].TTY = true
