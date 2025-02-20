@@ -47,8 +47,6 @@ func TestJobBuilder(t *testing.T) {
 	userID := os.Getenv(constants.SystemEnvVarNameUser)
 
 	testJobTemplateWrapper := wrappers.MakeJobTemplate("job-template", metav1.NamespaceDefault).
-		Label("foo", "bar").
-		Annotation("foo", "baz").
 		Parallelism(1).
 		Completions(1).
 		WithInitContainer(
@@ -78,17 +76,19 @@ func TestJobBuilder(t *testing.T) {
 		WithVolume("v2", "default-config2")
 
 	testCases := map[string]struct {
-		namespace   string
-		profile     string
-		mode        v1alpha1.ApplicationProfileMode
-		command     []string
-		parallelism *int32
-		completions *int32
-		requests    corev1.ResourceList
-		localQueue  string
-		kjobctlObjs []runtime.Object
-		wantRootObj runtime.Object
-		wantErr     error
+		namespace             string
+		profile               string
+		mode                  v1alpha1.ApplicationProfileMode
+		command               []string
+		parallelism           *int32
+		completions           *int32
+		requests              corev1.ResourceList
+		localQueue            string
+		podTemplateLabels     map[string]string
+		podTemplateAnnotation map[string]string
+		kjobctlObjs           []runtime.Object
+		wantRootObj           runtime.Object
+		wantErr               error
 	}{
 		"shouldn't build job because template not found": {
 			namespace: metav1.NamespaceDefault,
@@ -112,8 +112,6 @@ func TestJobBuilder(t *testing.T) {
 					Obj(),
 			},
 			wantRootObj: wrappers.MakeJob("", metav1.NamespaceDefault).GenerateName("profile-job-").
-				Annotation("foo", "baz").
-				Label("foo", "bar").
 				Profile("profile").
 				Mode(v1alpha1.JobMode).
 				Spec(
@@ -128,6 +126,37 @@ func TestJobBuilder(t *testing.T) {
 						WithEnvVar(corev1.EnvVar{Name: "TIMESTAMP", Value: testStartTime.Format(time.RFC3339)}).
 						Obj().Template.Spec,
 				).
+				Obj(),
+		},
+		"should build job with pod template label and annotation": {
+			namespace:             metav1.NamespaceDefault,
+			profile:               "profile",
+			mode:                  v1alpha1.JobMode,
+			podTemplateLabels:     map[string]string{"foo": "bar"},
+			podTemplateAnnotation: map[string]string{"foo": "baz"},
+			kjobctlObjs: []runtime.Object{
+				testJobTemplateWrapper.Clone().Obj(),
+				wrappers.MakeApplicationProfile("profile", metav1.NamespaceDefault).
+					WithSupportedMode(v1alpha1.SupportedMode{Name: v1alpha1.JobMode, Template: "job-template"}).
+					Obj(),
+			},
+			wantRootObj: wrappers.MakeJob("", metav1.NamespaceDefault).GenerateName("profile-job-").
+				Profile("profile").
+				Mode(v1alpha1.JobMode).
+				Spec(
+					testJobTemplateWrapper.Clone().
+						WithEnvVar(corev1.EnvVar{Name: constants.EnvVarNameUserID, Value: userID}).
+						WithEnvVar(corev1.EnvVar{Name: constants.EnvVarTaskName, Value: "default_profile"}).
+						WithEnvVar(corev1.EnvVar{
+							Name:  constants.EnvVarTaskID,
+							Value: fmt.Sprintf("%s_%s_default_profile", userID, testStartTime.Format(time.RFC3339)),
+						}).
+						WithEnvVar(corev1.EnvVar{Name: "PROFILE", Value: "default_profile"}).
+						WithEnvVar(corev1.EnvVar{Name: "TIMESTAMP", Value: testStartTime.Format(time.RFC3339)}).
+						Obj().Template.Spec,
+				).
+				PodTemplateAnnotation("foo", "baz").
+				PodTemplateLabel("foo", "bar").
 				Obj(),
 		},
 		"should build job with replacements": {
@@ -153,8 +182,6 @@ func TestJobBuilder(t *testing.T) {
 				wrappers.MakeVolumeBundle("vb2", metav1.NamespaceDefault).Obj(),
 			},
 			wantRootObj: wrappers.MakeJob("", metav1.NamespaceDefault).GenerateName("profile-job-").
-				Annotation("foo", "baz").
-				Label("foo", "bar").
 				Profile("profile").
 				Mode(v1alpha1.JobMode).
 				Label(kueueconstants.QueueLabel, "lq1").
@@ -198,6 +225,8 @@ func TestJobBuilder(t *testing.T) {
 				WithRequests(tc.requests).
 				WithLocalQueue(tc.localQueue).
 				WithSkipLocalQueueValidation(true).
+				WithPodTemplateLabels(tc.podTemplateLabels).
+				WithPodTemplateAnnotations(tc.podTemplateAnnotation).
 				Do(ctx)
 
 			var opts []cmp.Option

@@ -46,8 +46,6 @@ func TestRayClusterBuilder(t *testing.T) {
 	userID := os.Getenv(constants.SystemEnvVarNameUser)
 
 	testRayClusterTemplateWrapper := wrappers.MakeRayClusterTemplate("ray-cluster-template", metav1.NamespaceDefault).
-		Label("foo", "bar").
-		Annotation("foo", "baz").
 		Spec(*wrappers.MakeRayClusterSpec().
 			WithWorkerGroupSpec(
 				*wrappers.MakeWorkerGroupSpec("g1").
@@ -146,8 +144,6 @@ func TestRayClusterBuilder(t *testing.T) {
 					Obj(),
 			},
 			wantRootObj: wrappers.MakeRayCluster("", metav1.NamespaceDefault).GenerateName("profile-raycluster-").
-				Annotation("foo", "baz").
-				Label("foo", "bar").
 				Profile("profile").
 				Mode(v1alpha1.RayClusterMode).
 				Spec(
@@ -192,8 +188,6 @@ func TestRayClusterBuilder(t *testing.T) {
 				wrappers.MakeVolumeBundle("vb2", metav1.NamespaceDefault).Obj(),
 			},
 			wantRootObj: wrappers.MakeRayCluster("", metav1.NamespaceDefault).GenerateName("profile-raycluster-").
-				Annotation("foo", "baz").
-				Label("foo", "bar").
 				Profile("profile").
 				Mode(v1alpha1.RayClusterMode).
 				Label(kueueconstants.QueueLabel, "lq1").

@@ -190,8 +190,26 @@ func (j *JobWrapper) Succeeded(value int32) *JobWrapper {
 	return j
 }
 
-// Spec set job spec.
+// Spec sets job spec.
 func (j *JobWrapper) Spec(spec batchv1.JobSpec) *JobWrapper {
 	j.Job.Spec = spec
+	return j
+}
+
+// PodTemplateLabel sets pod template label.
+func (j *JobWrapper) PodTemplateLabel(key, value string) *JobWrapper {
+	if j.Job.Spec.Template.Labels == nil {
+		j.Job.Spec.Template.Labels = make(map[string]string)
+	}
+	j.Job.Spec.Template.Labels[key] = value
+	return j
+}
+
+// PodTemplateAnnotation sets pod template annotation.
+func (j *JobWrapper) PodTemplateAnnotation(key, value string) *JobWrapper {
+	if j.Job.Spec.Template.Annotations == nil {
+		j.Job.Spec.Template.Annotations = make(map[string]string)
+	}
+	j.Job.Spec.Template.Annotations[key] = value
 	return j
 }
