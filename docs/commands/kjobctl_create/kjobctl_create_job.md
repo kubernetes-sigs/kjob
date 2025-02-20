@@ -112,6 +112,24 @@ kjobctl create job --profile APPLICATION_PROFILE_NAME [--localqueue LOCAL_QUEUE_
         </td>
     </tr>
     <tr>
+        <td colspan="2">--pod-template-annotation &lt;comma-separated &#39;key=value&#39; pairs&gt;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default: []</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td style="line-height: 130%; word-wrap: break-word;">
+            <p>Specifies one or more annotations for the Pod template.</p>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">--pod-template-label &lt;comma-separated &#39;key=value&#39; pairs&gt;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default: []</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td style="line-height: 130%; word-wrap: break-word;">
+            <p>Specifies one or more labels for the Pod template.</p>
+        </td>
+    </tr>
+    <tr>
         <td colspan="2">--priority string</td>
     </tr>
     <tr>

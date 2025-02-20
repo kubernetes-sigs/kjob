@@ -51,7 +51,7 @@ func (b *jobBuilder) build(ctx context.Context) (runtime.Object, []runtime.Objec
 		Spec:       template.Template.Spec,
 	}
 
-	job.Spec.Template.Spec = b.buildPodSpec(job.Spec.Template.Spec)
+	b.buildPodTemplateSpec(&job.Spec.Template)
 
 	if b.parallelism != nil {
 		job.Spec.Parallelism = b.parallelism
