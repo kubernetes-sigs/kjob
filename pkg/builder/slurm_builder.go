@@ -323,13 +323,6 @@ func (b *slurmBuilder) build(ctx context.Context) (runtime.Object, []runtime.Obj
 			totalCpus.Add(*b.cpusPerTask)
 		}
 
-		if b.gpusPerTask != nil {
-			for name, number := range b.gpusPerTask {
-				requests[corev1.ResourceName(name)] = *number
-			}
-			totalGpus.Add(totalGPUsPerTask)
-		}
-
 		if b.memPerTask != nil {
 			requests[corev1.ResourceMemory] = *b.memPerTask
 			totalMem.Add(*b.memPerTask)
@@ -352,6 +345,13 @@ func (b *slurmBuilder) build(ctx context.Context) (runtime.Object, []runtime.Obj
 		limits := corev1.ResourceList{}
 		if !memPerContainer.IsZero() {
 			limits[corev1.ResourceMemory] = memPerContainer
+		}
+
+		if b.gpusPerTask != nil {
+			for name, number := range b.gpusPerTask {
+				limits[corev1.ResourceName(name)] = *number
+			}
+			totalGpus.Add(totalGPUsPerTask)
 		}
 
 		if len(limits) > 0 {

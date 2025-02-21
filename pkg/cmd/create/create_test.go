@@ -1781,8 +1781,10 @@ export $(cat /slurm/env/$JOB_CONTAINER_INDEX/slurm.env | xargs)cd /mydir
 								WithResources(corev1.ResourceRequirements{
 									Requests: corev1.ResourceList{
 										corev1.ResourceMemory: resource.MustParse("2G"),
-										"volta":               resource.MustParse("3"),
-										"kepler":              resource.MustParse("1"),
+									},
+									Limits: corev1.ResourceList{
+										"volta":  resource.MustParse("3"),
+										"kepler": resource.MustParse("1"),
 									},
 								}).
 								Obj()).
@@ -1791,8 +1793,10 @@ export $(cat /slurm/env/$JOB_CONTAINER_INDEX/slurm.env | xargs)cd /mydir
 								WithResources(corev1.ResourceRequirements{
 									Requests: corev1.ResourceList{
 										corev1.ResourceMemory: resource.MustParse("2G"),
-										"volta":               resource.MustParse("3"),
-										"kepler":              resource.MustParse("1"),
+									},
+									Limits: corev1.ResourceList{
+										"volta":  resource.MustParse("3"),
+										"kepler": resource.MustParse("1"),
 									},
 								}).
 								Obj()).
