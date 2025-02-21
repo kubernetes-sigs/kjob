@@ -57,17 +57,18 @@ spec:
                     requiredFlags:
                       description: |-
                         requiredFlags point which cli flags are required to be passed in order to fill the gaps in the templates.
-                        Possible values are cmd, parallelism, completions, replicas, min-replicas, max-replicas, request, localqueue, and raycluster.
-                        replicas, min-replicas, and max-replicas flags used only for RayJob and RayCluster mode.
+                        Possible values are cmd, parallelism, completions, replicas, min-replicas, max-replicas, request, localqueue,
+                        raycluster, pod-template-label and pod-template-annotation.
+                        The replicas, min-replicas, and max-replicas flags used only for RayJob and RayCluster mode.
                         The raycluster flag used only for the RayJob mode.
                         The request flag used only for Interactive and Job modes.
                         The cmd flag used only for Interactive, Job, and RayJob.
                         The time and priority flags can be used in all modes.
                         If the raycluster flag are set, none of localqueue, replicas, min-replicas, or max-replicas can be set.
-                        For the Slurm mode, the possible values are: array, cpus-per-task, error, gpus-per-task, input, job-name, mem, mem-per-cpu,
-                        mem-per-gpu, mem-per-task, nodes, ntasks, output, partition, localqueue.
+                        For the Slurm mode, the possible values are: array, cpus-per-task, error, gpus-per-task, input, job-name, mem,
+                        mem-per-cpu, mem-per-gpu, mem-per-task, nodes, ntasks, output, partition, localqueue.
 
-                        cmd and requests values are going to be added only to the first primary container.
+                        The cmd and requests values are going to be added only to the first primary container.
                       items:
                         enum:
                         - cmd
