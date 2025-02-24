@@ -3,7 +3,7 @@ module sigs.k8s.io/kjob
 go 1.23.0
 
 require (
-	github.com/google/go-cmp v0.6.0
+	github.com/google/go-cmp v0.7.0
 	github.com/onsi/ginkgo/v2 v2.22.2
 	github.com/onsi/gomega v1.36.2
 	github.com/ray-project/kuberay/ray-operator v1.2.2
