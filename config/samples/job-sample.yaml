@@ -15,6 +15,9 @@ metadata:
   name: job-template
   namespace: default
 template:
+  metadata:
+    annotation:
+      foo: "bar"
   spec:
     parallelism: 3
     completions: 3
