@@ -72,6 +72,7 @@ const (
 	firstNodeIPFlagName              = "first-node-ip"
 	firstNodeIPTimeoutFlagName       = "first-node-ip-timeout"
 	waitFlagName                     = "wait"
+	waitTimeoutFlagName              = "wait-timeout"
 
 	commandFlagName               = string(v1alpha1.CmdFlag)
 	parallelismFlagName           = string(v1alpha1.ParallelismFlag)
@@ -188,6 +189,7 @@ type CreateOptions struct {
 	InitImage          string
 	PodRunningTimeout  time.Duration
 	FirstNodeIPTimeout time.Duration
+	WaitTimeout        time.Duration
 	FirstNodeIP        bool
 	RemoveObject       bool
 	ChangeDir          string
@@ -370,6 +372,7 @@ var createModeSubcommands = map[string]modeSubcommand{
 		Setup: func(clientGetter util.ClientGetter, subcmd *cobra.Command, o *CreateOptions) {
 			subcmd.Use += " [--ignore-unknown-flags]" +
 				" [--wait]" +
+				" [--wait-timeout]" +
 				" [--init-image IMAGE]" +
 				" [--first-node-ip]" +
 				" [--first-node-ip-timeout DURATION]" +
@@ -398,7 +401,9 @@ var createModeSubcommands = map[string]modeSubcommand{
 			subcmd.Flags().BoolVar(&o.IgnoreUnknown, ignoreUnknownFlagName, false,
 				"Ignore all the unsupported flags in the bash script.")
 			subcmd.Flags().BoolVar(&o.Wait, waitFlagName, false,
-				"Wait for the Job to complete and stream its Pod logs")
+				"Wait for the Job to complete and stream its Pod logs.")
+			subcmd.Flags().DurationVar(&o.WaitTimeout, waitTimeoutFlagName, 0,
+				"Timeout for waiting for the job to complete.")
 			subcmd.Flags().StringVar(&o.InitImage, initImageFlagName, "registry.k8s.io/busybox:1.27.2",
 				"The image used for the init container.")
 			subcmd.Flags().BoolVar(&o.FirstNodeIP, firstNodeIPFlagName, false,
@@ -545,8 +550,8 @@ func (o *CreateOptions) Complete(clientGetter util.ClientGetter, cmd *cobra.Comm
 			return errors.New("must specify only one script")
 		}
 
-		if o.RemoveObject && !o.Wait {
-			return errors.New("the --wait flag is required when --rm is set")
+		if o.WaitTimeout != 0 && !o.Wait {
+			return errors.New("the --wait-timeout flag is required when --wait is set")
 		}
 
 		o.Script = slurmArgs[0]
@@ -912,16 +917,27 @@ func (o *CreateOptions) watchJobAndStreamLogs(ctx context.Context, clientGetter 
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	defer signal.Stop(sigChan)
 
+	waitTimeoutDone := make(chan struct{}, 1)
+	if o.WaitTimeout > 0 {
+		go func() {
+			defer close(waitTimeoutDone)
+			select {
+			case <-ctx.Done():
+			case <-time.After(o.WaitTimeout):
+			}
+		}()
+	}
+
 	watcherErrChan := make(chan error, 1)
-	defer close(watcherErrChan)
 	go func() {
-		err = o.watchJobPods(ctx, clientGetter, jobName)
+		defer close(watcherErrChan)
+		err := o.watchJobPods(ctx, clientGetter, jobName)
 		watcherErrChan <- err
 	}()
 
 	jobCompletionErrChan := make(chan error, 1)
-	defer close(jobCompletionErrChan)
 	go func() {
+		defer close(jobCompletionErrChan)
 		err := o.verifyJobFinished(ctx, k8sClient, jobName)
 		jobCompletionErrChan <- err
 	}()
@@ -929,28 +945,31 @@ func (o *CreateOptions) watchJobAndStreamLogs(ctx context.Context, clientGetter 
 	select {
 	case sig := <-sigChan:
 		fmt.Fprintf(o.Out, "Received signal: %v\n", sig)
-		if o.RemoveObject {
-			fmt.Fprintf(o.Out, "Stopping the job and cleaning up...\n")
-			err := k8sClient.BatchV1().Jobs(o.Namespace).Delete(ctx, jobName, metav1.DeleteOptions{
-				PropagationPolicy: ptr.To(metav1.DeletePropagationBackground),
-			})
-			if err != nil {
-				return err
-			}
-		}
+		return o.removeObject(ctx, k8sClient, jobName)
+	case <-waitTimeoutDone:
+		err := o.removeObject(ctx, k8sClient, jobName)
+		return errors.Join(errors.New("timeout deadline exceeded"), err)
 	case err := <-watcherErrChan:
 		if err != nil {
-			fmt.Fprintf(o.Out, "Error watching job pods: %v\n", err)
-			return err
+			return fmt.Errorf("error watching job pods: %w", err)
 		}
 	case err := <-jobCompletionErrChan:
 		if err != nil {
-			fmt.Fprintf(o.Out, "Error checking job completion: %v\n", err)
-			return err
+			return fmt.Errorf("checking job completion: %w", err)
 		}
-		fmt.Fprint(o.Out, "Job logs streaming finished.")
+		fmt.Fprintln(o.Out, "Job logs streaming finished.")
 	}
 
+	return nil
+}
+
+func (o *CreateOptions) removeObject(ctx context.Context, clientset kubernetes.Interface, jobName string) error {
+	if o.RemoveObject {
+		fmt.Fprintf(o.Out, "Stopping the job and cleaning up...\n")
+		return clientset.BatchV1().Jobs(o.Namespace).Delete(ctx, jobName, metav1.DeleteOptions{
+			PropagationPolicy: ptr.To(metav1.DeletePropagationBackground),
+		})
+	}
 	return nil
 }
 
@@ -980,7 +999,7 @@ func (o *CreateOptions) watchJobPods(ctx context.Context, clientGetter util.Clie
 			if pod.Status.Phase == corev1.PodRunning {
 				go func() {
 					err = o.streamLogsFromPod(ctx, clientGetter, pod.Name)
-					if err != nil {
+					if err != nil && !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
 						fmt.Fprintf(o.Out, "Error streaming logs from pod %q: %v\n", pod.Name, err)
 					}
 				}()

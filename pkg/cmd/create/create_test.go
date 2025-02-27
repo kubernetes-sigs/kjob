@@ -922,6 +922,12 @@ func TestCreateCmd(t *testing.T) {
 			},
 			wantErr: "must specify only one script",
 		},
+		"shouldn't create slurm because the wait-timeout flag requires the wait flag to be set": {
+			args: func(tc *createCmdTestCase) []string {
+				return []string{"slurm", "--profile", "profile", "--wait-timeout", "5s", "--", tc.tempFile}
+			},
+			wantErr: "the --wait-timeout flag is required when --wait is set",
+		},
 		"should create slurm": {
 			beforeTest: beforeSlurmTest,
 			args: func(tc *createCmdTestCase) []string {

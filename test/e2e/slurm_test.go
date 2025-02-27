@@ -445,6 +445,62 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, func() {
 			})
 		})
 
+		ginkgo.It("should interrupt log streaming and removes job after timeout", func() {
+			ginkgo.By("Create temporary script file")
+			script, err := os.CreateTemp("", "e2e-slurm-")
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			defer script.Close()
+			defer os.Remove(script.Name())
+
+			ginkgo.By("Write sleep command to script", func() {
+				_, err := script.WriteString("#!/bin/bash\nsleep 60")
+				gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			})
+
+			var cmd *exec.Cmd
+			var out bytes.Buffer
+			var outErr bytes.Buffer
+			ginkgo.By("Create slurm with --rm flag", func() {
+				cmdArgs := []string{
+					"create", "slurm",
+					"-n", ns.Name,
+					"--profile", profile.Name,
+					"--wait", "--rm",
+					"--wait-timeout", "1s",
+				}
+				cmdArgs = append(cmdArgs, "--", script.Name())
+				cmd = exec.Command(kjobctlPath, cmdArgs...)
+
+				cmd.Stdout = &out
+				cmd.Stderr = &outErr
+				err := cmd.Start()
+				gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			})
+
+			job := &batchv1.Job{}
+			ginkgo.By("Wait for the job to be created", func() {
+				gomega.Eventually(func(g gomega.Gomega) {
+					jobList := &batchv1.JobList{}
+					g.Expect(k8sClient.List(ctx, jobList, client.InNamespace(ns.Name))).To(gomega.Succeed())
+					g.Expect(jobList.Items).To(gomega.HaveLen(1))
+					job = &jobList.Items[0]
+				}, util.Timeout, util.Interval).Should(gomega.Succeed())
+			})
+
+			ginkgo.By("Wait for timeout", func() {
+				err = cmd.Wait()
+				gomega.Expect(err).To(gomega.HaveOccurred())
+				gomega.Expect(out.String()).To(gomega.ContainSubstring("Stopping the job and cleaning up..."))
+				gomega.Expect(outErr.String()).To(gomega.ContainSubstring("Error: timeout deadline exceeded"))
+			})
+
+			ginkgo.By("Check job is deleted", func() {
+				gomega.Eventually(func(g gomega.Gomega) {
+					g.Expect(errors.IsNotFound(k8sClient.Get(ctx, client.ObjectKeyFromObject(job), job))).To(gomega.BeTrue())
+				}, util.Timeout, util.Interval).Should(gomega.Succeed())
+			})
+		})
+
 		ginkgo.It("should stream logs from all the containers", func() {
 			ginkgo.By("Create temporary file")
 			script, err := os.CreateTemp("", "e2e-slurm-")
