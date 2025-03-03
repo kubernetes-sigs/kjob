@@ -157,7 +157,7 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, func() {
 					}
 
 					gomega.Eventually(func(g gomega.Gomega) {
-						out, outErr, err := util.KExecute(ctx, cfg, restClient, ns.Name, pod.Name, containerName)
+						out, outErr, err := util.KExecute(ctx, cfg, restClient, ns.Name, pod.Name, containerName, []string{"cat", "/env.out"})
 						g.Expect(err).NotTo(gomega.HaveOccurred())
 						g.Expect(string(outErr)).To(gomega.BeEmpty())
 						g.Expect(parseSlurmEnvOutput(out)).To(gomega.BeComparableTo(wantOut,
@@ -550,6 +550,88 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, func() {
 						},
 						cmpopts.IgnoreFields(batchv1.JobCondition{}, "LastTransitionTime", "LastProbeTime", "Reason", "Message"))))
 				}, util.Timeout, util.Interval).Should(gomega.Succeed())
+			})
+		})
+	})
+
+	ginkgo.When("using --stdout --stderr flags", func() {
+		ginkgo.It("should write logs to the specified stdout and stderr files and print this logs", func() {
+			ginkgo.By("Create temporary file")
+			script, err := os.CreateTemp("", "e2e-slurm-")
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			defer script.Close()
+			defer os.Remove(script.Name())
+
+			const (
+				outputFile = "/output.log"
+				errorFile  = "/error.log"
+			)
+
+			ginkgo.By("Prepare script", func() {
+				_, err := script.WriteString("#!/bin/bash\nsleep 1\n>&1 echo 'stdout message'\n>&2 echo 'stderr message'\nsleep 60")
+				gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			})
+
+			var cmd *exec.Cmd
+			var out bytes.Buffer
+			var outErr bytes.Buffer
+			ginkgo.By("Create slurm with --rm flag", func() {
+				cmdArgs := []string{"create", "slurm", "-n", ns.Name, "--profile", profile.Name, "--wait", "--rm"}
+				cmdArgs = append(cmdArgs, "--", script.Name(), "--output", outputFile, "--error", errorFile)
+
+				cmd = exec.Command(kjobctlPath, cmdArgs...)
+				cmd.Stdout = &out
+				cmd.Stderr = &outErr
+				err := cmd.Start()
+				gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			})
+
+			pod := &corev1.Pod{}
+			ginkgo.By("Wait for the pod to be running", func() {
+				gomega.Eventually(func(g gomega.Gomega) {
+					podList := &corev1.PodList{}
+					g.Expect(k8sClient.List(ctx, podList, client.InNamespace(ns.Name))).To(gomega.Succeed())
+					g.Expect(podList.Items).To(gomega.HaveLen(1))
+					g.Expect(podList.Items[0].Spec.Containers).To(gomega.HaveLen(1))
+					g.Expect(podList.Items[0].Status.Phase).To(gomega.Equal(corev1.PodRunning))
+					pod = &podList.Items[0]
+				}, util.Timeout, util.Interval).Should(gomega.Succeed())
+			})
+
+			ginkgo.By("Wait for output logs", func() {
+				gomega.Eventually(func(g gomega.Gomega) {
+					out, outErr, err := util.KExecute(ctx, cfg, restClient, ns.Name, pod.Name, pod.Spec.Containers[0].Name, []string{"cat", outputFile})
+					g.Expect(err).NotTo(gomega.HaveOccurred())
+					g.Expect(string(outErr)).To(gomega.BeEmpty())
+					g.Expect(string(out)).To(gomega.Equal("stdout message\n"))
+				}, util.Timeout, util.Interval).Should(gomega.Succeed())
+			})
+
+			ginkgo.By("Wait for error logs", func() {
+				gomega.Eventually(func(g gomega.Gomega) {
+					out, outErr, err := util.KExecute(ctx, cfg, restClient, ns.Name, pod.Name, pod.Spec.Containers[0].Name, []string{"cat", errorFile})
+					g.Expect(err).NotTo(gomega.HaveOccurred())
+					g.Expect(string(outErr)).To(gomega.BeEmpty())
+					g.Expect(string(out)).To(gomega.Equal("stderr message\n"))
+				}, util.Timeout, util.Interval).Should(gomega.Succeed())
+			})
+
+			ginkgo.By("Interrupt execution", func() {
+				err = cmd.Process.Signal(os.Interrupt)
+				gomega.Expect(err).NotTo(gomega.HaveOccurred())
+				err = cmd.Wait()
+				gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			})
+
+			var jobName, configMapName, serviceName, logs string
+			ginkgo.By("Check CLI output", func() {
+				jobName, configMapName, serviceName, logs, err = parseSlurmCreateOutput(out.Bytes(), profile.Name)
+				gomega.Expect(err).NotTo(gomega.HaveOccurred())
+				gomega.Expect(jobName).NotTo(gomega.BeEmpty())
+				gomega.Expect(configMapName).NotTo(gomega.BeEmpty())
+				gomega.Expect(serviceName).NotTo(gomega.BeEmpty())
+				gomega.Expect(logs).To(gomega.ContainSubstring("stdout message"))
+				gomega.Expect(logs).To(gomega.ContainSubstring("stderr message"))
 			})
 		})
 	})
