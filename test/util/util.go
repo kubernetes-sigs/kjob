@@ -143,7 +143,7 @@ func CreateRestClient(cfg *rest.Config) *rest.RESTClient {
 	return restClient
 }
 
-func KExecute(ctx context.Context, cfg *rest.Config, client *rest.RESTClient, ns, pod, container string) ([]byte, []byte, error) {
+func KExecute(ctx context.Context, cfg *rest.Config, client *rest.RESTClient, ns, pod, container string, command []string) ([]byte, []byte, error) {
 	var out, outErr bytes.Buffer
 
 	req := client.Post().
@@ -153,7 +153,7 @@ func KExecute(ctx context.Context, cfg *rest.Config, client *rest.RESTClient, ns
 		SubResource("exec").
 		VersionedParams(&corev1.PodExecOptions{
 			Container: container,
-			Command:   []string{"cat", "/env.out"},
+			Command:   command,
 			Stdout:    true,
 			Stderr:    true,
 		}, scheme.ParameterCodec)
