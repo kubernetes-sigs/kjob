@@ -628,13 +628,15 @@ func (b *slurmBuilder) buildEntrypointCommand() string {
 	}
 
 	if b.output != "" {
-		strBuilder.WriteString(" 1>")
+		strBuilder.WriteString(" 1> >(tee ")
 		strBuilder.WriteString(unmaskFilename(b.output))
+		strBuilder.WriteByte(')')
 	}
 
 	if b.error != "" {
-		strBuilder.WriteString(" 2>")
+		strBuilder.WriteString(" 2> >(tee ")
 		strBuilder.WriteString(unmaskFilename(b.error))
+		strBuilder.WriteString(" >&2)")
 	}
 
 	return strBuilder.String()
