@@ -44,6 +44,15 @@ kjobctl create slurm --profile APPLICATION_PROFILE_NAME [--localqueue LOCAL_QUEU
         </td>
     </tr>
     <tr>
+        <td colspan="2">--container-name string</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td style="line-height: 130%; word-wrap: break-word;">
+            <p>Stream logs from specified container.</p>
+        </td>
+    </tr>
+    <tr>
         <td colspan="2">--dry-run string&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default: &#34;none&#34;</td>
     </tr>
     <tr>
