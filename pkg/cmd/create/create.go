@@ -996,60 +996,61 @@ func (o *CreateOptions) watchJobPods(ctx context.Context, clientGetter util.Clie
 		}
 
 		if event.Type == watch.Added || event.Type == watch.Modified {
-			if pod.Status.Phase == corev1.PodRunning {
-				go func() {
-					err = o.streamLogsFromPod(ctx, clientGetter, pod.Name)
-					if err != nil && !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
-						fmt.Fprintf(o.Out, "Error streaming logs from pod %q: %v\n", pod.Name, err)
-					}
-				}()
+			switch pod.Status.Phase {
+			case corev1.PodRunning, corev1.PodSucceeded, corev1.PodFailed:
+				go o.streamLogsFromPod(ctx, clientGetter, pod)
 			}
 		}
 	}
 	return nil
 }
 
-func (o *CreateOptions) streamLogsFromPod(ctx context.Context, clientGetter util.ClientGetter, podName string) error {
+func (o *CreateOptions) streamLogsFromPod(ctx context.Context, clientGetter util.ClientGetter, pod *corev1.Pod) {
+	_, loaded := o.activeStreams.LoadOrStore(pod.Name, true)
+	if loaded {
+		// pod is already streaming logs
+		return
+	}
+
+	for index := range pod.Spec.Containers {
+		if pod.Spec.Containers[index].Name == builder.SlurmInitContainerName {
+			continue
+		}
+
+		go func() {
+			err := o.streamLogsFromPodContainer(ctx, clientGetter, pod, index)
+			if err != nil && !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
+				fmt.Fprintf(o.Out, "Error streaming logs from pod %q container %q: %v\n", pod.Name, pod.Spec.Containers[index].Name, err)
+			}
+		}()
+	}
+}
+
+func (o *CreateOptions) streamLogsFromPodContainer(ctx context.Context, clientGetter util.ClientGetter, pod *corev1.Pod, containerIndex int) error {
 	k8sClient, err := clientGetter.K8sClientset()
 	if err != nil {
 		return err
 	}
 
-	_, loaded := o.activeStreams.LoadOrStore(podName, true)
-	if loaded {
-		// pod is already streaming logs
-		return nil
+	container := pod.Spec.Containers[containerIndex]
+
+	fmt.Fprintf(o.Out, "Starting log streaming for pod %q container %q...\n", pod.Name, container.Name)
+
+	logOptions := &corev1.PodLogOptions{
+		Container: container.Name,
+		Follow:    pod.Status.Phase == corev1.PodRunning,
 	}
-	defer o.activeStreams.Delete(podName)
+	req := k8sClient.CoreV1().Pods(o.Namespace).GetLogs(pod.Name, logOptions)
 
-	fmt.Fprintf(o.Out, "Starting log streaming for pod %s...\n", podName)
-
-	pod, err := k8sClient.CoreV1().Pods(o.Namespace).Get(ctx, podName, metav1.GetOptions{})
+	logStream, err := req.Stream(ctx)
 	if err != nil {
 		return err
 	}
+	defer logStream.Close()
 
-	for _, container := range pod.Spec.Containers {
-		if container.Name == builder.SlurmInitContainerName {
-			continue
-		}
-
-		logOptions := &corev1.PodLogOptions{
-			Container: container.Name,
-			Follow:    true,
-		}
-		req := k8sClient.CoreV1().Pods(o.Namespace).GetLogs(podName, logOptions)
-
-		logStream, err := req.Stream(ctx)
-		if err != nil {
-			return err
-		}
-		defer logStream.Close()
-
-		_, err = io.Copy(o.Out, logStream)
-		if err != nil {
-			return err
-		}
+	_, err = io.Copy(o.Out, logStream)
+	if err != nil {
+		return err
 	}
 
 	return nil
