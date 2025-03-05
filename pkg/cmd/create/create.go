@@ -1071,11 +1071,14 @@ func (o *CreateOptions) verifyJobFinished(ctx context.Context, clientset kuberne
 		if !ok {
 			continue
 		}
-
-		isJobFinished := slices.ContainsFunc(job.Status.Conditions, func(c batchv1.JobCondition) bool {
-			return (c.Type == batchv1.JobComplete || c.Type == batchv1.JobFailed) && c.Status == corev1.ConditionTrue
-		})
-		if isJobFinished {
+		switch event.Type {
+		case watch.Modified:
+			if slices.ContainsFunc(job.Status.Conditions, func(c batchv1.JobCondition) bool {
+				return (c.Type == batchv1.JobComplete || c.Type == batchv1.JobFailed) && c.Status == corev1.ConditionTrue
+			}) {
+				break
+			}
+		case watch.Deleted:
 			break
 		}
 	}
