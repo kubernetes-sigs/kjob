@@ -294,7 +294,7 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, func() {
 			defer os.Remove(script.Name())
 
 			ginkgo.By("Prepare script", func() {
-				_, err := script.WriteString("#!/bin/bash\nsleep 600")
+				_, err := script.WriteString("#!/bin/bash\nsleep 60")
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			})
 
@@ -352,7 +352,7 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, func() {
 			defer os.Remove(script.Name())
 
 			ginkgo.By("Prepare script", func() {
-				_, err := script.WriteString("#!/bin/bash\nsleep 10\necho 'Hello world!'")
+				_, err := script.WriteString("#!/bin/bash\necho 'Hello world!'")
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			})
 
@@ -376,7 +376,10 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, func() {
 				gomega.Expect(serviceName).NotTo(gomega.BeEmpty())
 				gomega.Expect(logs).To(
 					gomega.MatchRegexp(
-						`Starting log streaming for pod profile-slurm-[a-zA-Z0-9]+-[0-9]+-[a-zA-Z0-9]+\.\.\.\nHello world!\nJob logs streaming finished\.`,
+						`Starting log streaming for pod "profile-slurm-[a-zA-Z0-9]+-[0-9]+-[a-zA-Z0-9]+" container "c1"\.\.\.
+Hello world!
+Job logs streaming finished\.
+`,
 					),
 				)
 			})
@@ -509,7 +512,7 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, func() {
 			defer os.Remove(script.Name())
 
 			ginkgo.By("Prepare script", func() {
-				_, err := script.WriteString("#!/bin/bash\nsleep 10\necho 'Hello world!'")
+				_, err := script.WriteString("#!/bin/bash\necho 'Hello world!'")
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			})
 
@@ -534,7 +537,11 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, func() {
 				gomega.Expect(serviceName).NotTo(gomega.BeEmpty())
 				gomega.Expect(logs).To(
 					gomega.MatchRegexp(
-						`Starting log streaming for pod profile-slurm-[a-zA-Z0-9]+-[0-9]+-[a-zA-Z0-9]+\.\.\.\nHello world!\nHello world!\nJob logs streaming finished\.`,
+						`Starting log streaming for pod "profile-slurm-[a-zA-Z0-9]+-[0-9]+-[a-zA-Z0-9]+" container "c1-."\.\.\.
+Starting log streaming for pod "profile-slurm-[a-zA-Z0-9]+-[0-9]+-[a-zA-Z0-9]+" container "c1-."\.\.\.
+Hello world!
+Hello world!
+Job logs streaming finished\.`,
 					),
 				)
 			})
