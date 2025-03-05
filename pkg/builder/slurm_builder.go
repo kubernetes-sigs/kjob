@@ -306,69 +306,68 @@ func (b *slurmBuilder) build(ctx context.Context) (runtime.Object, []runtime.Obj
 	}
 
 	var totalCpus, totalGpus, totalMem resource.Quantity
-	for i := range job.Spec.Template.Spec.Containers {
-		container := &job.Spec.Template.Spec.Containers[i]
 
-		container.Command = []string{"bash", slurmEntrypointFilenamePath}
+	container := &job.Spec.Template.Spec.Containers[0]
 
-		var requests corev1.ResourceList
-		if b.requests != nil {
-			requests = b.requests
-		} else {
-			requests = corev1.ResourceList{}
-		}
+	container.Command = []string{"bash", slurmEntrypointFilenamePath}
 
-		if b.cpusPerTask != nil {
-			requests[corev1.ResourceCPU] = *b.cpusPerTask
-			totalCpus.Add(*b.cpusPerTask)
-		}
-
-		if b.memPerTask != nil {
-			requests[corev1.ResourceMemory] = *b.memPerTask
-			totalMem.Add(*b.memPerTask)
-		}
-
-		if !memPerCPU.IsZero() {
-			requests[corev1.ResourceMemory] = memPerCPU
-			totalMem.Add(memPerCPU)
-		}
-
-		if !memPerGPU.IsZero() {
-			requests[corev1.ResourceMemory] = memPerGPU
-			totalMem.Add(memPerGPU)
-		}
-
-		if len(requests) > 0 {
-			container.Resources.Requests = requests
-		}
-
-		limits := corev1.ResourceList{}
-		if !memPerContainer.IsZero() {
-			limits[corev1.ResourceMemory] = memPerContainer
-		}
-
-		if b.gpusPerTask != nil {
-			for name, number := range b.gpusPerTask {
-				limits[corev1.ResourceName(name)] = *number
-			}
-			totalGpus.Add(totalGPUsPerTask)
-		}
-
-		if len(limits) > 0 {
-			container.Resources.Limits = limits
-		}
-
-		container.VolumeMounts = append(container.VolumeMounts,
-			corev1.VolumeMount{
-				Name:      "slurm-scripts",
-				MountPath: slurmScriptsPath,
-			},
-			corev1.VolumeMount{
-				Name:      "slurm-env",
-				MountPath: slurmEnvsPath,
-			},
-		)
+	var requests corev1.ResourceList
+	if b.requests != nil {
+		requests = b.requests
+	} else {
+		requests = corev1.ResourceList{}
 	}
+
+	if b.cpusPerTask != nil {
+		requests[corev1.ResourceCPU] = *b.cpusPerTask
+		totalCpus.Add(*b.cpusPerTask)
+	}
+
+	if b.memPerTask != nil {
+		requests[corev1.ResourceMemory] = *b.memPerTask
+		totalMem.Add(*b.memPerTask)
+	}
+
+	if !memPerCPU.IsZero() {
+		requests[corev1.ResourceMemory] = memPerCPU
+		totalMem.Add(memPerCPU)
+	}
+
+	if !memPerGPU.IsZero() {
+		requests[corev1.ResourceMemory] = memPerGPU
+		totalMem.Add(memPerGPU)
+	}
+
+	if len(requests) > 0 {
+		container.Resources.Requests = requests
+	}
+
+	limits := corev1.ResourceList{}
+	if !memPerContainer.IsZero() {
+		limits[corev1.ResourceMemory] = memPerContainer
+	}
+
+	if b.gpusPerTask != nil {
+		for name, number := range b.gpusPerTask {
+			limits[corev1.ResourceName(name)] = *number
+		}
+		totalGpus.Add(totalGPUsPerTask)
+	}
+
+	if len(limits) > 0 {
+		container.Resources.Limits = limits
+	}
+
+	container.VolumeMounts = append(container.VolumeMounts,
+		corev1.VolumeMount{
+			Name:      "slurm-scripts",
+			MountPath: slurmScriptsPath,
+		},
+		corev1.VolumeMount{
+			Name:      "slurm-env",
+			MountPath: slurmEnvsPath,
+		},
+	)
 
 	nTasks := ptr.Deref(b.nTasks, 1)
 	completions := int32(math.Ceil(float64(b.arrayIndexes.Count()) / float64(nTasks)))
