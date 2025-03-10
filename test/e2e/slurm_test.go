@@ -87,8 +87,8 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, func() {
 		ginkgo.By("Create temporary file")
 		script, err := os.CreateTemp("", "e2e-slurm-")
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
-		defer script.Close()
 		defer os.Remove(script.Name())
+		defer script.Close()
 
 		ginkgo.By("Prepare script", func() {
 			_, err := script.WriteString("#!/bin/bash\nwhile true; do printenv | grep SLURM_ > /env.out; sleep 0.25; done")
@@ -290,8 +290,8 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, func() {
 			ginkgo.By("Create temporary file")
 			script, err := os.CreateTemp("", "e2e-slurm-")
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
-			defer script.Close()
 			defer os.Remove(script.Name())
+			defer script.Close()
 
 			ginkgo.By("Prepare script", func() {
 				_, err := script.WriteString("#!/bin/bash\nsleep 60")
@@ -343,13 +343,65 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, func() {
 		})
 	})
 
+	ginkgo.It("should stop waiting and streaming when the job is removed", func() {
+		ginkgo.By("Create temporary script file")
+		script, err := os.CreateTemp("", "e2e-slurm-")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		defer os.Remove(script.Name())
+		defer script.Close()
+
+		ginkgo.By("Write sleep command to script", func() {
+			_, err := script.WriteString("#!/bin/bash\nsleep 60")
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		})
+
+		var cmd *exec.Cmd
+		var out bytes.Buffer
+		ginkgo.By("Create slurm with --rm flag", func() {
+			cmdArgs := []string{
+				"create", "slurm",
+				"-n", ns.Name,
+				"--profile", profile.Name,
+				"--wait",
+				"--wait-timeout", "60s",
+				"--",
+				script.Name(),
+			}
+			cmd = exec.Command(kjobctlPath, cmdArgs...)
+			cmd.Stdout = &out
+			err := cmd.Start()
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		})
+
+		job := &batchv1.Job{}
+		ginkgo.By("Wait for the job to be created and running", func() {
+			gomega.Eventually(func(g gomega.Gomega) {
+				jobList := &batchv1.JobList{}
+				g.Expect(k8sClient.List(ctx, jobList, client.InNamespace(ns.Name))).To(gomega.Succeed())
+				g.Expect(jobList.Items).To(gomega.HaveLen(1))
+				job = &jobList.Items[0]
+				g.Expect(job.Status.Active).To(gomega.Equal(int32(1)))
+			}, util.Timeout, util.Interval).Should(gomega.Succeed())
+		})
+
+		ginkgo.By("Remove job", func() {
+			gomega.Expect(k8sClient.Delete(ctx, job)).To(gomega.Succeed())
+		})
+
+		ginkgo.By("Ensure that log streaming has stopped", func() {
+			gomega.Eventually(func(g gomega.Gomega) {
+				g.Expect(out.String()).To(gomega.ContainSubstring("Job logs streaming finished."))
+			}, util.Timeout, util.Interval).Should(gomega.Succeed())
+		})
+	})
+
 	ginkgo.When("using --wait option", func() {
 		ginkgo.It("should wait for job completion", func() {
 			ginkgo.By("Create temporary file")
 			script, err := os.CreateTemp("", "e2e-slurm-")
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
-			defer script.Close()
 			defer os.Remove(script.Name())
+			defer script.Close()
 
 			ginkgo.By("Prepare script", func() {
 				_, err := script.WriteString("#!/bin/bash\necho 'Hello world!'")
@@ -402,8 +454,8 @@ Job logs streaming finished\.
 			ginkgo.By("Create temporary script file")
 			script, err := os.CreateTemp("", "e2e-slurm-")
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
-			defer script.Close()
 			defer os.Remove(script.Name())
+			defer script.Close()
 
 			ginkgo.By("Write sleep command to script", func() {
 				_, err := script.WriteString("#!/bin/bash\nsleep 60")
@@ -452,8 +504,8 @@ Job logs streaming finished\.
 			ginkgo.By("Create temporary script file")
 			script, err := os.CreateTemp("", "e2e-slurm-")
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
-			defer script.Close()
 			defer os.Remove(script.Name())
+			defer script.Close()
 
 			ginkgo.By("Write sleep command to script", func() {
 				_, err := script.WriteString("#!/bin/bash\nsleep 60")
@@ -508,8 +560,8 @@ Job logs streaming finished\.
 			ginkgo.By("Create temporary file")
 			script, err := os.CreateTemp("", "e2e-slurm-")
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
-			defer script.Close()
 			defer os.Remove(script.Name())
+			defer script.Close()
 
 			ginkgo.By("Prepare script", func() {
 				_, err := script.WriteString("#!/bin/bash\necho 'Hello world!'")

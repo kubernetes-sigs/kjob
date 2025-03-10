@@ -23,7 +23,6 @@ import (
 	"io"
 	"os"
 	"os/signal"
-	"slices"
 	"strings"
 	"sync"
 	"syscall"
@@ -1072,12 +1071,15 @@ func (o *CreateOptions) verifyJobFinished(ctx context.Context, clientset kuberne
 		if !ok {
 			continue
 		}
-
-		isJobFinished := slices.ContainsFunc(job.Status.Conditions, func(c batchv1.JobCondition) bool {
-			return (c.Type == batchv1.JobComplete || c.Type == batchv1.JobFailed) && c.Status == corev1.ConditionTrue
-		})
-		if isJobFinished {
-			break
+		switch event.Type {
+		case watch.Modified:
+			for _, c := range job.Status.Conditions {
+				if (c.Type == batchv1.JobComplete || c.Type == batchv1.JobFailed) && c.Status == corev1.ConditionTrue {
+					return nil
+				}
+			}
+		case watch.Deleted:
+			return nil
 		}
 	}
 	return nil
