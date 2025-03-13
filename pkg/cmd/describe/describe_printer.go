@@ -33,7 +33,7 @@ import (
 	describehelper "k8s.io/kubectl/pkg/describe"
 	"k8s.io/utils/ptr"
 
-	"sigs.k8s.io/kjob/pkg/util"
+	"sigs.k8s.io/kjob/pkg/util/maps"
 )
 
 // ResourceDescriber generates output for the named resource or an error
@@ -319,14 +319,14 @@ func describeConfigMap(configMap *corev1.ConfigMap) (string, error) {
 		printLabelsMultiline(w, "Labels", configMap.Labels)
 
 		w.Write(IndentLevelZero, "\nData\n====\n")
-		for _, k := range util.SortedKeys(configMap.Data) {
+		for _, k := range maps.SortedKeys(configMap.Data) {
 			w.Write(IndentLevelZero, "%s:\n----\n", k)
 			w.Write(IndentLevelZero, "%s\n", configMap.Data[k])
 			w.Write(IndentLevelZero, "\n")
 		}
 
 		w.Write(IndentLevelZero, "\nBinaryData\n====\n")
-		for _, k := range util.SortedKeys(configMap.BinaryData) {
+		for _, k := range maps.SortedKeys(configMap.BinaryData) {
 			w.Write(IndentLevelZero, "%s: %s bytes\n", k, strconv.Itoa(len(configMap.BinaryData[k])))
 		}
 		w.Write(IndentLevelZero, "\n")
