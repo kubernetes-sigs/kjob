@@ -36,7 +36,7 @@ const (
 	SlurmMode       ApplicationProfileMode = "Slurm"
 )
 
-// +kubebuilder:validation:Enum=cmd;parallelism;completions;replicas;min-replicas;max-replicas;request;localqueue;raycluster;array;cpus-per-task;error;gpus-per-task;input;job-name;mem-per-cpu;mem-per-gpu;mem-per-task;nodes;ntasks;output;partition
+// +kubebuilder:validation:Enum=cmd;parallelism;completions;replicas;min-replicas;max-replicas;request;localqueue;raycluster;array;cpus-per-task;error;gpus-per-task;input;job-name;mem-per-cpu;mem-per-gpu;mem-per-task;nodes;ntasks;output;partition;priority;time;pod-template-label;pod-template-annotation
 type Flag string
 
 const (
