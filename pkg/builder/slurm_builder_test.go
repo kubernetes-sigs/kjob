@@ -363,16 +363,16 @@ func TestSlurmBuilderBuildEntrypointCommand(t *testing.T) {
 		},
 		"should build entrypoint command with output": {
 			output:                "/home/test/stdout.out",
-			wantEntrypointCommand: "/slurm/scripts/script 1>/home/test/stdout.out",
+			wantEntrypointCommand: "/slurm/scripts/script 1> >(tee /home/test/stdout.out)",
 		},
 		"should build entrypoint command with error": {
 			error:                 "/home/test/stderr.out",
-			wantEntrypointCommand: "/slurm/scripts/script 2>/home/test/stderr.out",
+			wantEntrypointCommand: "/slurm/scripts/script 2> >(tee /home/test/stderr.out >&2)",
 		},
 		"should build entrypoint command with output and error": {
 			output:                "/home/test/stdout.out",
 			error:                 "/home/test/stderr.out",
-			wantEntrypointCommand: "/slurm/scripts/script 1>/home/test/stdout.out 2>/home/test/stderr.out",
+			wantEntrypointCommand: "/slurm/scripts/script 1> >(tee /home/test/stdout.out) 2> >(tee /home/test/stderr.out >&2)",
 		},
 		"should build entrypoint command with input": {
 			input:                 "/home/test/script.sh",
@@ -381,18 +381,18 @@ func TestSlurmBuilderBuildEntrypointCommand(t *testing.T) {
 		"should build entrypoint command with input and output": {
 			input:                 "/home/test/script.sh",
 			output:                "/home/test/stdout.out",
-			wantEntrypointCommand: "/slurm/scripts/script </home/test/script.sh 1>/home/test/stdout.out",
+			wantEntrypointCommand: "/slurm/scripts/script </home/test/script.sh 1> >(tee /home/test/stdout.out)",
 		},
 		"should build entrypoint command with input and error": {
 			input:                 "/home/test/script.sh",
 			error:                 "/home/test/stderr.out",
-			wantEntrypointCommand: "/slurm/scripts/script </home/test/script.sh 2>/home/test/stderr.out",
+			wantEntrypointCommand: "/slurm/scripts/script </home/test/script.sh 2> >(tee /home/test/stderr.out >&2)",
 		},
 		"should build entrypoint command with input, output and error": {
 			input:                 "/home/test/script.sh",
 			output:                "/home/test/stdout.out",
 			error:                 "/home/test/stderr.out",
-			wantEntrypointCommand: "/slurm/scripts/script </home/test/script.sh 1>/home/test/stdout.out 2>/home/test/stderr.out",
+			wantEntrypointCommand: "/slurm/scripts/script </home/test/script.sh 1> >(tee /home/test/stdout.out) 2> >(tee /home/test/stderr.out >&2)",
 		},
 	}
 	for name, tc := range testCases {
