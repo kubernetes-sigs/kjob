@@ -66,7 +66,7 @@ spec:
                         The time and priority flags can be used in all modes.
                         If the raycluster flag are set, none of localqueue, replicas, min-replicas, or max-replicas can be set.
                         For the Slurm mode, the possible values are: array, cpus-per-task, error, gpus-per-task, input, job-name, mem,
-                        mem-per-cpu, mem-per-gpu, mem-per-task, nodes, ntasks, output, partition, localqueue.
+                        mem-per-cpu, mem-per-gpu, mem-per-task, nodes, ntasks, ntasks-per-node, output, partition, localqueue.
 
                         The cmd and requests values are going to be added only to the first primary container.
                       items:
@@ -91,6 +91,7 @@ spec:
                         - mem-per-task
                         - nodes
                         - ntasks
+                        - ntasks-per-node
                         - output
                         - partition
                         - priority
@@ -182,6 +183,9 @@ spec:
                       || self.name == ''Slurm'''
                   - message: ntasks flag can be used only on Slurm mode
                     rule: '!has(self.requiredFlags) || !(''ntasks'' in self.requiredFlags)
+                      || self.name == ''Slurm'''
+                  - message: ntasks-per-node flag can be used only on Slurm mode
+                    rule: '!has(self.requiredFlags) || !(''ntasks-per-node'' in self.requiredFlags)
                       || self.name == ''Slurm'''
                   - message: output flag can be used only on Slurm mode
                     rule: '!has(self.requiredFlags) || !(''output'' in self.requiredFlags)

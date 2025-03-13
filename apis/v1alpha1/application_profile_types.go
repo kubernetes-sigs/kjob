@@ -36,7 +36,7 @@ const (
 	SlurmMode       ApplicationProfileMode = "Slurm"
 )
 
-// +kubebuilder:validation:Enum=cmd;parallelism;completions;replicas;min-replicas;max-replicas;request;localqueue;raycluster;array;cpus-per-task;error;gpus-per-task;input;job-name;mem-per-cpu;mem-per-gpu;mem-per-task;nodes;ntasks;output;partition;priority;time;pod-template-label;pod-template-annotation
+// +kubebuilder:validation:Enum=cmd;parallelism;completions;replicas;min-replicas;max-replicas;request;localqueue;raycluster;array;cpus-per-task;error;gpus-per-task;input;job-name;mem-per-cpu;mem-per-gpu;mem-per-task;nodes;ntasks;ntasks-per-node;output;partition;priority;time;pod-template-label;pod-template-annotation
 type Flag string
 
 const (
@@ -61,6 +61,7 @@ const (
 	MemPerTaskFlag            Flag = "mem-per-task"
 	NodesFlag                 Flag = "nodes"
 	NTasksFlag                Flag = "ntasks"
+	NTasksPerNodeFlag         Flag = "ntasks-per-node"
 	OutputFlag                Flag = "output"
 	PartitionFlag             Flag = "partition"
 	PriorityFlag              Flag = "priority"
@@ -94,6 +95,7 @@ type TemplateReference string
 // +kubebuilder:validation:XValidation:rule="!has(self.requiredFlags) || !('mem-per-task' in self.requiredFlags) || self.name == 'Slurm'", message="mem-per-task flag can be used only on Slurm mode"
 // +kubebuilder:validation:XValidation:rule="!has(self.requiredFlags) || !('nodes' in self.requiredFlags) || self.name == 'Slurm'", message="nodes flag can be used only on Slurm mode"
 // +kubebuilder:validation:XValidation:rule="!has(self.requiredFlags) || !('ntasks' in self.requiredFlags) || self.name == 'Slurm'", message="ntasks flag can be used only on Slurm mode"
+// +kubebuilder:validation:XValidation:rule="!has(self.requiredFlags) || !('ntasks-per-node' in self.requiredFlags) || self.name == 'Slurm'", message="ntasks-per-node flag can be used only on Slurm mode"
 // +kubebuilder:validation:XValidation:rule="!has(self.requiredFlags) || !('output' in self.requiredFlags) || self.name == 'Slurm'", message="output flag can be used only on Slurm mode"
 // +kubebuilder:validation:XValidation:rule="!has(self.requiredFlags) || !('partition' in self.requiredFlags) || self.name == 'Slurm'", message="partition flag can be used only on Slurm mode"
 // +kubebuilder:validation:XValidation:rule="!has(self.requiredFlags) || self.name != 'Slurm' || !('parallelism' in self.requiredFlags)", message="parallelism flag can't be used on Slurm mode"
@@ -127,7 +129,7 @@ type SupportedMode struct {
 	// The time and priority flags can be used in all modes.
 	// If the raycluster flag are set, none of localqueue, replicas, min-replicas, or max-replicas can be set.
 	// For the Slurm mode, the possible values are: array, cpus-per-task, error, gpus-per-task, input, job-name, mem,
-	// mem-per-cpu, mem-per-gpu, mem-per-task, nodes, ntasks, output, partition, localqueue.
+	// mem-per-cpu, mem-per-gpu, mem-per-task, nodes, ntasks, ntasks-per-node, output, partition, localqueue.
 	//
 	// The cmd and requests values are going to be added only to the first primary container.
 	//

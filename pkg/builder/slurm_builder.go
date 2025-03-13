@@ -22,7 +22,6 @@ import (
 	"embed"
 	"errors"
 	"fmt"
-	"math"
 	"os"
 	"slices"
 	"strconv"
@@ -39,6 +38,7 @@ import (
 	"sigs.k8s.io/kjob/apis/v1alpha1"
 	kjobctlconstants "sigs.k8s.io/kjob/pkg/constants"
 	"sigs.k8s.io/kjob/pkg/parser"
+	utilslices "sigs.k8s.io/kjob/pkg/util/slices"
 	"sigs.k8s.io/kjob/pkg/util/validate"
 )
 
@@ -49,7 +49,7 @@ const SlurmInitContainerName = "slurm-init-env"
 
 const (
 	// Note that the first job ID will always be 1.
-	slurmArrayJobID = 1
+	slurmFirstJobID = 1
 
 	slurmScriptsPath            = "/slurm/scripts"
 	slurmInitEntrypointFilename = "init-entrypoint.sh"
@@ -61,7 +61,11 @@ const (
 )
 
 var (
-	errNoScriptSpecified = errors.New("no script specified")
+	errNoScriptSpecified                             = errors.New("no script specified")
+	errNTasksOrNTasksPerNodeMustBeSpecifiedWithNodes = errors.New("ntasks or ntasks-per-node must be specified with nodes")
+	errInvalidNodesNTasksOrNTasksPerNodeValue        = errors.New("invalid nodes, ntasks or ntasks-per-node value")
+	errInvalidNTasksOrNTasksPerNodeValue             = errors.New("invalid ntasks or ntasks-per-node value")
+	errInvalidNodesOrNTasksValue                     = errors.New("invalid nodes or ntasks value")
 )
 
 var (
@@ -87,7 +91,7 @@ type slurmBuilder struct {
 
 	scriptContent   string
 	template        *template.Template
-	arrayIndexes    parser.ArrayIndexes
+	arrayIndexes    *parser.ArrayIndexes
 	cpusOnNode      *resource.Quantity
 	cpusPerGpu      *resource.Quantity
 	totalMemPerNode *resource.Quantity
@@ -96,81 +100,18 @@ type slurmBuilder struct {
 
 var _ builder = (*slurmBuilder)(nil)
 
-func (b *slurmBuilder) validateGeneral() error {
-	if len(b.script) == 0 {
-		return errNoScriptSpecified
-	}
-
-	if b.memPerCPU != nil && b.cpusPerTask == nil {
-		return errNoCpusPerTaskSpecified
-	}
-
-	if b.memPerGPU != nil && b.gpusPerTask == nil {
-		return errNoGpusPerTaskSpecified
-	}
-
-	return nil
-}
-
-func (b *slurmBuilder) complete() error {
-	content, err := os.ReadFile(b.script)
-	if err != nil {
-		return err
-	}
-	b.scriptContent = string(content)
-
-	t, err := template.ParseFS(slurmTemplates, "templates/*")
-	if err != nil {
-		return err
-	}
-	b.template = t
-
-	if err := b.getSbatchEnvs(); err != nil {
-		return err
-	}
-
-	if err := b.replaceScriptFlags(); err != nil {
-		return err
-	}
-
-	if err := validate.ValidateMutuallyExclusiveFlags(map[string]bool{
-		string(v1alpha1.MemPerNodeFlag): b.memPerNode != nil,
-		string(v1alpha1.MemPerTaskFlag): b.memPerTask != nil,
-		string(v1alpha1.MemPerCPUFlag):  b.memPerCPU != nil,
-		string(v1alpha1.MemPerGPUFlag):  b.memPerGPU != nil,
-	}); err != nil {
-		return err
-	}
-
-	nTasks := ptr.Deref(b.nTasks, 1)
-
-	replacedScriptContent, err := parser.SlurmValidateAndReplaceScript(b.scriptContent, nTasks)
-	if err != nil {
-		return err
-	}
-	b.scriptContent = replacedScriptContent
-
-	if b.array == "" {
-		b.arrayIndexes = parser.GenerateArrayIndexes(ptr.Deref(b.nodes, 1) * nTasks)
-	} else {
-		b.arrayIndexes, err = parser.ParseArrayIndexes(b.array)
-		if err != nil {
-			return err
-		}
-		if b.arrayIndexes.Parallelism != nil {
-			b.nodes = b.arrayIndexes.Parallelism
-		}
-	}
-
-	return nil
-}
-
 func (b *slurmBuilder) build(ctx context.Context) (runtime.Object, []runtime.Object, error) {
-	if err := b.validateGeneral(); err != nil {
+	if len(b.script) == 0 {
+		return nil, nil, errNoScriptSpecified
+	}
+
+	err := b.parse()
+	if err != nil {
 		return nil, nil, err
 	}
 
-	if err := b.complete(); err != nil {
+	err = b.complete()
+	if err != nil {
 		return nil, nil, err
 	}
 
@@ -198,6 +139,8 @@ func (b *slurmBuilder) build(ctx context.Context) (runtime.Object, []runtime.Obj
 		Spec:       template.Template.Spec,
 	}
 
+	job.Spec.Completions = ptr.To(b.completion())
+	job.Spec.Parallelism = ptr.To(b.parallelism())
 	job.Spec.CompletionMode = ptr.To(batchv1.IndexedCompletion)
 	job.Spec.Template.Spec.Subdomain = job.Name
 
@@ -349,14 +292,8 @@ func (b *slurmBuilder) build(ctx context.Context) (runtime.Object, []runtime.Obj
 		)
 	}
 
-	nTasks := ptr.Deref(b.nTasks, 1)
-	completions := int32(math.Ceil(float64(b.arrayIndexes.Count()) / float64(nTasks)))
-
-	job.Spec.Completions = ptr.To(completions)
-	job.Spec.Parallelism = b.nodes
-
-	if nTasks > 1 {
-		for i := 1; i < int(nTasks); i++ {
+	if b.containers() > 1 {
+		for i := 1; i < b.containers(); i++ {
 			replica := job.Spec.Template.Spec.Containers[0].DeepCopy()
 			replica.Name = fmt.Sprintf("%s-%d", job.Spec.Template.Spec.Containers[0].Name, i)
 			job.Spec.Template.Spec.Containers = append(job.Spec.Template.Spec.Containers, *replica)
@@ -375,17 +312,6 @@ func (b *slurmBuilder) build(ctx context.Context) (runtime.Object, []runtime.Obj
 		}
 
 		job.Spec.Template.Spec.Containers[0].Name = fmt.Sprintf("%s-0", job.Spec.Template.Spec.Containers[0].Name)
-	}
-
-	for i := range job.Spec.Template.Spec.Containers {
-		job.Spec.Template.Spec.Containers[i].Env = append(job.Spec.Template.Spec.Containers[i].Env, corev1.EnvVar{
-			Name:  "JOB_CONTAINER_INDEX",
-			Value: strconv.FormatInt(int64(i), 10),
-		})
-	}
-
-	if b.nodes != nil {
-		job.Spec.Parallelism = b.nodes
 	}
 
 	if !totalCpus.IsZero() {
@@ -441,46 +367,140 @@ func (b *slurmBuilder) build(ctx context.Context) (runtime.Object, []runtime.Obj
 	return job, []runtime.Object{configMap, service}, nil
 }
 
-func (b *slurmBuilder) buildArrayIndexes() string {
-	nTasks := ptr.Deref(b.nTasks, 1)
-	length := int64(math.Ceil(float64(len(b.arrayIndexes.Indexes)) / float64(nTasks)))
-	containerIndexes := make([][]string, length)
+func (b *slurmBuilder) parse() error {
+	content, err := os.ReadFile(b.script)
+	if err != nil {
+		return err
+	}
+	b.scriptContent = string(content)
 
-	var (
-		completionIndex int32
-		containerIndex  int32
-	)
-	for _, index := range b.arrayIndexes.Indexes {
-		containerIndexes[completionIndex] = append(containerIndexes[completionIndex], fmt.Sprint(index))
-		containerIndex++
-		if containerIndex >= nTasks {
-			containerIndex = 0
-			completionIndex++
+	t, err := template.ParseFS(slurmTemplates, "templates/*")
+	if err != nil {
+		return err
+	}
+	b.template = t
+
+	if err := b.getSbatchEnvs(); err != nil {
+		return err
+	}
+
+	if err := b.replaceScriptFlags(); err != nil {
+		return err
+	}
+
+	if b.isArrayJob() {
+		b.arrayIndexes, err = parser.ParseArrayIndexes(b.array)
+		if err != nil {
+			return err
 		}
 	}
 
-	completionIndexes := make([]string, length)
-	for completionIndex, containerIndexes := range containerIndexes {
-		completionIndexes[completionIndex] = strings.Join(containerIndexes, ",")
+	return nil
+}
+
+func (b *slurmBuilder) isArrayJob() bool {
+	return b.array != ""
+}
+
+func (b *slurmBuilder) complete() error {
+	nodes := ptr.Deref(b.nodes, DefaultNodes)
+	nTasks := ptr.Deref(b.nTasks, DefaultNTasks)
+	nTasksPerNode := ptr.Deref(b.nTasksPerNode, DefaultNTasksPerNode)
+
+	if nodes != DefaultNodes && nTasks == DefaultNTasks && nTasksPerNode == DefaultNTasksPerNode {
+		return errNTasksOrNTasksPerNodeMustBeSpecifiedWithNodes
 	}
 
-	return strings.Join(completionIndexes, ";")
+	if nodes != DefaultNodes && nTasks != DefaultNTasks && nTasksPerNode != DefaultNTasksPerNode && nTasks != nodes*nTasksPerNode {
+		return errInvalidNodesNTasksOrNTasksPerNodeValue
+	}
+
+	switch {
+	case nodes == DefaultNodes && nTasks != DefaultNTasks && nTasksPerNode != DefaultNTasksPerNode:
+		nodesFloat := float64(nTasks) / float64(nTasksPerNode)
+		nodes = int32(nodesFloat)
+		if nodesFloat > float64(nodes) {
+			return errInvalidNTasksOrNTasksPerNodeValue
+		}
+		b.nodes = ptr.To(nodes)
+	case nTasks != DefaultNTasks && nTasksPerNode == DefaultNTasksPerNode:
+		nTasksPerNodeFloat := float64(nTasks) / float64(nodes)
+		nTasksPerNode = int32(nTasksPerNodeFloat)
+		if nTasksPerNodeFloat > float64(nTasksPerNode) {
+			return errInvalidNodesOrNTasksValue
+		}
+		b.nTasksPerNode = ptr.To(nTasksPerNode)
+	case nTasks == DefaultNTasks && nTasksPerNode != DefaultNTasksPerNode:
+		nTasks = nodes * nTasksPerNode
+		b.nTasks = ptr.To(nTasks)
+	}
+
+	// Only one of --nodes or --array can be specified unless --nodes is set to 1.
+	if err := validate.ValidateMutuallyExclusiveFlags(map[string]bool{
+		string(v1alpha1.NodesFlag): nodes != DefaultNodes,
+		string(v1alpha1.ArrayFlag): b.array != "",
+	}); err != nil {
+		return err
+	}
+
+	if b.memPerCPU != nil && b.cpusPerTask == nil {
+		return errNoCpusPerTaskSpecified
+	}
+
+	if b.memPerGPU != nil && b.gpusPerTask == nil {
+		return errNoGpusPerTaskSpecified
+	}
+
+	if err := validate.ValidateMutuallyExclusiveFlags(map[string]bool{
+		string(v1alpha1.MemPerNodeFlag): b.memPerNode != nil,
+		string(v1alpha1.MemPerTaskFlag): b.memPerTask != nil,
+		string(v1alpha1.MemPerCPUFlag):  b.memPerCPU != nil,
+		string(v1alpha1.MemPerGPUFlag):  b.memPerGPU != nil,
+	}); err != nil {
+		return err
+	}
+
+	replacedScriptContent, err := parser.SlurmValidateAndReplaceScript(b.scriptContent, nTasks)
+	if err != nil {
+		return err
+	}
+	b.scriptContent = replacedScriptContent
+
+	return nil
+}
+
+func (b *slurmBuilder) parallelism() int32 {
+	if b.isArrayJob() {
+		return ptr.Deref(b.arrayIndexes.Parallelism, DefaultArrayIndexParallelism)
+	}
+	return ptr.Deref(b.nodes, DefaultNodes)
+}
+
+func (b *slurmBuilder) completion() int32 {
+	if b.isArrayJob() {
+		return int32(b.arrayIndexes.Count())
+	}
+	return ptr.Deref(b.nodes, DefaultNodes)
+}
+
+func (b *slurmBuilder) containers() int {
+	return int(ptr.Deref(b.nTasksPerNode, DefaultNTasksPerNode))
+}
+
+func (b *slurmBuilder) buildArrayIndexes() string {
+	arrayIndexes := utilslices.Map(b.arrayIndexes.Indexes, func(from *int32) string {
+		return strconv.FormatInt(int64(*from), 10)
+	})
+	return strings.Join(arrayIndexes, ",")
 }
 
 type slurmInitEntrypointScript struct {
-	ArrayIndexes string
-
 	JobName   string
 	Namespace string
 
 	EnvsPath         string
 	SlurmEnvFilename string
 
-	SlurmArrayJobID     int32
-	SlurmArrayTaskCount int32
-	SlurmArrayTaskMax   int32
-	SlurmArrayTaskMin   int32
-	SlurmTasksPerNode   int32
 	SlurmCPUsPerTask    string
 	SlurmCPUsOnNode     string
 	SlurmJobCPUsPerNode string
@@ -489,41 +509,45 @@ type slurmInitEntrypointScript struct {
 	SlurmMemPerGPU      string
 	SlurmMemPerNode     string
 	SlurmGPUs           string
-	SlurmNTasks         int32
-	SlurmNTasksPerNode  int32
-	SlurmNProcs         int32
-	SlurmNNodes         int32
-	SlurmSubmitDir      string
-	SlurmJobNodeList    string
-	SlurmJobFirstNode   string
+
+	SlurmFirstJobID    int32
+	SlurmNTasks        int32
+	SlurmNTasksPerNode int32
+	SlurmJobNumNodes   int32
+	SlurmJobNodeList   string
+	SlurmJobFirstNode  string
+	SlurmTasksPerNode  string
+
+	SlurmSubmitDir string
+
+	ArrayJob            bool
+	ArrayIndexes        string
+	SlurmArrayTaskCount int32
+	SlurmArrayTaskMax   int32
+	SlurmArrayTaskMin   int32
+	SlurmArrayTaskStep  int32
 
 	FirstNodeIP               bool
 	FirstNodeIPTimeoutSeconds int32
 }
 
 func (b *slurmBuilder) buildInitEntrypointScript(jobName string) (string, error) {
-	nTasks := ptr.Deref(b.nTasks, 1)
-	nodes := ptr.Deref(b.nodes, 1)
+	nTasks := ptr.Deref(b.nTasks, DefaultNTasks)
+	nTasksPerNode := ptr.Deref(b.nTasksPerNode, DefaultNTasksPerNode)
 
-	nodeList := make([]string, nodes)
-	for i := int32(0); i < nodes; i++ {
+	nNodes := b.completion()
+	nodeList := make([]string, nNodes)
+	for i := int32(0); i < nNodes; i++ {
 		nodeList[i] = fmt.Sprintf("%s-%d.%s", jobName, i, jobName)
 	}
 
 	scriptValues := slurmInitEntrypointScript{
-		ArrayIndexes: b.buildArrayIndexes(),
-
 		JobName:   jobName,
 		Namespace: b.namespace,
 
 		EnvsPath:         slurmEnvsPath,
 		SlurmEnvFilename: slurmSlurmEnvFilename,
 
-		SlurmArrayJobID:     slurmArrayJobID,
-		SlurmArrayTaskCount: int32(b.arrayIndexes.Count()),
-		SlurmArrayTaskMax:   b.arrayIndexes.Max(),
-		SlurmArrayTaskMin:   b.arrayIndexes.Min(),
-		SlurmTasksPerNode:   nTasks,
 		SlurmCPUsPerTask:    getValueOrEmpty(b.cpusPerTask),
 		SlurmCPUsOnNode:     getValueOrEmpty(b.cpusOnNode),
 		SlurmJobCPUsPerNode: getValueOrEmpty(b.cpusOnNode),
@@ -532,16 +556,32 @@ func (b *slurmBuilder) buildInitEntrypointScript(jobName string) (string, error)
 		SlurmMemPerGPU:      getValueOrEmpty(b.memPerGPU),
 		SlurmMemPerNode:     getValueOrEmpty(b.totalMemPerNode),
 		SlurmGPUs:           getValueOrEmpty(b.totalGpus),
-		SlurmNTasks:         nTasks,
-		SlurmNTasksPerNode:  nTasks,
-		SlurmNProcs:         nTasks,
-		SlurmNNodes:         nodes,
-		SlurmSubmitDir:      slurmScriptsPath,
-		SlurmJobNodeList:    strings.Join(nodeList, ","),
-		SlurmJobFirstNode:   nodeList[0],
 
-		FirstNodeIP:               b.firstNodeIP,
-		FirstNodeIPTimeoutSeconds: int32(b.firstNodeIPTimeout.Seconds()),
+		SlurmNTasks:        nTasks,
+		SlurmNTasksPerNode: nTasksPerNode,
+		SlurmJobNumNodes:   nNodes,
+		SlurmJobNodeList:   strings.Join(nodeList, ","),
+		SlurmJobFirstNode:  nodeList[0],
+		SlurmFirstJobID:    slurmFirstJobID,
+		// SlurmTasksPerNode:  nTasks, // TODO: Implement buildTasksPerNode() builder according to https://slurm.schedmd.com/sbatch.html#OPT_SLURM_TASKS_PER_NODE.
+
+		SlurmSubmitDir: slurmScriptsPath,
+	}
+
+	if b.isArrayJob() {
+		scriptValues.ArrayJob = true
+		scriptValues.ArrayIndexes = b.buildArrayIndexes()
+		scriptValues.JobName = jobName
+		scriptValues.SlurmFirstJobID = slurmFirstJobID
+		scriptValues.SlurmArrayTaskCount = int32(b.arrayIndexes.Count())
+		scriptValues.SlurmArrayTaskMax = b.arrayIndexes.Max()
+		scriptValues.SlurmArrayTaskMin = b.arrayIndexes.Min()
+		scriptValues.SlurmArrayTaskStep = ptr.Deref(b.arrayIndexes.Step, DefaultArrayIndexStep)
+	}
+
+	if b.firstNodeIP {
+		scriptValues.FirstNodeIP = true
+		scriptValues.FirstNodeIPTimeoutSeconds = int32(b.firstNodeIPTimeout.Seconds())
 	}
 
 	var script bytes.Buffer
