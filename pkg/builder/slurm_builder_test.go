@@ -47,9 +47,7 @@ import (
 type slurmBuilderTestCase struct {
 	beforeTest       func(t *testing.T, tc *slurmBuilderTestCase)
 	tempFile         string
-	namespace        string
 	profile          string
-	mode             v1alpha1.ApplicationProfileMode
 	array            string
 	cpusPerTask      *resource.Quantity
 	gpusPerTask      map[string]*resource.Quantity
@@ -63,7 +61,6 @@ type slurmBuilderTestCase struct {
 	input            string
 	jobName          string
 	partition        string
-	initImage        string
 	workerContainers []string
 	firstNodeTimeout time.Duration
 	kjobctlObjs      []runtime.Object
@@ -93,144 +90,79 @@ func beforeSlurmTest(t *testing.T, tc *slurmBuilderTestCase) {
 }
 
 func TestSlurmBuilderDo(t *testing.T) {
+	const (
+		baseImage              = "bash:4.4"
+		baseInitContainerImage = "bash:latest"
+		applicationProfileName = "profile"
+	)
+
 	testStartTime := time.Now()
 	userID := os.Getenv(constants.SystemEnvVarNameUser)
 
-	testCases := map[string]slurmBuilderTestCase{
-		"shouldn't build slurm job because script not specified": {
-			namespace: metav1.NamespaceDefault,
-			profile:   "profile",
-			mode:      v1alpha1.SlurmMode,
-			kjobctlObjs: []runtime.Object{
-				wrappers.MakeApplicationProfile("profile", metav1.NamespaceDefault).
-					WithSupportedMode(v1alpha1.SupportedMode{Name: v1alpha1.SlurmMode, Template: "slurm-template"}).
-					Obj(),
-			},
-			wantErr: noScriptSpecifiedErr,
-		},
-		"shouldn't build slurm job because template not found": {
-			beforeTest: beforeSlurmTest,
-			namespace:  metav1.NamespaceDefault,
-			profile:    "profile",
-			mode:       v1alpha1.SlurmMode,
-			kjobctlObjs: []runtime.Object{
-				wrappers.MakeApplicationProfile("profile", metav1.NamespaceDefault).
-					WithSupportedMode(v1alpha1.SupportedMode{Name: v1alpha1.SlurmMode, Template: "slurm-template"}).
-					Obj(),
-			},
-			wantErr: apierrors.NewNotFound(schema.GroupResource{Group: "kjobctl.x-k8s.io", Resource: "jobtemplates"}, "slurm-template"),
-		},
-		"shouldn't build slurm job because --mem-per-cpu and --mem-per-gpu flags mutually exclusive": {
-			beforeTest:  beforeSlurmTest,
-			namespace:   metav1.NamespaceDefault,
-			profile:     "profile",
-			mode:        v1alpha1.SlurmMode,
-			cpusPerTask: ptr.To(resource.MustParse("1")),
-			memPerCPU:   ptr.To(resource.MustParse("1")),
-			gpusPerTask: map[string]*resource.Quantity{
-				"test": ptr.To(resource.MustParse("1")),
-			},
-			memPerGPU: ptr.To(resource.MustParse("1")),
-			kjobctlObjs: []runtime.Object{
-				wrappers.MakeApplicationProfile("profile", metav1.NamespaceDefault).
-					WithSupportedMode(v1alpha1.SupportedMode{Name: v1alpha1.SlurmMode, Template: "slurm-template"}).
-					Obj(),
-			},
-			wantErr: validate.NewMutuallyExclusiveError(
-				[]string{
-					string(v1alpha1.MemPerNodeFlag),
-					string(v1alpha1.MemPerCPUFlag),
-					string(v1alpha1.MemPerGPUFlag),
-					string(v1alpha1.MemPerTaskFlag),
+	baseContainerWrapper := *wrappers.MakeContainer("c1", baseImage)
+
+	baseContainerWrapperWithEnv := baseContainerWrapper.Clone().
+		WithEnvVar(corev1.EnvVar{Name: constants.EnvVarNameUserID, Value: userID}).
+		WithEnvVar(corev1.EnvVar{Name: constants.EnvVarTaskName, Value: "default_profile"}).
+		WithEnvVar(corev1.EnvVar{
+			Name:  constants.EnvVarTaskID,
+			Value: fmt.Sprintf("%s_%s_default_profile", userID, testStartTime.Format(time.RFC3339)),
+		}).
+		WithEnvVar(corev1.EnvVar{Name: "PROFILE", Value: "default_profile"}).
+		WithEnvVar(corev1.EnvVar{Name: "TIMESTAMP", Value: testStartTime.Format(time.RFC3339)})
+
+	baseJobTemplateWrapper := wrappers.MakeJobTemplate("slurm-job-template", metav1.NamespaceDefault).
+		WithContainer(*baseContainerWrapper.DeepCopy())
+
+	baseApplicationProfileWrapper := wrappers.MakeApplicationProfile(applicationProfileName, metav1.NamespaceDefault).
+		WithSupportedMode(*wrappers.MakeSupportedMode(v1alpha1.SlurmMode, "slurm-job-template").Obj())
+
+	baseJobContainerWrapper := baseContainerWrapperWithEnv.Clone().
+		Command("bash", "/slurm/scripts/entrypoint.sh").
+		WithVolumeMount(corev1.VolumeMount{Name: "slurm-scripts", MountPath: "/slurm/scripts"}).
+		WithVolumeMount(corev1.VolumeMount{Name: "slurm-env", MountPath: "/slurm/env"})
+
+	baseJobWrapper := wrappers.MakeJob("", metav1.NamespaceDefault).
+		Completions(1).
+		CompletionMode(batchv1.IndexedCompletion).
+		Profile(applicationProfileName).
+		Mode(v1alpha1.SlurmMode).
+		Subdomain("profile-slurm").
+		WithInitContainer(*wrappers.MakeContainer("slurm-init-env", baseInitContainerImage).
+			Command("sh", "/slurm/scripts/init-entrypoint.sh").
+			WithVolumeMount(corev1.VolumeMount{Name: "slurm-scripts", MountPath: "/slurm/scripts"}).
+			WithVolumeMount(corev1.VolumeMount{Name: "slurm-env", MountPath: "/slurm/env"}).
+			WithEnvVar(corev1.EnvVar{Name: "POD_IP", ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{FieldPath: "status.podIP"},
+			}}).
+			Obj()).
+		WithContainer(*baseJobContainerWrapper.DeepCopy()).
+		WithEnvVarIndexValue("JOB_CONTAINER_INDEX").
+		WithVolume(corev1.Volume{
+			Name: "slurm-scripts",
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{Name: "profile-slurm"},
+					Items: []corev1.KeyToPath{
+						{Key: "init-entrypoint.sh", Path: "init-entrypoint.sh"},
+						{Key: "entrypoint.sh", Path: "entrypoint.sh"},
+						{Key: "script", Path: "script", Mode: ptr.To[int32](0755)},
+					},
 				},
-				[]string{string(v1alpha1.MemPerCPUFlag), string(v1alpha1.MemPerGPUFlag)},
-			),
-		},
-		"should build slurm job": {
-			beforeTest:       beforeSlurmTest,
-			namespace:        metav1.NamespaceDefault,
-			profile:          "profile",
-			mode:             v1alpha1.SlurmMode,
-			array:            "1-5%2",
-			initImage:        "bash:latest",
-			workerContainers: []string{"c1"},
-			kjobctlObjs: []runtime.Object{
-				wrappers.MakeJobTemplate("slurm-job-template", metav1.NamespaceDefault).
-					WithContainer(*wrappers.MakeContainer("c1", "bash:4.4").Obj()).
-					WithContainer(*wrappers.MakeContainer("c2", "bash:4.4").Obj()).
-					Obj(),
-				wrappers.MakeApplicationProfile("profile", metav1.NamespaceDefault).
-					WithSupportedMode(*wrappers.MakeSupportedMode(v1alpha1.SlurmMode, "slurm-job-template").Obj()).
-					Obj(),
 			},
-			wantRootObj: wrappers.MakeJob("", metav1.NamespaceDefault).
-				Parallelism(2).
-				Completions(5).
-				CompletionMode(batchv1.IndexedCompletion).
-				Profile("profile").
-				Mode(v1alpha1.SlurmMode).
-				Subdomain("profile-slurm").
-				WithInitContainer(*wrappers.MakeContainer("slurm-init-env", "bash:latest").
-					Command("sh", "/slurm/scripts/init-entrypoint.sh").
-					WithVolumeMount(corev1.VolumeMount{Name: "slurm-scripts", MountPath: "/slurm/scripts"}).
-					WithVolumeMount(corev1.VolumeMount{Name: "slurm-env", MountPath: "/slurm/env"}).
-					WithEnvVar(corev1.EnvVar{Name: "POD_IP", ValueFrom: &corev1.EnvVarSource{
-						FieldRef: &corev1.ObjectFieldSelector{FieldPath: "status.podIP"},
-					}}).
-					Obj()).
-				WithContainer(*wrappers.MakeContainer("c1", "bash:4.4").
-					Command("bash", "/slurm/scripts/entrypoint.sh").
-					WithVolumeMount(corev1.VolumeMount{Name: "slurm-scripts", MountPath: "/slurm/scripts"}).
-					WithVolumeMount(corev1.VolumeMount{Name: "slurm-env", MountPath: "/slurm/env"}).
-					WithEnvVar(corev1.EnvVar{Name: constants.EnvVarNameUserID, Value: userID}).
-					WithEnvVar(corev1.EnvVar{Name: constants.EnvVarTaskName, Value: "default_profile"}).
-					WithEnvVar(corev1.EnvVar{
-						Name:  constants.EnvVarTaskID,
-						Value: fmt.Sprintf("%s_%s_default_profile", userID, testStartTime.Format(time.RFC3339)),
-					}).
-					WithEnvVar(corev1.EnvVar{Name: "PROFILE", Value: "default_profile"}).
-					WithEnvVar(corev1.EnvVar{Name: "TIMESTAMP", Value: testStartTime.Format(time.RFC3339)}).
-					WithEnvVar(corev1.EnvVar{Name: "JOB_CONTAINER_INDEX", Value: "0"}).
-					Obj()).
-				WithContainer(*wrappers.MakeContainer("c2", "bash:4.4").
-					Command().
-					WithEnvVar(corev1.EnvVar{Name: constants.EnvVarNameUserID, Value: userID}).
-					WithEnvVar(corev1.EnvVar{Name: constants.EnvVarTaskName, Value: "default_profile"}).
-					WithEnvVar(corev1.EnvVar{
-						Name:  constants.EnvVarTaskID,
-						Value: fmt.Sprintf("%s_%s_default_profile", userID, testStartTime.Format(time.RFC3339)),
-					}).
-					WithEnvVar(corev1.EnvVar{Name: "PROFILE", Value: "default_profile"}).
-					WithEnvVar(corev1.EnvVar{Name: "TIMESTAMP", Value: testStartTime.Format(time.RFC3339)}).
-					WithEnvVar(corev1.EnvVar{Name: "JOB_CONTAINER_INDEX", Value: "1"}).
-					Obj()).
-				WithVolume(corev1.Volume{
-					Name: "slurm-scripts",
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{Name: "profile-slurm"},
-							Items: []corev1.KeyToPath{
-								{Key: "init-entrypoint.sh", Path: "init-entrypoint.sh"},
-								{Key: "entrypoint.sh", Path: "entrypoint.sh"},
-								{Key: "script", Path: "script", Mode: ptr.To[int32](0755)},
-							},
-						},
-					},
-				}).
-				WithVolume(corev1.Volume{
-					Name: "slurm-env",
-					VolumeSource: corev1.VolumeSource{
-						EmptyDir: &corev1.EmptyDirVolumeSource{},
-					},
-				}).
-				Obj(),
-			wantChildObjs: []runtime.Object{
-				wrappers.MakeConfigMap("", metav1.NamespaceDefault).
-					Profile("profile").
-					Mode(v1alpha1.SlurmMode).
-					Data(map[string]string{
-						"script": "#!/bin/bash\nsleep 300'",
-						"init-entrypoint.sh": `#!/bin/sh
+		}).
+		WithVolume(corev1.Volume{
+			Name: "slurm-env",
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
+			},
+		})
+
+	baseConfigMapWrapper := wrappers.MakeConfigMap("", metav1.NamespaceDefault).
+		Profile(applicationProfileName).
+		Mode(v1alpha1.SlurmMode).
+		Data(map[string]string{
+			"init-entrypoint.sh": `#!/bin/sh
 
 set -o errexit
 set -o nounset
@@ -241,7 +173,7 @@ set -x
 # JOB_COMPLETION_INDEX - completion index of the job.
 # POD_IP               - current pod IP
 
-array_indexes="1;2;3;4;5"
+array_indexes="0"
 container_indexes=$(echo "$array_indexes" | awk -F';' -v idx="$JOB_COMPLETION_INDEX" '{print $((idx + 1))}')
 
 for i in $(seq 0 1)
@@ -257,9 +189,9 @@ do
 
 	cat << EOF > /slurm/env/$i/slurm.env
 SLURM_ARRAY_JOB_ID=1
-SLURM_ARRAY_TASK_COUNT=5
-SLURM_ARRAY_TASK_MAX=5
-SLURM_ARRAY_TASK_MIN=1
+SLURM_ARRAY_TASK_COUNT=1
+SLURM_ARRAY_TASK_MAX=0
+SLURM_ARRAY_TASK_MIN=0
 SLURM_TASKS_PER_NODE=1
 SLURM_CPUS_PER_TASK=
 SLURM_CPUS_ON_NODE=
@@ -272,11 +204,11 @@ SLURM_GPUS=
 SLURM_NTASKS=1
 SLURM_NTASKS_PER_NODE=1
 SLURM_NPROCS=1
-SLURM_NNODES=2
+SLURM_NNODES=1
 SLURM_SUBMIT_DIR=/slurm/scripts
 SLURM_SUBMIT_HOST=$HOSTNAME
-SLURM_JOB_NODELIST=profile-slurm-0.profile-slurm,profile-slurm-1.profile-slurm
-SLURM_JOB_FIRST_NODE=profile-slurm-0.profile-slurm
+SLURM_JOB_NODELIST=profile-slurm-q85rk-0.profile-slurm-q85rk
+SLURM_JOB_FIRST_NODE=profile-slurm-q85rk-0.profile-slurm-q85rk
 SLURM_JOB_ID=$(expr $JOB_COMPLETION_INDEX \* 1 + $i + 1)
 SLURM_JOBID=$(expr $JOB_COMPLETION_INDEX \* 1 + $i + 1)
 SLURM_ARRAY_TASK_ID=$container_index
@@ -285,7 +217,7 @@ EOF
 
 done
 `,
-						"entrypoint.sh": `#!/usr/local/bin/bash
+			"entrypoint.sh": `#!/usr/local/bin/bash
 
 set -o errexit
 set -o nounset
@@ -304,26 +236,101 @@ export $(cat /slurm/env/$JOB_CONTAINER_INDEX/slurm.env | xargs)
 
 /slurm/scripts/script
 `,
-					}).
-					Obj(),
-				wrappers.MakeService("profile-slurm", metav1.NamespaceDefault).
-					Profile("profile").
-					Mode(v1alpha1.SlurmMode).
-					ClusterIP("None").
-					Selector("job-name", "profile-slurm").
-					Obj(),
+			"script": "#!/bin/bash\nsleep 300'",
+		})
+
+	baseServiceWrapper := wrappers.MakeService("profile-slurm", metav1.NamespaceDefault).
+		Profile(applicationProfileName).
+		Mode(v1alpha1.SlurmMode).
+		ClusterIP("None").
+		Selector("job-name", "profile-slurm")
+
+	cmpOpts := []cmp.Option{
+		cmpopts.AcyclicTransformer("RemoveGeneratedNameSuffixInString", func(val string) string {
+			return regexp.MustCompile("(profile-slurm)(-.{5})").ReplaceAllString(val, "$1")
+		}),
+		cmpopts.AcyclicTransformer("RemoveGeneratedNameSuffixInMap", func(m map[string]string) map[string]string {
+			for key, val := range m {
+				m[key] = regexp.MustCompile("(profile-slurm)(-.{5})").ReplaceAllString(val, "$1")
+			}
+			return m
+		}),
+	}
+
+	testCases := map[string]slurmBuilderTestCase{
+		"shouldn't build slurm job because script not specified": {
+			profile:     applicationProfileName,
+			kjobctlObjs: []runtime.Object{baseApplicationProfileWrapper.DeepCopy()},
+			wantErr:     noScriptSpecifiedErr,
+		},
+		"shouldn't build slurm job with --mem-per-cpu because no --cpus-per-task specified": {
+			beforeTest:  beforeSlurmTest,
+			profile:     applicationProfileName,
+			memPerCPU:   ptr.To(resource.MustParse("1")),
+			kjobctlObjs: []runtime.Object{baseApplicationProfileWrapper.DeepCopy()},
+			wantErr:     noCpusPerTaskSpecifiedErr,
+		},
+		"shouldn't build slurm job with --mem-per-cpu because no --gpus-per-task specified": {
+			beforeTest:  beforeSlurmTest,
+			profile:     applicationProfileName,
+			memPerGPU:   ptr.To(resource.MustParse("1")),
+			kjobctlObjs: []runtime.Object{baseApplicationProfileWrapper.DeepCopy()},
+			wantErr:     noGpusPerTaskSpecifiedErr,
+		},
+		"shouldn't build slurm job because --mem-per-cpu and --mem-per-gpu flags mutually exclusive": {
+			beforeTest:  beforeSlurmTest,
+			profile:     applicationProfileName,
+			cpusPerTask: ptr.To(resource.MustParse("1")),
+			memPerCPU:   ptr.To(resource.MustParse("1")),
+			gpusPerTask: map[string]*resource.Quantity{
+				"test": ptr.To(resource.MustParse("1")),
 			},
-			cmpopts: []cmp.Option{
-				cmpopts.AcyclicTransformer("RemoveGeneratedNameSuffixInString", func(val string) string {
-					return regexp.MustCompile("(profile-slurm)(-.{5})").ReplaceAllString(val, "$1")
-				}),
-				cmpopts.AcyclicTransformer("RemoveGeneratedNameSuffixInMap", func(m map[string]string) map[string]string {
-					for key, val := range m {
-						m[key] = regexp.MustCompile("(profile-slurm)(-.{5})").ReplaceAllString(val, "$1")
-					}
-					return m
-				}),
+			memPerGPU:   ptr.To(resource.MustParse("1")),
+			kjobctlObjs: []runtime.Object{baseApplicationProfileWrapper.DeepCopy()},
+			wantErr: validate.NewMutuallyExclusiveError(
+				[]string{
+					string(v1alpha1.MemPerNodeFlag),
+					string(v1alpha1.MemPerCPUFlag),
+					string(v1alpha1.MemPerGPUFlag),
+					string(v1alpha1.MemPerTaskFlag),
+				},
+				[]string{string(v1alpha1.MemPerCPUFlag), string(v1alpha1.MemPerGPUFlag)},
+			),
+		},
+		"shouldn't build slurm job because template not found": {
+			beforeTest:  beforeSlurmTest,
+			profile:     applicationProfileName,
+			kjobctlObjs: []runtime.Object{baseApplicationProfileWrapper.DeepCopy()},
+			wantErr:     apierrors.NewNotFound(schema.GroupResource{Group: "kjobctl.x-k8s.io", Resource: "jobtemplates"}, "slurm-job-template"),
+		},
+		"should build slurm job": {
+			beforeTest:    beforeSlurmTest,
+			profile:       applicationProfileName,
+			kjobctlObjs:   []runtime.Object{baseJobTemplateWrapper.DeepCopy(), baseApplicationProfileWrapper.DeepCopy()},
+			wantRootObj:   baseJobWrapper.DeepCopy(),
+			wantChildObjs: []runtime.Object{baseConfigMapWrapper.DeepCopy(), baseServiceWrapper.DeepCopy()},
+			cmpopts:       cmpOpts,
+		},
+		"should build slurm job with --worker-container": {
+			beforeTest:       beforeSlurmTest,
+			profile:          applicationProfileName,
+			workerContainers: []string{"c1"},
+			kjobctlObjs: []runtime.Object{
+				baseJobTemplateWrapper.Clone().
+					WithContainer(*wrappers.MakeContainer("c2", baseImage).Obj()).
+					Obj(),
+				baseApplicationProfileWrapper.DeepCopy(),
 			},
+			wantRootObj: baseJobWrapper.Clone().
+				WithContainer(
+					*baseContainerWrapperWithEnv.Clone().
+						Name("c2").
+						WithEnvVar(corev1.EnvVar{Name: "JOB_CONTAINER_INDEX", Value: "1"}).
+						Obj(),
+				).
+				Obj(),
+			wantChildObjs: []runtime.Object{baseConfigMapWrapper.DeepCopy(), baseServiceWrapper.DeepCopy()},
+			cmpopts:       cmpOpts,
 		},
 	}
 	for name, tc := range testCases {
@@ -338,10 +345,10 @@ export $(cat /slurm/env/$JOB_CONTAINER_INDEX/slurm.env | xargs)
 			tcg := cmdtesting.NewTestClientGetter().
 				WithKjobctlClientset(kjobctlfake.NewSimpleClientset(tc.kjobctlObjs...))
 
-			gotRootObj, gotChildObjs, gotErr := NewBuilder(tcg, testStartTime).
-				WithNamespace(tc.namespace).
+			builder := NewBuilder(tcg, testStartTime).
+				WithNamespace(metav1.NamespaceDefault).
 				WithProfileName(tc.profile).
-				WithModeName(tc.mode).
+				WithModeName(v1alpha1.SlurmMode).
 				WithScript(tc.tempFile).
 				WithArray(tc.array).
 				WithCpusPerTask(tc.cpusPerTask).
@@ -356,10 +363,11 @@ export $(cat /slurm/env/$JOB_CONTAINER_INDEX/slurm.env | xargs)
 				WithInput(tc.input).
 				WithJobName(tc.jobName).
 				WithPartition(tc.partition).
-				WithInitImage(tc.initImage).
+				WithInitImage(baseInitContainerImage).
 				WithFirstNodeIPTimeout(tc.firstNodeTimeout).
-				WithWorkerContainers(tc.workerContainers).
-				Do(ctx)
+				WithWorkerContainers(tc.workerContainers)
+
+			gotRootObj, gotChildObjs, gotErr := builder.Do(ctx)
 
 			var opts []cmp.Option
 			var statusError *apierrors.StatusError
@@ -368,7 +376,6 @@ export $(cat /slurm/env/$JOB_CONTAINER_INDEX/slurm.env | xargs)
 			}
 			if diff := cmp.Diff(tc.wantErr, gotErr, opts...); diff != "" {
 				t.Errorf("Unexpected error (-want/+got)\n%s", diff)
-				return
 			}
 
 			defaultCmpOpts := []cmp.Option{cmpopts.IgnoreFields(metav1.ObjectMeta{}, "Name")}
