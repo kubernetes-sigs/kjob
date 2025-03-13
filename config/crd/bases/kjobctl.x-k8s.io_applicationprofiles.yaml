@@ -92,6 +92,8 @@ spec:
                         - ntasks
                         - output
                         - partition
+                        - priority
+                        - time
                         type: string
                       maxItems: 14
                       type: array

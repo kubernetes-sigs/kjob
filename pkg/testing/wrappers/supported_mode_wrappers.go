@@ -37,3 +37,8 @@ func MakeSupportedMode(name v1alpha1.ApplicationProfileMode, template v1alpha1.T
 func (m *SupportedModeWrapper) Obj() *v1alpha1.SupportedMode {
 	return &m.SupportedMode
 }
+
+func (m *SupportedModeWrapper) RequiredFlags(requiredFlags ...v1alpha1.Flag) *SupportedModeWrapper {
+	m.SupportedMode.RequiredFlags = requiredFlags
+	return m
+}
