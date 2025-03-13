@@ -54,22 +54,14 @@ func (ai ArrayIndexes) Max() int32 {
 	return slices.Max(ai.Indexes)
 }
 
-func GenerateArrayIndexes(count int32) ArrayIndexes {
-	ai := ArrayIndexes{}
-	for i := int32(0); i < count; i++ {
-		ai.Indexes = append(ai.Indexes, i)
-	}
-	return ai
-}
-
 // ParseArrayIndexes parse array flag to ArrayIndexes.
 // Include syntax like:
 //   - 1-5   - which results in indexes: 1, 2, 3, 4, 5
 //   - 1,4,5 - which results exactly in the mentioned indexes 1, 4, 5
 //   - 3-9:3 - with step indicator, which results in 3,6,9
 //   - 1-5%2 - which results in indexes: 1, 2, 3, 4, 5 but only 2 of them are processed at the same time.
-func ParseArrayIndexes(str string) (ArrayIndexes, error) {
-	arrayIndexes := ArrayIndexes{}
+func ParseArrayIndexes(str string) (*ArrayIndexes, error) {
+	arrayIndexes := &ArrayIndexes{}
 
 	var (
 		indexes     []int32
@@ -86,7 +78,7 @@ func ParseArrayIndexes(str string) (ArrayIndexes, error) {
 		if matches[4] != "" {
 			num, err = strconv.ParseInt(matches[4], 10, 32)
 			if err != nil {
-				return arrayIndexes, errInvalidArrayFlagFormat
+				return nil, errInvalidArrayFlagFormat
 			}
 		}
 
@@ -99,11 +91,11 @@ func ParseArrayIndexes(str string) (ArrayIndexes, error) {
 
 		indexes, err = parseRangeIndexes(matches[1], step)
 	} else {
-		return arrayIndexes, errInvalidArrayFlagFormat
+		return nil, errInvalidArrayFlagFormat
 	}
 
 	if err != nil {
-		return arrayIndexes, err
+		return nil, err
 	}
 
 	slices.Sort(indexes)

@@ -45,29 +45,33 @@ import (
 )
 
 type slurmBuilderTestCase struct {
-	beforeTest       func(t *testing.T, tc *slurmBuilderTestCase)
-	tempFile         string
-	profile          string
-	array            string
-	cpusPerTask      *resource.Quantity
-	gpusPerTask      map[string]*resource.Quantity
-	memPerTask       *resource.Quantity
-	memPerCPU        *resource.Quantity
-	memPerGPU        *resource.Quantity
-	nodes            *int32
-	nTasks           *int32
-	output           string
-	err              string
-	input            string
-	jobName          string
-	partition        string
-	workerContainers []string
-	firstNodeTimeout time.Duration
-	kjobctlObjs      []runtime.Object
-	wantRootObj      runtime.Object
-	wantChildObjs    []runtime.Object
-	wantErr          error
-	cmpopts          []cmp.Option
+	beforeTest        func(t *testing.T, tc *slurmBuilderTestCase)
+	tempFile          string
+	profile           string
+	array             string
+	cpusPerTask       *resource.Quantity
+	gpusPerTask       map[string]*resource.Quantity
+	memPerTask        *resource.Quantity
+	memPerCPU         *resource.Quantity
+	memPerGPU         *resource.Quantity
+	nodes             *int32
+	nTasks            *int32
+	nTasksPerNode     *int32
+	output            string
+	err               string
+	input             string
+	jobName           string
+	partition         string
+	workerContainers  []string
+	firstNodeTimeout  time.Duration
+	kjobctlObjs       []runtime.Object
+	wantRootObj       runtime.Object
+	wantChildObjs     []runtime.Object
+	wantNTasks        *int32
+	wantNTasksPerNode *int32
+	wantNodes         *int32
+	wantErr           error
+	cmpopts           []cmp.Option
 }
 
 func beforeSlurmTest(t *testing.T, tc *slurmBuilderTestCase) {
@@ -123,6 +127,7 @@ func TestSlurmBuilderDo(t *testing.T) {
 		WithVolumeMount(corev1.VolumeMount{Name: "slurm-env", MountPath: "/slurm/env"})
 
 	baseJobWrapper := wrappers.MakeJob("", metav1.NamespaceDefault).
+		Parallelism(1).
 		Completions(1).
 		CompletionMode(batchv1.IndexedCompletion).
 		Profile(applicationProfileName).
@@ -137,7 +142,6 @@ func TestSlurmBuilderDo(t *testing.T) {
 			}}).
 			Obj()).
 		WithContainer(*baseJobContainerWrapper.DeepCopy()).
-		WithEnvVarIndexValue("JOB_CONTAINER_INDEX").
 		WithVolume(corev1.Volume{
 			Name: "slurm-scripts",
 			VolumeSource: corev1.VolumeSource{
@@ -169,30 +173,11 @@ set -o nounset
 set -o pipefail
 set -x
 
-# External variables
-# JOB_COMPLETION_INDEX - completion index of the job.
-# POD_IP               - current pod IP
+mkdir -p /slurm/env
 
-array_indexes="0"
-container_indexes=$(echo "$array_indexes" | awk -F';' -v idx="$JOB_COMPLETION_INDEX" '{print $((idx + 1))}')
+job_id=$(expr $JOB_COMPLETION_INDEX + 1)
 
-for i in $(seq 0 1)
-do
-  container_index=$(echo "$container_indexes" | awk -F',' -v idx="$i" '{print $((idx + 1))}')
-
-	if [ -z "$container_index" ]; then
-		break
-	fi
-
-	mkdir -p /slurm/env/$i
-
-
-	cat << EOF > /slurm/env/$i/slurm.env
-SLURM_ARRAY_JOB_ID=1
-SLURM_ARRAY_TASK_COUNT=1
-SLURM_ARRAY_TASK_MAX=0
-SLURM_ARRAY_TASK_MIN=0
-SLURM_TASKS_PER_NODE=1
+cat << EOF > /slurm/env/slurm.env
 SLURM_CPUS_PER_TASK=
 SLURM_CPUS_ON_NODE=
 SLURM_JOB_CPUS_PER_NODE=
@@ -201,21 +186,23 @@ SLURM_MEM_PER_CPU=
 SLURM_MEM_PER_GPU=
 SLURM_MEM_PER_NODE=
 SLURM_GPUS=
+
+SLURM_TASKS_PER_NODE=
 SLURM_NTASKS=1
 SLURM_NTASKS_PER_NODE=1
 SLURM_NPROCS=1
+SLURM_JOB_NUM_NODES=1
 SLURM_NNODES=1
+
 SLURM_SUBMIT_DIR=/slurm/scripts
 SLURM_SUBMIT_HOST=$HOSTNAME
-SLURM_JOB_NODELIST=profile-slurm-q85rk-0.profile-slurm-q85rk
-SLURM_JOB_FIRST_NODE=profile-slurm-q85rk-0.profile-slurm-q85rk
-SLURM_JOB_ID=$(expr $JOB_COMPLETION_INDEX \* 1 + $i + 1)
-SLURM_JOBID=$(expr $JOB_COMPLETION_INDEX \* 1 + $i + 1)
-SLURM_ARRAY_TASK_ID=$container_index
-SLURM_JOB_FIRST_NODE_IP=${SLURM_JOB_FIRST_NODE_IP:-""}
-EOF
 
-done
+SLURM_JOB_NODELIST=profile-slurm-lpsbk-0.profile-slurm-lpsbk
+SLURM_JOB_FIRST_NODE=profile-slurm-lpsbk-0.profile-slurm-lpsbk
+
+SLURM_JOB_ID=$job_id
+SLURM_JOBID=$job_id
+EOF
 `,
 			"entrypoint.sh": `#!/usr/local/bin/bash
 
@@ -223,16 +210,13 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-# External variables
-# JOB_CONTAINER_INDEX 	- container index in the container template.
-
-if [ ! -d "/slurm/env/$JOB_CONTAINER_INDEX" ]; then
+if [ ! -d "/slurm/env" ]; then
 	exit 0
 fi
 
 SBATCH_JOB_NAME=
 
-export $(cat /slurm/env/$JOB_CONTAINER_INDEX/slurm.env | xargs)
+export $(cat /slurm/env/slurm.env | xargs)
 
 /slurm/scripts/script
 `,
@@ -256,6 +240,11 @@ export $(cat /slurm/env/$JOB_CONTAINER_INDEX/slurm.env | xargs)
 			return m
 		}),
 	}
+
+	mutualExclusiveNodesAndArrayFlagsError := validate.NewMutuallyExclusiveError(
+		[]string{string(v1alpha1.ArrayFlag), string(v1alpha1.NodesFlag)},
+		[]string{string(v1alpha1.ArrayFlag), string(v1alpha1.NodesFlag)},
+	)
 
 	testCases := map[string]slurmBuilderTestCase{
 		"shouldn't build slurm job because script not specified": {
@@ -322,15 +311,469 @@ export $(cat /slurm/env/$JOB_CONTAINER_INDEX/slurm.env | xargs)
 				baseApplicationProfileWrapper.DeepCopy(),
 			},
 			wantRootObj: baseJobWrapper.Clone().
-				WithContainer(
-					*baseContainerWrapperWithEnv.Clone().
-						Name("c2").
-						WithEnvVar(corev1.EnvVar{Name: "JOB_CONTAINER_INDEX", Value: "1"}).
-						Obj(),
-				).
+				WithContainer(*baseContainerWrapperWithEnv.Clone().Name("c2").Obj()).
 				Obj(),
 			wantChildObjs: []runtime.Object{baseConfigMapWrapper.DeepCopy(), baseServiceWrapper.DeepCopy()},
 			cmpopts:       cmpOpts,
+		},
+		"should build slurm job with --ntasks=5, --ntasks-per-node=, --nodes=, --array=": {
+			beforeTest:  beforeSlurmTest,
+			profile:     applicationProfileName,
+			nTasks:      ptr.To[int32](5),
+			kjobctlObjs: []runtime.Object{baseJobTemplateWrapper.DeepCopy(), baseApplicationProfileWrapper.DeepCopy()},
+			wantRootObj: baseJobWrapper.Clone().
+				Parallelism(1).
+				Completions(1).
+				Containers(
+					*baseJobContainerWrapper.Clone().Name("c1-0").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-1").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-2").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-3").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-4").Obj(),
+				).
+				Obj(),
+			wantChildObjs:     []runtime.Object{baseConfigMapWrapper.DeepCopy(), baseServiceWrapper.DeepCopy()},
+			wantNTasks:        ptr.To[int32](5),
+			wantNTasksPerNode: ptr.To[int32](5),
+			cmpopts:           append(cmpOpts, cmpopts.IgnoreFields(corev1.ConfigMap{}, "Data")),
+		},
+		"should build slurm job with --ntasks=5, --ntasks-per-node=, --nodes=, --array=1-3%2": {
+			beforeTest:  beforeSlurmTest,
+			profile:     applicationProfileName,
+			nTasks:      ptr.To[int32](5),
+			array:       "1-3%2",
+			kjobctlObjs: []runtime.Object{baseJobTemplateWrapper.DeepCopy(), baseApplicationProfileWrapper.DeepCopy()},
+			wantRootObj: baseJobWrapper.Clone().
+				Parallelism(2).
+				Completions(3).
+				Containers(
+					*baseJobContainerWrapper.Clone().Name("c1-0").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-1").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-2").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-3").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-4").Obj(),
+				).
+				Obj(),
+			wantChildObjs:     []runtime.Object{baseConfigMapWrapper.DeepCopy(), baseServiceWrapper.DeepCopy()},
+			wantNTasks:        ptr.To[int32](5),
+			wantNTasksPerNode: ptr.To[int32](5),
+			cmpopts:           append(cmpOpts, cmpopts.IgnoreFields(corev1.ConfigMap{}, "Data")),
+		},
+		"should build slurm job with --ntasks=, --ntasks-per-node=5, --nodes=, --array=": {
+			beforeTest:    beforeSlurmTest,
+			profile:       applicationProfileName,
+			nTasksPerNode: ptr.To[int32](5),
+			kjobctlObjs:   []runtime.Object{baseJobTemplateWrapper.DeepCopy(), baseApplicationProfileWrapper.DeepCopy()},
+			wantRootObj: baseJobWrapper.Clone().
+				Parallelism(1).
+				Completions(1).
+				Containers(
+					*baseJobContainerWrapper.Clone().Name("c1-0").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-1").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-2").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-3").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-4").Obj(),
+				).
+				Obj(),
+			wantChildObjs:     []runtime.Object{baseConfigMapWrapper.DeepCopy(), baseServiceWrapper.DeepCopy()},
+			wantNTasks:        ptr.To[int32](5),
+			wantNTasksPerNode: ptr.To[int32](5),
+			cmpopts:           append(cmpOpts, cmpopts.IgnoreFields(corev1.ConfigMap{}, "Data")),
+		},
+		"should build slurm job with --ntasks=, --ntasks-per-node=5, --nodes=, --array=1-3%2": {
+			beforeTest:    beforeSlurmTest,
+			profile:       applicationProfileName,
+			nTasksPerNode: ptr.To[int32](5),
+			array:         "1-3%2",
+			kjobctlObjs:   []runtime.Object{baseJobTemplateWrapper.DeepCopy(), baseApplicationProfileWrapper.DeepCopy()},
+			wantRootObj: baseJobWrapper.Clone().
+				Parallelism(2).
+				Completions(3).
+				Containers(
+					*baseJobContainerWrapper.Clone().Name("c1-0").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-1").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-2").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-3").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-4").Obj(),
+				).
+				Obj(),
+			wantChildObjs:     []runtime.Object{baseConfigMapWrapper.DeepCopy(), baseServiceWrapper.DeepCopy()},
+			wantNTasks:        ptr.To[int32](5),
+			wantNTasksPerNode: ptr.To[int32](5),
+			cmpopts:           append(cmpOpts, cmpopts.IgnoreFields(corev1.ConfigMap{}, "Data")),
+		},
+		"shouldn't build slurm job with --ntasks=, --ntasks-per-node=, --nodes=5, --array= (unsupported scenario)": {
+			beforeTest:  beforeSlurmTest,
+			profile:     applicationProfileName,
+			nodes:       ptr.To[int32](5),
+			kjobctlObjs: []runtime.Object{baseApplicationProfileWrapper.DeepCopy()},
+			wantErr:     errNTasksOrNTasksPerNodeMustBeSpecifiedWithNodes,
+			wantNodes:   ptr.To[int32](5),
+		},
+		"shouldn't build slurm job with --ntasks=, --ntasks-per-node=, --nodes=5, --array=1-3%2 (unsupported scenario)": {
+			beforeTest:  beforeSlurmTest,
+			profile:     applicationProfileName,
+			nodes:       ptr.To[int32](5),
+			kjobctlObjs: []runtime.Object{baseJobTemplateWrapper.DeepCopy(), baseApplicationProfileWrapper.DeepCopy()},
+			wantErr:     errNTasksOrNTasksPerNodeMustBeSpecifiedWithNodes,
+			wantNodes:   ptr.To[int32](5),
+		},
+		"should build slurm job with --ntasks=10, --ntasks-per-node=5, --nodes=, --array=": {
+			beforeTest:    beforeSlurmTest,
+			profile:       applicationProfileName,
+			nTasks:        ptr.To[int32](10),
+			nTasksPerNode: ptr.To[int32](5),
+			kjobctlObjs:   []runtime.Object{baseJobTemplateWrapper.DeepCopy(), baseApplicationProfileWrapper.DeepCopy()},
+			wantRootObj: baseJobWrapper.Clone().
+				Parallelism(2).
+				Completions(2).
+				Containers(
+					*baseJobContainerWrapper.Clone().Name("c1-0").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-1").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-2").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-3").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-4").Obj(),
+				).
+				Obj(),
+			wantChildObjs:     []runtime.Object{baseConfigMapWrapper.DeepCopy(), baseServiceWrapper.DeepCopy()},
+			wantNTasks:        ptr.To[int32](10),
+			wantNTasksPerNode: ptr.To[int32](5),
+			wantNodes:         ptr.To[int32](2),
+			cmpopts:           append(cmpOpts, cmpopts.IgnoreFields(corev1.ConfigMap{}, "Data")),
+		},
+		"shouldn't build slurm job with --ntasks=10, --ntasks-per-node=5, --nodes=, --array=1-3%2 (unsupported scenario)": {
+			beforeTest:        beforeSlurmTest,
+			profile:           applicationProfileName,
+			nTasks:            ptr.To[int32](10),
+			nTasksPerNode:     ptr.To[int32](5),
+			array:             "1-3%2",
+			kjobctlObjs:       []runtime.Object{baseApplicationProfileWrapper.DeepCopy()},
+			wantErr:           mutualExclusiveNodesAndArrayFlagsError,
+			wantNTasks:        ptr.To[int32](10),
+			wantNTasksPerNode: ptr.To[int32](5),
+			wantNodes:         ptr.To[int32](2),
+		},
+		"should build slurm job with --ntasks=5, --ntasks-per-node=5, --nodes=, --array=1-3%2": {
+			beforeTest:    beforeSlurmTest,
+			profile:       applicationProfileName,
+			nTasks:        ptr.To[int32](5),
+			nTasksPerNode: ptr.To[int32](5),
+			array:         "1-3%2",
+			kjobctlObjs:   []runtime.Object{baseJobTemplateWrapper.DeepCopy(), baseApplicationProfileWrapper.DeepCopy()},
+			wantRootObj: baseJobWrapper.Clone().
+				Parallelism(2).
+				Completions(3).
+				Containers(
+					*baseJobContainerWrapper.Clone().Name("c1-0").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-1").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-2").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-3").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-4").Obj(),
+				).
+				Obj(),
+			wantChildObjs:     []runtime.Object{baseConfigMapWrapper.DeepCopy(), baseServiceWrapper.DeepCopy()},
+			wantNTasks:        ptr.To[int32](5),
+			wantNTasksPerNode: ptr.To[int32](5),
+			wantNodes:         ptr.To[int32](1),
+			cmpopts:           append(cmpOpts, cmpopts.IgnoreFields(corev1.ConfigMap{}, "Data")),
+		},
+		"should build slurm job with --ntasks=6, --ntasks-per-node=, --nodes=2, --array=": {
+			beforeTest:  beforeSlurmTest,
+			profile:     applicationProfileName,
+			nTasks:      ptr.To[int32](6),
+			nodes:       ptr.To[int32](2),
+			kjobctlObjs: []runtime.Object{baseJobTemplateWrapper.DeepCopy(), baseApplicationProfileWrapper.DeepCopy()},
+			wantRootObj: baseJobWrapper.Clone().
+				Parallelism(2).
+				Completions(2).
+				Containers(
+					*baseJobContainerWrapper.Clone().Name("c1-0").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-1").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-2").Obj(),
+				).
+				Obj(),
+			wantChildObjs:     []runtime.Object{baseConfigMapWrapper.DeepCopy(), baseServiceWrapper.DeepCopy()},
+			wantNTasks:        ptr.To[int32](6),
+			wantNTasksPerNode: ptr.To[int32](3),
+			wantNodes:         ptr.To[int32](2),
+			cmpopts:           append(cmpOpts, cmpopts.IgnoreFields(corev1.ConfigMap{}, "Data")),
+		},
+		"shouldn't build slurm job with --ntasks=5, --ntasks-per-node=, --nodes=2, --array= (unsupported scenario)": {
+			beforeTest:  beforeSlurmTest,
+			profile:     applicationProfileName,
+			nTasks:      ptr.To[int32](5),
+			nodes:       ptr.To[int32](2),
+			kjobctlObjs: []runtime.Object{baseApplicationProfileWrapper.DeepCopy()},
+			wantErr:     errInvalidNodesOrNTasksValue,
+			wantNTasks:  ptr.To[int32](5),
+			wantNodes:   ptr.To[int32](2),
+		},
+		"shouldn't build slurm job with --ntasks=6, --ntasks-per-node=, --nodes=2, --array=1-3%2 (unsupported scenario)": {
+			beforeTest:        beforeSlurmTest,
+			profile:           applicationProfileName,
+			nTasks:            ptr.To[int32](6),
+			nodes:             ptr.To[int32](2),
+			array:             "1-3%2",
+			kjobctlObjs:       []runtime.Object{baseApplicationProfileWrapper.DeepCopy()},
+			wantErr:           mutualExclusiveNodesAndArrayFlagsError,
+			wantNTasks:        ptr.To[int32](6),
+			wantNTasksPerNode: ptr.To[int32](3),
+			wantNodes:         ptr.To[int32](2),
+		},
+		"should build slurm job with --ntasks=5, --ntasks-per-node=, --nodes=1, --array=1-3%2": {
+			beforeTest:  beforeSlurmTest,
+			profile:     applicationProfileName,
+			nTasks:      ptr.To[int32](5),
+			nodes:       ptr.To[int32](1),
+			array:       "1-3%2",
+			kjobctlObjs: []runtime.Object{baseJobTemplateWrapper.DeepCopy(), baseApplicationProfileWrapper.DeepCopy()},
+			wantRootObj: baseJobWrapper.Clone().
+				Parallelism(2).
+				Completions(3).
+				Containers(
+					*baseJobContainerWrapper.Clone().Name("c1-0").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-1").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-2").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-3").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-4").Obj(),
+				).
+				Obj(),
+			wantChildObjs:     []runtime.Object{baseConfigMapWrapper.DeepCopy(), baseServiceWrapper.DeepCopy()},
+			wantNTasks:        ptr.To[int32](5),
+			wantNTasksPerNode: ptr.To[int32](5),
+			wantNodes:         ptr.To[int32](1),
+			cmpopts:           append(cmpOpts, cmpopts.IgnoreFields(corev1.ConfigMap{}, "Data")),
+		},
+		"should build slurm job with --ntasks=, --ntasks-per-node=6, --nodes=2, --array=": {
+			beforeTest:    beforeSlurmTest,
+			profile:       applicationProfileName,
+			nTasksPerNode: ptr.To[int32](6),
+			nodes:         ptr.To[int32](2),
+			kjobctlObjs:   []runtime.Object{baseJobTemplateWrapper.DeepCopy(), baseApplicationProfileWrapper.DeepCopy()},
+			wantRootObj: baseJobWrapper.Clone().
+				Parallelism(2).
+				Completions(2).
+				Containers(
+					*baseJobContainerWrapper.Clone().Name("c1-0").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-1").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-2").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-3").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-4").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-5").Obj(),
+				).
+				Obj(),
+			wantChildObjs:     []runtime.Object{baseConfigMapWrapper.DeepCopy(), baseServiceWrapper.DeepCopy()},
+			wantNTasks:        ptr.To[int32](12),
+			wantNTasksPerNode: ptr.To[int32](6),
+			wantNodes:         ptr.To[int32](2),
+			cmpopts:           append(cmpOpts, cmpopts.IgnoreFields(corev1.ConfigMap{}, "Data")),
+		},
+		"shouldn't build slurm job with --ntasks=, --ntasks-per-node=6, --nodes=2, --array=1-3%2 (unsupported scenario)": {
+			beforeTest:        beforeSlurmTest,
+			profile:           applicationProfileName,
+			nTasksPerNode:     ptr.To[int32](6),
+			nodes:             ptr.To[int32](2),
+			array:             "1-3%2",
+			kjobctlObjs:       []runtime.Object{baseApplicationProfileWrapper.DeepCopy()},
+			wantErr:           mutualExclusiveNodesAndArrayFlagsError,
+			wantNTasks:        ptr.To[int32](12),
+			wantNTasksPerNode: ptr.To[int32](6),
+			wantNodes:         ptr.To[int32](2),
+		},
+		"should build slurm job with --ntasks=, --ntasks-per-node=5, --nodes=1, --array=1-3%2": {
+			beforeTest:    beforeSlurmTest,
+			profile:       applicationProfileName,
+			nTasksPerNode: ptr.To[int32](5),
+			nodes:         ptr.To[int32](1),
+			array:         "1-3%2",
+			kjobctlObjs:   []runtime.Object{baseJobTemplateWrapper.DeepCopy(), baseApplicationProfileWrapper.DeepCopy()},
+			wantRootObj: baseJobWrapper.Clone().
+				Parallelism(2).
+				Completions(3).
+				Containers(
+					*baseJobContainerWrapper.Clone().Name("c1-0").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-1").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-2").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-3").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-4").Obj(),
+				).
+				Obj(),
+			wantChildObjs:     []runtime.Object{baseConfigMapWrapper.DeepCopy(), baseServiceWrapper.DeepCopy()},
+			wantNTasks:        ptr.To[int32](5),
+			wantNTasksPerNode: ptr.To[int32](5),
+			wantNodes:         ptr.To[int32](1),
+			cmpopts:           append(cmpOpts, cmpopts.IgnoreFields(corev1.ConfigMap{}, "Data")),
+		},
+		"should build slurm job with --ntasks=6, --ntasks-per-node=3, --nodes=2, --array=": {
+			beforeTest:    beforeSlurmTest,
+			profile:       applicationProfileName,
+			nTasks:        ptr.To[int32](6),
+			nTasksPerNode: ptr.To[int32](3),
+			nodes:         ptr.To[int32](2),
+			kjobctlObjs:   []runtime.Object{baseJobTemplateWrapper.DeepCopy(), baseApplicationProfileWrapper.DeepCopy()},
+			wantRootObj: baseJobWrapper.Clone().
+				Parallelism(2).
+				Completions(2).
+				Containers(
+					*baseJobContainerWrapper.Clone().Name("c1-0").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-1").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-2").Obj(),
+				).
+				Obj(),
+			wantNTasks:        ptr.To[int32](6),
+			wantNTasksPerNode: ptr.To[int32](3),
+			wantNodes:         ptr.To[int32](2),
+			wantChildObjs: []runtime.Object{
+				baseConfigMapWrapper.Clone().
+					DataValue("init-entrypoint.sh", `#!/bin/sh
+
+set -o errexit
+set -o nounset
+set -o pipefail
+set -x
+
+mkdir -p /slurm/env
+
+job_id=$(expr $JOB_COMPLETION_INDEX + 1)
+
+cat << EOF > /slurm/env/slurm.env
+SLURM_CPUS_PER_TASK=
+SLURM_CPUS_ON_NODE=
+SLURM_JOB_CPUS_PER_NODE=
+SLURM_CPUS_PER_GPU=
+SLURM_MEM_PER_CPU=
+SLURM_MEM_PER_GPU=
+SLURM_MEM_PER_NODE=
+SLURM_GPUS=
+
+SLURM_TASKS_PER_NODE=
+SLURM_NTASKS=6
+SLURM_NTASKS_PER_NODE=3
+SLURM_NPROCS=6
+SLURM_JOB_NUM_NODES=2
+SLURM_NNODES=2
+
+SLURM_SUBMIT_DIR=/slurm/scripts
+SLURM_SUBMIT_HOST=$HOSTNAME
+
+SLURM_JOB_NODELIST=profile-slurm-6s7p9-0.profile-slurm-6s7p9,profile-slurm-6s7p9-1.profile-slurm-6s7p9
+SLURM_JOB_FIRST_NODE=profile-slurm-6s7p9-0.profile-slurm-6s7p9
+
+SLURM_JOB_ID=$job_id
+SLURM_JOBID=$job_id
+EOF
+`,
+					).
+					Obj(),
+				baseServiceWrapper.DeepCopy(),
+			},
+			cmpopts: cmpOpts,
+		},
+		"shouldn't build slurm job with --ntasks=6, --ntasks-per-node=4, --nodes=2, --array= (unsupported scenario)": {
+			beforeTest:        beforeSlurmTest,
+			profile:           applicationProfileName,
+			nTasks:            ptr.To[int32](6),
+			nTasksPerNode:     ptr.To[int32](4),
+			nodes:             ptr.To[int32](2),
+			kjobctlObjs:       []runtime.Object{baseApplicationProfileWrapper.DeepCopy()},
+			wantErr:           errInvalidNodesNTasksOrNTasksPerNodeValue,
+			wantNTasks:        ptr.To[int32](6),
+			wantNTasksPerNode: ptr.To[int32](4),
+			wantNodes:         ptr.To[int32](2),
+			cmpopts:           append(cmpOpts, cmpopts.IgnoreFields(corev1.ConfigMap{}, "Data")),
+		},
+		"shouldn't build slurm job with --ntasks=6, --ntasks-per-node=3, --nodes=2, --array=1-3%2 (unsupported scenario)": {
+			beforeTest:        beforeSlurmTest,
+			profile:           applicationProfileName,
+			nTasks:            ptr.To[int32](6),
+			nTasksPerNode:     ptr.To[int32](3),
+			nodes:             ptr.To[int32](2),
+			array:             "1-3%2",
+			kjobctlObjs:       []runtime.Object{baseApplicationProfileWrapper.DeepCopy()},
+			wantErr:           mutualExclusiveNodesAndArrayFlagsError,
+			wantNTasks:        ptr.To[int32](6),
+			wantNTasksPerNode: ptr.To[int32](3),
+			wantNodes:         ptr.To[int32](2),
+		},
+		"should build slurm job with --ntasks=5, --ntasks-per-node=5, --nodes=1, --array=1-3%2": {
+			beforeTest:    beforeSlurmTest,
+			profile:       applicationProfileName,
+			nTasks:        ptr.To[int32](5),
+			nTasksPerNode: ptr.To[int32](5),
+			nodes:         ptr.To[int32](1),
+			array:         "1-3%2",
+			kjobctlObjs:   []runtime.Object{baseJobTemplateWrapper.DeepCopy(), baseApplicationProfileWrapper.DeepCopy()},
+			wantRootObj: baseJobWrapper.Clone().
+				Parallelism(2).
+				Completions(3).
+				Containers(
+					*baseJobContainerWrapper.Clone().Name("c1-0").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-1").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-2").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-3").Obj(),
+					*baseJobContainerWrapper.Clone().Name("c1-4").Obj(),
+				).
+				Obj(),
+			wantNTasks:        ptr.To[int32](5),
+			wantNTasksPerNode: ptr.To[int32](5),
+			wantNodes:         ptr.To[int32](1),
+			wantChildObjs: []runtime.Object{
+				baseConfigMapWrapper.Clone().
+					DataValue("init-entrypoint.sh", `#!/bin/sh
+
+set -o errexit
+set -o nounset
+set -o pipefail
+set -x
+
+mkdir -p /slurm/env
+
+job_id=$(expr $JOB_COMPLETION_INDEX + 1)
+
+cat << EOF > /slurm/env/slurm.env
+SLURM_CPUS_PER_TASK=
+SLURM_CPUS_ON_NODE=
+SLURM_JOB_CPUS_PER_NODE=
+SLURM_CPUS_PER_GPU=
+SLURM_MEM_PER_CPU=
+SLURM_MEM_PER_GPU=
+SLURM_MEM_PER_NODE=
+SLURM_GPUS=
+
+SLURM_TASKS_PER_NODE=
+SLURM_NTASKS=5
+SLURM_NTASKS_PER_NODE=5
+SLURM_NPROCS=5
+SLURM_JOB_NUM_NODES=3
+SLURM_NNODES=3
+
+SLURM_SUBMIT_DIR=/slurm/scripts
+SLURM_SUBMIT_HOST=$HOSTNAME
+
+SLURM_JOB_NODELIST=profile-slurm-spfds-0.profile-slurm-spfds,profile-slurm-spfds-1.profile-slurm-spfds,profile-slurm-spfds-2.profile-slurm-spfds
+SLURM_JOB_FIRST_NODE=profile-slurm-spfds-0.profile-slurm-spfds
+
+SLURM_JOB_ID=$job_id
+SLURM_JOBID=$job_id
+EOF
+
+array_indexes="1,2,3"
+array_task_id=$(echo "$array_indexes" | awk -F',' -v idx="$JOB_COMPLETION_INDEX" '{print $((idx + 1))}')
+
+cat << EOF >> /slurm/env/slurm.env
+SLURM_ARRAY_JOB_ID=1
+SLURM_ARRAY_TASK_ID=$array_task_id
+SLURM_ARRAY_TASK_COUNT=3
+SLURM_ARRAY_TASK_MAX=3
+SLURM_ARRAY_TASK_MIN=1
+SLURM_ARRAY_TASK_STEP=1
+EOF
+`,
+					).
+					Obj(),
+				baseServiceWrapper.DeepCopy(),
+			},
+			cmpopts: cmpOpts,
 		},
 	}
 	for name, tc := range testCases {
@@ -358,6 +801,7 @@ export $(cat /slurm/env/$JOB_CONTAINER_INDEX/slurm.env | xargs)
 				WithMemPerGPU(tc.memPerGPU).
 				WithNodes(tc.nodes).
 				WithNTasks(tc.nTasks).
+				WithNTasksPerNode(tc.nTasksPerNode).
 				WithOutput(tc.output).
 				WithError(tc.err).
 				WithInput(tc.input).
@@ -376,6 +820,16 @@ export $(cat /slurm/env/$JOB_CONTAINER_INDEX/slurm.env | xargs)
 			}
 			if diff := cmp.Diff(tc.wantErr, gotErr, opts...); diff != "" {
 				t.Errorf("Unexpected error (-want/+got)\n%s", diff)
+			}
+
+			if diff := cmp.Diff(tc.wantNTasks, builder.nTasks, opts...); diff != "" {
+				t.Errorf("Unexpected nTasks (-want/+got)\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.wantNTasksPerNode, builder.nTasksPerNode, opts...); diff != "" {
+				t.Errorf("Unexpected nTasksPerNode (-want/+got)\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.wantNodes, builder.nodes, opts...); diff != "" {
+				t.Errorf("Unexpected nodes (-want/+got)\n%s", diff)
 			}
 
 			defaultCmpOpts := []cmp.Option{cmpopts.IgnoreFields(metav1.ObjectMeta{}, "Name")}
