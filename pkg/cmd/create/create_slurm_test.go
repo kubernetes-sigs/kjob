@@ -127,6 +127,18 @@ func TestCreateSlurmCmd(t *testing.T) {
 			},
 			wantErr: "the --stream-container can only be specified for streaming output.",
 		},
+		"shouldn't create slurm because the ntasks flag should be greater than 0": {
+			args: func(tc *createSlurmCmdTestCase) []string {
+				return []string{"slurm", "--profile", "profile", "--", tc.tempFile, "--ntasks", "0"}
+			},
+			wantErr: "--ntasks must be greater than 0",
+		},
+		"shouldn't create slurm because the ntasks-per-node flag should be greater than 0": {
+			args: func(tc *createSlurmCmdTestCase) []string {
+				return []string{"slurm", "--profile", "profile", "--", tc.tempFile, "--ntasks-per-node", "0"}
+			},
+			wantErr: "--ntasks-per-node must be greater than 0",
+		},
 		"should create slurm": {
 			beforeTest: beforeSlurmTest,
 			args: func(tc *createSlurmCmdTestCase) []string {

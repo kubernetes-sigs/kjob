@@ -136,6 +136,7 @@ func (b *slurmBuilder) complete() error {
 		return err
 	}
 
+	nodes := ptr.Deref(b.nodes, 1)
 	nTasks := ptr.Deref(b.nTasks, 1)
 
 	replacedScriptContent, err := parser.SlurmValidateAndReplaceScript(b.scriptContent, nTasks)
@@ -145,14 +146,11 @@ func (b *slurmBuilder) complete() error {
 	b.scriptContent = replacedScriptContent
 
 	if b.array == "" {
-		b.arrayIndexes = parser.GenerateArrayIndexes(ptr.Deref(b.nodes, 1) * nTasks)
+		b.arrayIndexes = parser.GenerateArrayIndexes(nodes*nTasks, b.nodes)
 	} else {
 		b.arrayIndexes, err = parser.ParseArrayIndexes(b.array)
 		if err != nil {
 			return err
-		}
-		if b.arrayIndexes.Parallelism != nil {
-			b.nodes = b.arrayIndexes.Parallelism
 		}
 	}
 
@@ -373,14 +371,16 @@ func (b *slurmBuilder) build(ctx context.Context) (runtime.Object, []runtime.Obj
 		)
 	}
 
-	nTasks := ptr.Deref(b.nTasks, 1)
-	completions := int32(math.Ceil(float64(b.arrayIndexes.Count()) / float64(nTasks)))
+	//nTasks := ptr.Deref(b.nTasks, 1)
+	nTasksPerNode := ptr.Deref(b.nTasksPerNode, 1)
+
+	completions := int32(math.Ceil(float64(b.arrayIndexes.Count()) / float64(nTasksPerNode)))
 
 	job.Spec.Completions = ptr.To(completions)
-	job.Spec.Parallelism = b.nodes
+	job.Spec.Parallelism = b.arrayIndexes.Parallelism
 
-	if nTasks > 1 {
-		for i := 1; i < int(nTasks); i++ {
+	if nTasksPerNode > 1 {
+		for i := 1; i < int(nTasksPerNode); i++ {
 			replica := job.Spec.Template.Spec.Containers[0].DeepCopy()
 			replica.Name = fmt.Sprintf("%s-%d", job.Spec.Template.Spec.Containers[0].Name, i)
 			job.Spec.Template.Spec.Containers = append(job.Spec.Template.Spec.Containers, *replica)
@@ -406,10 +406,6 @@ func (b *slurmBuilder) build(ctx context.Context) (runtime.Object, []runtime.Obj
 			Name:  "JOB_CONTAINER_INDEX",
 			Value: strconv.FormatInt(int64(i), 10),
 		})
-	}
-
-	if b.nodes != nil {
-		job.Spec.Parallelism = b.nodes
 	}
 
 	if !totalCpus.IsZero() {
@@ -527,7 +523,7 @@ type slurmInitEntrypointScript struct {
 
 func (b *slurmBuilder) buildInitEntrypointScript(jobName string) (string, error) {
 	nTasks := ptr.Deref(b.nTasks, 1)
-	nodes := ptr.Deref(b.nodes, 1)
+	nodes := ptr.Deref(b.arrayIndexes.Parallelism, 1)
 
 	nodeList := make([]string, nodes)
 	for i := int32(0); i < nodes; i++ {
