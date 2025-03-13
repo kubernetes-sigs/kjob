@@ -46,6 +46,11 @@ func (w *ConfigMapWrapper) Obj() *corev1.ConfigMap {
 	return &w.ConfigMap
 }
 
+// Clone returns deep copy of the ConfigMap.
+func (w *ConfigMapWrapper) Clone() *ConfigMapWrapper {
+	return &ConfigMapWrapper{ConfigMap: *w.DeepCopy()}
+}
+
 // WithOwnerReference adds the owner reference.
 func (w *ConfigMapWrapper) WithOwnerReference(ref metav1.OwnerReference) *ConfigMapWrapper {
 	w.OwnerReferences = append(w.OwnerReferences, ref)
@@ -79,5 +84,14 @@ func (w *ConfigMapWrapper) Label(key, value string) *ConfigMapWrapper {
 // Data sets data.
 func (w *ConfigMapWrapper) Data(data map[string]string) *ConfigMapWrapper {
 	w.ConfigMap.Data = data
+	return w
+}
+
+// DataValue sets data value.
+func (w *ConfigMapWrapper) DataValue(key, value string) *ConfigMapWrapper {
+	if w.ConfigMap.Data == nil {
+		w.ConfigMap.Data = make(map[string]string)
+	}
+	w.ConfigMap.Data[key] = value
 	return w
 }
