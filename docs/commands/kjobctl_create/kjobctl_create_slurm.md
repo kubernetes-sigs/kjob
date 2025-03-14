@@ -44,15 +44,6 @@ kjobctl create slurm --profile APPLICATION_PROFILE_NAME [--localqueue LOCAL_QUEU
         </td>
     </tr>
     <tr>
-        <td colspan="2">--container-name strings</td>
-    </tr>
-    <tr>
-        <td></td>
-        <td style="line-height: 130%; word-wrap: break-word;">
-            <p>Specify containers for which limits and volume mounts will be applied. Only output from this containers will be streamed.</p>
-        </td>
-    </tr>
-    <tr>
         <td colspan="2">--dry-run string&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default: &#34;none&#34;</td>
     </tr>
     <tr>
@@ -197,6 +188,15 @@ kjobctl create slurm --profile APPLICATION_PROFILE_NAME [--localqueue LOCAL_QUEU
         </td>
     </tr>
     <tr>
+        <td colspan="2">--stream-containers strings</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td style="line-height: 130%; word-wrap: break-word;">
+            <p>Specify containers from which logs will be streamed. This can be set only if --wait is used.</p>
+        </td>
+    </tr>
+    <tr>
         <td colspan="2">--template string</td>
     </tr>
     <tr>
@@ -221,6 +221,15 @@ kjobctl create slurm --profile APPLICATION_PROFILE_NAME [--localqueue LOCAL_QUEU
         <td></td>
         <td style="line-height: 130%; word-wrap: break-word;">
             <p>Timeout for waiting for the job to complete.</p>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">--worker-containers strings</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td style="line-height: 130%; word-wrap: break-word;">
+            <p>Specify containers for which limits and volumes will be applied.</p>
         </td>
     </tr>
     </tbody>

@@ -309,7 +309,7 @@ func (b *slurmBuilder) build(ctx context.Context) (runtime.Object, []runtime.Obj
 	var totalCpus, totalGpus, totalMem resource.Quantity
 	for i := range job.Spec.Template.Spec.Containers {
 		container := &job.Spec.Template.Spec.Containers[i]
-		if !slices.Contains(b.containerNames, container.Name) {
+		if len(b.workerContainers) > 0 && !slices.Contains(b.workerContainers, container.Name) {
 			continue
 		}
 		container.Command = []string{"bash", slurmEntrypointFilenamePath}
