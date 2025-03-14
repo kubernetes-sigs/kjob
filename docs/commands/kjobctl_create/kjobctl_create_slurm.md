@@ -44,7 +44,7 @@ kjobctl create slurm --profile APPLICATION_PROFILE_NAME [--localqueue LOCAL_QUEU
         </td>
     </tr>
     <tr>
-        <td colspan="2">--container-name string</td>
+        <td colspan="2">--container-name-prefix string</td>
     </tr>
     <tr>
         <td></td>

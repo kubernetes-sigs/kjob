@@ -23,6 +23,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"slices"
 	"strings"
 	"sync"
 	"syscall"
@@ -65,7 +66,7 @@ const (
 	removeFlagName                   = "rm"
 	ignoreUnknownFlagName            = "ignore-unknown-flags"
 	initImageFlagName                = "init-image"
-	containerNameFlagName            = "container-name"
+	containerNamesFlagName           = "container-name"
 	skipLocalQueueValidationFlagName = "skip-localqueue-validation"
 	skipPriorityValidationFlagName   = "skip-priority-validation"
 	changeDirFlagName                = "chdir"
@@ -193,7 +194,7 @@ type CreateOptions struct {
 	FirstNodeIP        bool
 	RemoveObject       bool
 	ChangeDir          string
-	ContainerName      string
+	ContainerNames     []string
 	SlurmFlagSet       *pflag.FlagSet
 	activeStreams      sync.Map
 
@@ -404,8 +405,7 @@ var createModeSubcommands = map[string]modeSubcommand{
 				"Wait for the Job to complete and stream its Pod logs.")
 			subcmd.Flags().DurationVar(&o.WaitTimeout, waitTimeoutFlagName, 0,
 				"Timeout for waiting for the job to complete.")
-			subcmd.Flags().StringVar(&o.ContainerName, containerNameFlagName, "",
-				"Stream logs from specified container.")
+			subcmd.Flags().StringArrayVar(&o.ContainerNames, containerNamesFlagName, nil, "Stream logs from specified containers.")
 			subcmd.Flags().StringVar(&o.InitImage, initImageFlagName, "registry.k8s.io/busybox:1.27.2",
 				"The image used for the init container.")
 			subcmd.Flags().BoolVar(&o.FirstNodeIP, firstNodeIPFlagName, false,
@@ -555,8 +555,8 @@ func (o *CreateOptions) Complete(clientGetter util.ClientGetter, cmd *cobra.Comm
 		if o.WaitTimeout != 0 && !o.Wait {
 			return errors.New("the --wait-timeout flag is required when --wait is set")
 		}
-		if o.ContainerName != "" && !o.Wait {
-			return errors.New("the --container-name can only be specified for streaming output.")
+		if len(o.ContainerNames) != 0 && !o.Wait {
+			return errors.New("the --container-names can only be specified for streaming output.")
 		}
 		o.Script = slurmArgs[0]
 	}
@@ -935,7 +935,7 @@ func (o *CreateOptions) watchJobAndStreamLogs(ctx context.Context, clientGetter 
 	watcherErrChan := make(chan error, 1)
 	go func() {
 		defer close(watcherErrChan)
-		err := o.watchJobPods(ctx, clientGetter, jobName, o.ContainerName)
+		err := o.watchJobPods(ctx, clientGetter, jobName, o.ContainerNames)
 		watcherErrChan <- err
 	}()
 
@@ -977,7 +977,7 @@ func (o *CreateOptions) removeObject(ctx context.Context, clientset kubernetes.I
 	return nil
 }
 
-func (o *CreateOptions) watchJobPods(ctx context.Context, clientGetter util.ClientGetter, jobName string, containerName string) error {
+func (o *CreateOptions) watchJobPods(ctx context.Context, clientGetter util.ClientGetter, jobName string, containerNames []string) error {
 	k8sClient, err := clientGetter.K8sClientset()
 	if err != nil {
 		return err
@@ -1020,7 +1020,9 @@ func (o *CreateOptions) streamLogsFromPod(ctx context.Context, clientGetter util
 		if pod.Spec.Containers[index].Name == builder.SlurmInitContainerName {
 			continue
 		}
-
+		if len(o.ContainerName) > 0 && !slices.Contains(o.ContainerNames, pod.Spec.Containers[index].Name) {
+			continue
+		}
 		go func() {
 			err := o.streamLogsFromPodContainer(ctx, clientGetter, pod, index)
 			if err != nil && !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
