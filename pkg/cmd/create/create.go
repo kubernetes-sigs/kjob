@@ -66,8 +66,8 @@ const (
 	removeFlagName                   = "rm"
 	ignoreUnknownFlagName            = "ignore-unknown-flags"
 	initImageFlagName                = "init-image"
-	streamContainersFlagName         = "stream-containers"
-	workerContainersFlagName         = "worker-containers"
+	streamContainersFlagName         = "stream-container"
+	workerContainersFlagName         = "worker-container"
 	skipLocalQueueValidationFlagName = "skip-localqueue-validation"
 	skipPriorityValidationFlagName   = "skip-priority-validation"
 	changeDirFlagName                = "chdir"
@@ -380,8 +380,8 @@ var createModeSubcommands = map[string]modeSubcommand{
 				" [--first-node-ip]" +
 				" [--first-node-ip-timeout DURATION]" +
 				" [--rm]" +
-				" [--stream-containers NAME]" +
-				" [--worker-containers NAME]" +
+				" [--stream-container NAME]" +
+				" [--worker-container NAME]" +
 				" -- " +
 				" [--array ARRAY]" +
 				" [--cpus-per-task QUANTITY]" +
@@ -561,7 +561,7 @@ func (o *CreateOptions) Complete(clientGetter util.ClientGetter, cmd *cobra.Comm
 			return errors.New("the --wait-timeout flag is required when --wait is set")
 		}
 		if len(o.StreamContainers) != 0 && !o.Wait {
-			return errors.New("the --stream-containers can only be specified for streaming output.")
+			return errors.New("the --stream-container can only be specified for streaming output.")
 		}
 		o.Script = slurmArgs[0]
 	}

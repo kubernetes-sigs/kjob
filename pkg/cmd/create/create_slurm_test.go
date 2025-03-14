@@ -121,11 +121,11 @@ func TestCreateSlurmCmd(t *testing.T) {
 			},
 			wantErr: "the --wait-timeout flag is required when --wait is set",
 		},
-		"shouldn't create slurm because the stream-containers is used without wait": {
+		"shouldn't create slurm because the stream-container is used without wait": {
 			args: func(tc *createSlurmCmdTestCase) []string {
-				return []string{"slurm", "--profile", "profile", "--stream-containers", "foo", "--", tc.tempFile}
+				return []string{"slurm", "--profile", "profile", "--stream-container", "foo", "--", tc.tempFile}
 			},
-			wantErr: "the --stream-containers can only be specified for streaming output.",
+			wantErr: "the --stream-container can only be specified for streaming output.",
 		},
 		"should create slurm": {
 			beforeTest: beforeSlurmTest,
