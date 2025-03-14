@@ -395,6 +395,8 @@ var createModeSubcommands = map[string]modeSubcommand{
 				" [--input FILENAME_PATTERN]" +
 				" [--job-name NAME]" +
 				" [--partition NAME]" +
+				" [--stream-containers NAME]" +
+				" [--worker-containers NAME]" +
 				" SCRIPT"
 
 			subcmd.Short = "Create a slurm job"
@@ -559,7 +561,7 @@ func (o *CreateOptions) Complete(clientGetter util.ClientGetter, cmd *cobra.Comm
 			return errors.New("the --wait-timeout flag is required when --wait is set")
 		}
 		if len(o.StreamContainers) != 0 && !o.Wait {
-			return errors.New("the --container-names can only be specified for streaming output.")
+			return errors.New("the --stream-containers can only be specified for streaming output.")
 		}
 		o.Script = slurmArgs[0]
 	}
