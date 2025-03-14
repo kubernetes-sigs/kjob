@@ -63,6 +63,7 @@ type slurmBuilderTestCase struct {
 	jobName          string
 	partition        string
 	initImage        string
+	workerContainers []string
 	firstNodeTimeout time.Duration
 	kjobctlObjs      []runtime.Object
 	wantRootObj      runtime.Object
@@ -119,15 +120,17 @@ func TestSlurmBuilderDo(t *testing.T) {
 			wantErr: apierrors.NewNotFound(schema.GroupResource{Group: "kjobctl.x-k8s.io", Resource: "jobtemplates"}, "slurm-template"),
 		},
 		"should build slurm job": {
-			beforeTest: beforeSlurmTest,
-			namespace:  metav1.NamespaceDefault,
-			profile:    "profile",
-			mode:       v1alpha1.SlurmMode,
-			array:      "1-5%2",
-			initImage:  "bash:latest",
+			beforeTest:       beforeSlurmTest,
+			namespace:        metav1.NamespaceDefault,
+			profile:          "profile",
+			mode:             v1alpha1.SlurmMode,
+			array:            "1-5%2",
+			initImage:        "bash:latest",
+			workerContainers: []string{"c1"},
 			kjobctlObjs: []runtime.Object{
 				wrappers.MakeJobTemplate("slurm-job-template", metav1.NamespaceDefault).
 					WithContainer(*wrappers.MakeContainer("c1", "bash:4.4").Obj()).
+					WithContainer(*wrappers.MakeContainer("c2", "bash:4.4").Obj()).
 					Obj(),
 				wrappers.MakeApplicationProfile("profile", metav1.NamespaceDefault).
 					WithSupportedMode(*wrappers.MakeSupportedMode(v1alpha1.SlurmMode, "slurm-job-template").Obj()).
@@ -161,6 +164,18 @@ func TestSlurmBuilderDo(t *testing.T) {
 					WithEnvVar(corev1.EnvVar{Name: "PROFILE", Value: "default_profile"}).
 					WithEnvVar(corev1.EnvVar{Name: "TIMESTAMP", Value: testStartTime.Format(time.RFC3339)}).
 					WithEnvVar(corev1.EnvVar{Name: "JOB_CONTAINER_INDEX", Value: "0"}).
+					Obj()).
+				WithContainer(*wrappers.MakeContainer("c2", "bash:4.4").
+					Command().
+					WithEnvVar(corev1.EnvVar{Name: constants.EnvVarNameUserID, Value: userID}).
+					WithEnvVar(corev1.EnvVar{Name: constants.EnvVarTaskName, Value: "default_profile"}).
+					WithEnvVar(corev1.EnvVar{
+						Name:  constants.EnvVarTaskID,
+						Value: fmt.Sprintf("%s_%s_default_profile", userID, testStartTime.Format(time.RFC3339)),
+					}).
+					WithEnvVar(corev1.EnvVar{Name: "PROFILE", Value: "default_profile"}).
+					WithEnvVar(corev1.EnvVar{Name: "TIMESTAMP", Value: testStartTime.Format(time.RFC3339)}).
+					WithEnvVar(corev1.EnvVar{Name: "JOB_CONTAINER_INDEX", Value: "1"}).
 					Obj()).
 				WithVolume(corev1.Volume{
 					Name: "slurm-scripts",
@@ -316,6 +331,7 @@ export $(cat /slurm/env/$JOB_CONTAINER_INDEX/slurm.env | xargs)
 				WithPartition(tc.partition).
 				WithInitImage(tc.initImage).
 				WithFirstNodeIPTimeout(tc.firstNodeTimeout).
+				WithWorkerContainers(tc.workerContainers).
 				Do(ctx)
 
 			var opts []cmp.Option
