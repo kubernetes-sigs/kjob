@@ -1026,7 +1026,7 @@ func (o *CreateOptions) streamLogsFromPod(ctx context.Context, clientGetter util
 		if pod.Spec.Containers[index].Name == builder.SlurmInitContainerName {
 			continue
 		}
-		if len(o.ContainerName) > 0 && !slices.Contains(o.StreamContainers, pod.Spec.Containers[index].Name) {
+		if len(o.StreamContainers) > 0 && !slices.Contains(o.StreamContainers, pod.Spec.Containers[index].Name) {
 			continue
 		}
 		go func() {
