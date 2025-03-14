@@ -193,7 +193,7 @@ kjobctl create slurm --profile APPLICATION_PROFILE_NAME [--localqueue LOCAL_QUEU
     <tr>
         <td></td>
         <td style="line-height: 130%; word-wrap: break-word;">
-            <p>Specify containers from which logs will be streamed. This can be set only if --wait is used.</p>
+            <p>Specify containers from which logs will be streamed. This can be set only if --wait is used. By default, all containers are included.</p>
         </td>
     </tr>
     <tr>
@@ -229,7 +229,7 @@ kjobctl create slurm --profile APPLICATION_PROFILE_NAME [--localqueue LOCAL_QUEU
     <tr>
         <td></td>
         <td style="line-height: 130%; word-wrap: break-word;">
-            <p>Specify containers for which limits and volumes will be applied.</p>
+            <p>Specify containers for which limits and volumes will be applied. By default, all containers are included.</p>
         </td>
     </tr>
     </tbody>
