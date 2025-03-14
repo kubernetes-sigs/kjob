@@ -380,6 +380,8 @@ var createModeSubcommands = map[string]modeSubcommand{
 				" [--first-node-ip]" +
 				" [--first-node-ip-timeout DURATION]" +
 				" [--rm]" +
+				" [--stream-containers NAME]" +
+				" [--worker-containers NAME]" +
 				" -- " +
 				" [--array ARRAY]" +
 				" [--cpus-per-task QUANTITY]" +
@@ -395,8 +397,6 @@ var createModeSubcommands = map[string]modeSubcommand{
 				" [--input FILENAME_PATTERN]" +
 				" [--job-name NAME]" +
 				" [--partition NAME]" +
-				" [--stream-containers NAME]" +
-				" [--worker-containers NAME]" +
 				" SCRIPT"
 
 			subcmd.Short = "Create a slurm job"
