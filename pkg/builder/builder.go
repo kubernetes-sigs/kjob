@@ -126,6 +126,7 @@ type Builder struct {
 	timeLimit                string
 	podTemplateLabels        map[string]string
 	podTemplateAnnotations   map[string]string
+	containerNames           []string
 
 	profile       *v1alpha1.ApplicationProfile
 	mode          *v1alpha1.SupportedMode
@@ -325,6 +326,11 @@ func (b *Builder) WithPodTemplateLabels(podTemplateLabels map[string]string) *Bu
 
 func (b *Builder) WithPodTemplateAnnotations(podTemplateAnnotations map[string]string) *Builder {
 	b.podTemplateAnnotations = podTemplateAnnotations
+	return b
+}
+
+func (b *Builder) WithContainerNames(containerNames []string) *Builder {
+	b.containerNames = containerNames
 	return b
 }
 

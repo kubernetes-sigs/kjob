@@ -723,6 +723,7 @@ func (o *CreateOptions) Run(ctx context.Context, clientGetter util.ClientGetter,
 		WithTimeLimit(o.TimeLimit).
 		WithPodTemplateLabels(o.PodTemplateLabels).
 		WithPodTemplateAnnotations(o.PodTemplateAnnotations).
+		WithContainerNames(o.ContainerNames).
 		Do(ctx)
 	if err != nil {
 		return err
