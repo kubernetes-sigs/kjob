@@ -69,6 +69,7 @@ var (
 	noMemPerTaskSpecifiedErr               = errors.New("no mem-per-task specified")
 	noNodesSpecifiedErr                    = errors.New("no nodes specified")
 	noNTasksSpecifiedErr                   = errors.New("no ntasks specified")
+	noNTasksPerNodeSpecifiedErr            = errors.New("no ntasks-per-node specified")
 	noOutputSpecifiedErr                   = errors.New("no output specified")
 	noPartitionSpecifiedErr                = errors.New("no partition specified")
 	noPrioritySpecifiedErr                 = errors.New("no priority specified")
@@ -113,6 +114,7 @@ type Builder struct {
 	memPerTask               *resource.Quantity
 	nodes                    *int32
 	nTasks                   *int32
+	nTasksPerNode            *int32
 	output                   string
 	partition                string
 	priority                 string
@@ -261,6 +263,11 @@ func (b *Builder) WithNodes(nodes *int32) *Builder {
 
 func (b *Builder) WithNTasks(nTasks *int32) *Builder {
 	b.nTasks = nTasks
+	return b
+}
+
+func (b *Builder) WithNTasksPerNode(nTasksPerNode *int32) *Builder {
+	b.nTasksPerNode = nTasksPerNode
 	return b
 }
 
@@ -474,6 +481,10 @@ func (b *Builder) validateFlags() error {
 
 	if slices.Contains(b.mode.RequiredFlags, v1alpha1.NTasksFlag) && b.nTasks == nil {
 		return noNTasksSpecifiedErr
+	}
+
+	if slices.Contains(b.mode.RequiredFlags, v1alpha1.NTasksPerNodeFlag) && b.nTasksPerNode == nil {
+		return noNTasksPerNodeSpecifiedErr
 	}
 
 	if slices.Contains(b.mode.RequiredFlags, v1alpha1.OutputFlag) && b.output == "" {

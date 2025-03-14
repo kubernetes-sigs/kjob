@@ -36,6 +36,17 @@ func (c *ContainerWrapper) Obj() *corev1.Container {
 	return &c.Container
 }
 
+// Clone returns deep copy of the Container.
+func (c *ContainerWrapper) Clone() *ContainerWrapper {
+	return &ContainerWrapper{Container: *c.DeepCopy()}
+}
+
+// Name sets name on the Container.
+func (c *ContainerWrapper) Name(name string) *ContainerWrapper {
+	c.Container.Name = name
+	return c
+}
+
 // Command set command.
 func (c *ContainerWrapper) Command(command ...string) *ContainerWrapper {
 	c.Container.Command = command

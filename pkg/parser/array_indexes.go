@@ -49,11 +49,12 @@ func (ai ArrayIndexes) Max() int32 {
 	return slices.Max(ai.Indexes)
 }
 
-func GenerateArrayIndexes(count int32) ArrayIndexes {
+func GenerateArrayIndexes(count int32, parallelism *int32) ArrayIndexes {
 	ai := ArrayIndexes{}
 	for i := int32(0); i < count; i++ {
 		ai.Indexes = append(ai.Indexes, i)
 	}
+	ai.Parallelism = parallelism
 	return ai
 }
 
