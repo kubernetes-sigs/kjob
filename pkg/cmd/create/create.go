@@ -405,7 +405,7 @@ var createModeSubcommands = map[string]modeSubcommand{
 				"Wait for the Job to complete and stream its Pod logs.")
 			subcmd.Flags().DurationVar(&o.WaitTimeout, waitTimeoutFlagName, 0,
 				"Timeout for waiting for the job to complete.")
-			subcmd.Flags().StringArrayVar(&o.ContainerNames, containerNamesFlagName, nil, "Stream logs from specified containers.")
+			subcmd.Flags().StringArrayVar(&o.ContainerNames, containerNamesFlagName, nil, "Specify containers for which limits and volume mounts will be applied. Only output from this containers will be streamed.")
 			subcmd.Flags().StringVar(&o.InitImage, initImageFlagName, "registry.k8s.io/busybox:1.27.2",
 				"The image used for the init container.")
 			subcmd.Flags().BoolVar(&o.FirstNodeIP, firstNodeIPFlagName, false,

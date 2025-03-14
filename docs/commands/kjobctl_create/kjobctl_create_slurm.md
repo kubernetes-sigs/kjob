@@ -44,12 +44,12 @@ kjobctl create slurm --profile APPLICATION_PROFILE_NAME [--localqueue LOCAL_QUEU
         </td>
     </tr>
     <tr>
-        <td colspan="2">--container-name-prefix string</td>
+        <td colspan="2">--container-name strings</td>
     </tr>
     <tr>
         <td></td>
         <td style="line-height: 130%; word-wrap: break-word;">
-            <p>Stream logs from specified container.</p>
+            <p>Specify containers for which limits and volume mounts will be applied. Only output from this containers will be streamed.</p>
         </td>
     </tr>
     <tr>
