@@ -7,7 +7,7 @@ toolchain go1.24.1
 require (
 	github.com/golangci/golangci-lint v1.64.7
 	github.com/onsi/ginkgo/v2 v2.23.0
-	gotest.tools/gotestsum v1.12.0
+	gotest.tools/gotestsum v1.12.1
 	k8s.io/code-generator v0.32.3
 	sigs.k8s.io/controller-runtime/tools/setup-envtest v0.0.0-20240813183042-b901db121e1f
 	sigs.k8s.io/controller-tools v0.17.2
@@ -22,7 +22,7 @@ require (
 	github.com/dnephin/pflag v1.0.7 // indirect
 	github.com/emicklei/go-restful/v3 v3.12.1 // indirect
 	github.com/fatih/color v1.18.0 // indirect
-	github.com/fsnotify/fsnotify v1.7.0 // indirect
+	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
