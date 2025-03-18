@@ -20,14 +20,18 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path"
 	"slices"
 	"strings"
 
+	"github.com/go-logr/logr"
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
+	zaplog "go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -37,6 +41,7 @@ import (
 	"k8s.io/client-go/tools/remotecommand"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	kjob "sigs.k8s.io/kjob/apis/v1alpha1"
 )
@@ -168,4 +173,16 @@ func KExecute(ctx context.Context, cfg *rest.Config, client *rest.RESTClient, ns
 	}
 
 	return out.Bytes(), outErr.Bytes(), nil
+}
+
+func NewTestingLogger(writer io.Writer, level int) logr.Logger {
+	opts := func(o *zap.Options) {
+		o.TimeEncoder = zapcore.RFC3339NanoTimeEncoder
+		o.ZapOpts = []zaplog.Option{zaplog.AddCaller()}
+	}
+	return zap.New(
+		zap.WriteTo(writer),
+		zap.UseDevMode(true),
+		zap.Level(zapcore.Level(level)),
+		opts)
 }

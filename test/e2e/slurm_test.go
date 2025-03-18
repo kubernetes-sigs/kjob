@@ -33,11 +33,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/kueue/pkg/util/maps"
 
 	"sigs.k8s.io/kjob/apis/v1alpha1"
 	kjobctlconstants "sigs.k8s.io/kjob/pkg/constants"
 	"sigs.k8s.io/kjob/pkg/testing/wrappers"
+	kjobutil "sigs.k8s.io/kjob/pkg/util"
 	"sigs.k8s.io/kjob/test/util"
 )
 
@@ -151,7 +151,7 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, func() {
 
 			for containerName, expectContainerVars := range expectPod {
 				ginkgo.By(fmt.Sprintf("Check env variables in index %d and container name %s", completionIndex, containerName), func() {
-					wantOut := maps.MergeKeepFirst(expectContainerVars, expectCommonVars)
+					wantOut := kjobutil.MergeKeepFirst(expectContainerVars, expectCommonVars)
 					if withFirstNodeIP {
 						wantOut["SLURM_JOB_FIRST_NODE_IP"] = firstPod.Status.PodIP
 					}

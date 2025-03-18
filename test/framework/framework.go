@@ -28,9 +28,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
-	"sigs.k8s.io/kueue/test/util"
 
 	"sigs.k8s.io/kjob/apis/v1alpha1"
+	"sigs.k8s.io/kjob/test/util"
 )
 
 type Framework struct {
