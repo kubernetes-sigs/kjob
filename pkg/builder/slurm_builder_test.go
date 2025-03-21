@@ -41,6 +41,7 @@ import (
 	cmdtesting "sigs.k8s.io/kjob/pkg/cmd/testing"
 	"sigs.k8s.io/kjob/pkg/constants"
 	"sigs.k8s.io/kjob/pkg/testing/wrappers"
+	"sigs.k8s.io/kjob/pkg/util/validate"
 )
 
 type slurmBuilderTestCase struct {
@@ -118,6 +119,32 @@ func TestSlurmBuilderDo(t *testing.T) {
 					Obj(),
 			},
 			wantErr: apierrors.NewNotFound(schema.GroupResource{Group: "kjobctl.x-k8s.io", Resource: "jobtemplates"}, "slurm-template"),
+		},
+		"shouldn't build slurm job because --mem-per-cpu and --mem-per-gpu flags mutually exclusive": {
+			beforeTest:  beforeSlurmTest,
+			namespace:   metav1.NamespaceDefault,
+			profile:     "profile",
+			mode:        v1alpha1.SlurmMode,
+			cpusPerTask: ptr.To(resource.MustParse("1")),
+			memPerCPU:   ptr.To(resource.MustParse("1")),
+			gpusPerTask: map[string]*resource.Quantity{
+				"test": ptr.To(resource.MustParse("1")),
+			},
+			memPerGPU: ptr.To(resource.MustParse("1")),
+			kjobctlObjs: []runtime.Object{
+				wrappers.MakeApplicationProfile("profile", metav1.NamespaceDefault).
+					WithSupportedMode(v1alpha1.SupportedMode{Name: v1alpha1.SlurmMode, Template: "slurm-template"}).
+					Obj(),
+			},
+			wantErr: validate.NewMutuallyExclusiveError(
+				[]string{
+					string(v1alpha1.MemPerNodeFlag),
+					string(v1alpha1.MemPerCPUFlag),
+					string(v1alpha1.MemPerGPUFlag),
+					string(v1alpha1.MemPerTaskFlag),
+				},
+				[]string{string(v1alpha1.MemPerCPUFlag), string(v1alpha1.MemPerGPUFlag)},
+			),
 		},
 		"should build slurm job": {
 			beforeTest:       beforeSlurmTest,

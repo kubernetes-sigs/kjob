@@ -39,6 +39,7 @@ import (
 	"sigs.k8s.io/kjob/apis/v1alpha1"
 	kjobctlconstants "sigs.k8s.io/kjob/pkg/constants"
 	"sigs.k8s.io/kjob/pkg/parser"
+	"sigs.k8s.io/kjob/pkg/util/validate"
 )
 
 //go:embed templates/slurm_*
@@ -132,7 +133,12 @@ func (b *slurmBuilder) complete() error {
 		return err
 	}
 
-	if err := b.validateMutuallyExclusiveFlags(); err != nil {
+	if err := validate.ValidateMutuallyExclusiveFlags(map[string]bool{
+		string(v1alpha1.MemPerNodeFlag): b.memPerNode != nil,
+		string(v1alpha1.MemPerTaskFlag): b.memPerTask != nil,
+		string(v1alpha1.MemPerCPUFlag):  b.memPerCPU != nil,
+		string(v1alpha1.MemPerGPUFlag):  b.memPerGPU != nil,
+	}); err != nil {
 		return err
 	}
 
@@ -154,36 +160,6 @@ func (b *slurmBuilder) complete() error {
 		if b.arrayIndexes.Parallelism != nil {
 			b.nodes = b.arrayIndexes.Parallelism
 		}
-	}
-
-	return nil
-}
-
-func (b *slurmBuilder) validateMutuallyExclusiveFlags() error {
-	flags := map[string]bool{
-		string(v1alpha1.MemPerNodeFlag): b.memPerNode != nil,
-		string(v1alpha1.MemPerTaskFlag): b.memPerTask != nil,
-		string(v1alpha1.MemPerCPUFlag):  b.memPerCPU != nil,
-		string(v1alpha1.MemPerGPUFlag):  b.memPerGPU != nil,
-	}
-
-	var setFlagsCount int
-	setFlags := make([]string, 0)
-	for f, isSet := range flags {
-		if isSet {
-			setFlagsCount++
-			setFlags = append(setFlags, f)
-		}
-	}
-
-	if setFlagsCount > 1 {
-		return fmt.Errorf(
-			"if any flags in the group [%s %s %s] are set none of the others can be; [%s] were all set",
-			v1alpha1.MemPerTaskFlag,
-			v1alpha1.MemPerGPUFlag,
-			v1alpha1.MemPerGPUFlag,
-			strings.Join(setFlags, " "),
-		)
 	}
 
 	return nil
