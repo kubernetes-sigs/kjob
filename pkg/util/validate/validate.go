@@ -18,8 +18,9 @@ package validate
 
 import (
 	"fmt"
-	"sort"
 	"strings"
+
+	"sigs.k8s.io/kjob/pkg/util"
 )
 
 type MutuallyExclusiveError string
@@ -38,25 +39,19 @@ func NewMutuallyExclusiveError(allFlags, setFlags []string) MutuallyExclusiveErr
 	)
 }
 
-func ValidateMutuallyExclusiveFlags(flags map[string]bool) error {
-	if len(flags) < 2 {
+func ValidateMutuallyExclusiveFlags(flagsMap map[string]bool) error {
+	if len(flagsMap) < 2 {
 		return nil
 	}
 
-	var (
-		setFlags = make([]string, 0)
-		allFlags = make([]string, 0, len(flags))
-	)
+	allFlags := util.SortedKeys(flagsMap)
 
-	for f, isSet := range flags {
-		allFlags = append(allFlags, f)
-		if isSet {
-			setFlags = append(setFlags, f)
+	var setFlags []string
+	for _, flag := range allFlags {
+		if flagsMap[flag] {
+			setFlags = append(setFlags, flag)
 		}
 	}
-
-	sort.Strings(setFlags)
-	sort.Strings(allFlags)
 
 	if len(setFlags) > 1 {
 		return NewMutuallyExclusiveError(allFlags, setFlags)
