@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strings"
 
-	"sigs.k8s.io/kjob/pkg/util"
+	"sigs.k8s.io/kjob/pkg/util/maps"
 )
 
 type MutuallyExclusiveError string
@@ -44,7 +44,7 @@ func ValidateMutuallyExclusiveFlags(flagsMap map[string]bool) error {
 		return nil
 	}
 
-	allFlags := util.SortedKeys(flagsMap)
+	allFlags := maps.SortedKeys(flagsMap)
 
 	var setFlags []string
 	for _, flag := range allFlags {

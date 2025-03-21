@@ -37,7 +37,7 @@ import (
 	"sigs.k8s.io/kjob/apis/v1alpha1"
 	kjobctlconstants "sigs.k8s.io/kjob/pkg/constants"
 	"sigs.k8s.io/kjob/pkg/testing/wrappers"
-	kjobutil "sigs.k8s.io/kjob/pkg/util"
+	kjobutil "sigs.k8s.io/kjob/pkg/util/maps"
 	"sigs.k8s.io/kjob/test/util"
 )
 
