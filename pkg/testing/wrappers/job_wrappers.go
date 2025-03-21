@@ -51,6 +51,11 @@ func (j *JobWrapper) Obj() *batchv1.Job {
 	return &j.Job
 }
 
+// Clone returns deep copy of the Job.
+func (j *JobWrapper) Clone() *JobWrapper {
+	return &JobWrapper{Job: *j.DeepCopy()}
+}
+
 // GenerateName updates generateName.
 func (j *JobWrapper) GenerateName(v string) *JobWrapper {
 	j.ObjectMeta.GenerateName = v
@@ -121,6 +126,18 @@ func (j *JobWrapper) Annotation(key, value string) *JobWrapper {
 		j.Annotations = make(map[string]string)
 	}
 	j.ObjectMeta.Annotations[key] = value
+	return j
+}
+
+// Containers set containers on the pod template.
+func (j *JobWrapper) Containers(containers ...corev1.Container) *JobWrapper {
+	j.Job.Spec.Template.Spec.Containers = containers
+	return j
+}
+
+// InitContainers set init containers on the pod template.
+func (j *JobWrapper) InitContainers(initContainers ...corev1.Container) *JobWrapper {
+	j.Job.Spec.Template.Spec.InitContainers = initContainers
 	return j
 }
 
