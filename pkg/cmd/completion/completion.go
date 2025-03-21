@@ -246,6 +246,35 @@ func RayClusterNameFunc(clientGetter helpers.ClientGetter) func(*cobra.Command, 
 	}
 }
 
+func JobSetNameFunc(clientGetter helpers.ClientGetter) func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
+	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		clientset, err := clientGetter.JobSetClientset()
+		if err != nil {
+			return []string{}, cobra.ShellCompDirectiveError
+		}
+
+		namespace, _, err := clientGetter.ToRawKubeConfigLoader().Namespace()
+		if err != nil {
+			return []string{}, cobra.ShellCompDirectiveError
+		}
+
+		opts := metav1.ListOptions{LabelSelector: constants.ProfileLabel, Limit: completionLimit}
+		list, err := clientset.JobsetV1alpha2().JobSets(namespace).List(cmd.Context(), opts)
+		if err != nil {
+			return []string{}, cobra.ShellCompDirectiveError
+		}
+
+		var validArgs []string
+		for _, jobSet := range list.Items {
+			if !slices.Contains(args, jobSet.Name) {
+				validArgs = append(validArgs, jobSet.Name)
+			}
+		}
+
+		return validArgs, cobra.ShellCompDirectiveNoFileComp
+	}
+}
+
 func PodNameFunc(clientGetter helpers.ClientGetter) func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
 	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		clientset, err := clientGetter.K8sClientset()

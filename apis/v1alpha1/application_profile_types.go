@@ -34,6 +34,7 @@ const (
 	RayJobMode      ApplicationProfileMode = "RayJob"
 	RayClusterMode  ApplicationProfileMode = "RayCluster"
 	SlurmMode       ApplicationProfileMode = "Slurm"
+	JobSetMode      ApplicationProfileMode = "JobSet"
 )
 
 // +kubebuilder:validation:Enum=cmd;parallelism;completions;replicas;min-replicas;max-replicas;request;localqueue;raycluster;array;cpus-per-task;error;gpus-per-task;input;job-name;mem-per-cpu;mem-per-gpu;mem-per-task;nodes;ntasks;ntasks-per-node;output;partition;priority;time;pod-template-label;pod-template-annotation
@@ -76,11 +77,11 @@ const (
 // +kubebuilder:validation:Pattern="^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$"
 type TemplateReference string
 
-// +kubebuilder:validation:XValidation:rule="!has(self.requiredFlags) || !('replicas' in self.requiredFlags) || self.name in ['RayJob', 'RayCluster']", message="replicas flag can be used only on RayJob and RayCluster modes"
+// +kubebuilder:validation:XValidation:rule="!has(self.requiredFlags) || !('replicas' in self.requiredFlags) || self.name in ['JobSet', 'RayJob', 'RayCluster']", message="replicas flag can be used only on JobSet, RayJob, and RayCluster modes"
 // +kubebuilder:validation:XValidation:rule="!has(self.requiredFlags) || !('min-replicas' in self.requiredFlags) || self.name in ['RayJob', 'RayCluster']", message="min-replicas flag can be used only on RayJob and RayCluster modes"
 // +kubebuilder:validation:XValidation:rule="!has(self.requiredFlags) || !('max-replicas' in self.requiredFlags) || self.name in ['RayJob', 'RayCluster']", message="max-replicas flag can be used only on RayJob and RayCluster modes"
-// +kubebuilder:validation:XValidation:rule="!has(self.requiredFlags) || !('request' in self.requiredFlags) || self.name in ['Job', 'Interactive', 'RayJob']", message="request flag can be used only on Job and Interactive modes"
-// +kubebuilder:validation:XValidation:rule="!has(self.requiredFlags) || !('cmd' in self.requiredFlags) || self.name in ['Job', 'Interactive', 'RayJob']", message="cmd flag can be used only on Job, Interactive and RayJob modes"
+// +kubebuilder:validation:XValidation:rule="!has(self.requiredFlags) || !('request' in self.requiredFlags) || self.name in ['Job', 'JobSet', 'Interactive', 'RayJob']", message="request flag can be used only on Job, JobSet and Interactive modes"
+// +kubebuilder:validation:XValidation:rule="!has(self.requiredFlags) || !('cmd' in self.requiredFlags) || self.name in ['Job', 'JobSet', 'Interactive', 'RayJob']", message="cmd flag can be used only on Job, JobSet, Interactive and RayJob modes"
 // +kubebuilder:validation:XValidation:rule="!has(self.requiredFlags) || !('raycluster' in self.requiredFlags) || self.name == 'RayJob'", message="raycluster flag can be used only on RayJob mode"
 // +kubebuilder:validation:XValidation:rule="!has(self.requiredFlags) || !('raycluster' in self.requiredFlags) || !('localqueue' in self.requiredFlags || 'replicas' in self.requiredFlags  || 'min-replicas' in self.requiredFlags || 'max-replicas' in self.requiredFlags)", message="if raycluster flag are set none of localqueue, replicas, min-replicas and max-replicas can be"
 // +kubebuilder:validation:XValidation:rule="!has(self.requiredFlags) || !('array' in self.requiredFlags) || self.name == 'Slurm'", message="array flag can be used only on Slurm mode"
@@ -102,10 +103,10 @@ type TemplateReference string
 // +kubebuilder:validation:XValidation:rule="!has(self.requiredFlags) || self.name != 'Slurm' || !('completions' in self.requiredFlags)", message="completions flag can't be used on Slurm mode"
 type SupportedMode struct {
 	// name determines which template will be used and which object will eventually be created.
-	// Possible values are Interactive, Job, RayJob, RayCluster and Slurm.
+	// Possible values are Interactive, Job, JobSet, RayJob, RayCluster and Slurm.
 	//
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Enum=Interactive;Job;RayJob;RayCluster;Slurm
+	// +kubebuilder:validation:Enum=Interactive;Job;JobSet;RayJob;RayCluster;Slurm
 	Name ApplicationProfileMode `json:"name"`
 
 	// template is the name of the template.
@@ -115,6 +116,7 @@ type SupportedMode struct {
 	//   - on RayJob mode it must be kjobctl.x-k8s.io/v1alpha1/RayJobTemplate
 	//   - on RayCluster mode it must be kjobctl.x-k8s.io/v1alpha1/RayClusterTemplate
 	//   - on Slurm mode it must be kjobctl.x-k8s.io/v1alpha1/JobTemplate
+	//   - on JobSet mode it must be kjobctl.x-k8s.io/v1alpha1/JobSetTemplate
 	//
 	// +kubebuilder:validation:Required
 	Template TemplateReference `json:"template"`

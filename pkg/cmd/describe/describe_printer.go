@@ -32,6 +32,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/duration"
 	describehelper "k8s.io/kubectl/pkg/describe"
 	"k8s.io/utils/ptr"
+	jobsetapi "sigs.k8s.io/jobset/api/jobset/v1alpha2"
 
 	"sigs.k8s.io/kjob/pkg/util/maps"
 )
@@ -57,6 +58,7 @@ func NewResourceDescriber(mapping *meta.RESTMapping) (ResourceDescriber, error) 
 func DescriberFor(kind schema.GroupKind) (ResourceDescriber, bool) {
 	describers := map[schema.GroupKind]ResourceDescriber{
 		{Group: batchv1.GroupName, Kind: "Job"}:               &JobDescriber{},
+		{Group: jobsetapi.GroupVersion.Group, Kind: "JobSet"}: &JobSetDescriber{},
 		{Group: corev1.GroupName, Kind: "Pod"}:                &PodDescriber{},
 		{Group: rayv1.GroupVersion.Group, Kind: "RayJob"}:     &RayJobDescriber{},
 		{Group: rayv1.GroupVersion.Group, Kind: "RayCluster"}: &RayClusterDescriber{},
@@ -112,6 +114,35 @@ func describeJob(job *batchv1.Job) (string, error) {
 		}
 
 		describePodTemplate(&job.Spec.Template, w)
+
+		return nil
+	})
+}
+
+type JobSetDescriber struct{}
+
+func (d *JobSetDescriber) Describe(object *unstructured.Unstructured) (string, error) {
+	job := &jobsetapi.JobSet{}
+	err := runtime.DefaultUnstructuredConverter.FromUnstructured(object.UnstructuredContent(), job)
+	if err != nil {
+		return "", err
+	}
+
+	return describeJobSet(job)
+}
+
+func describeJobSet(jobSet *jobsetapi.JobSet) (string, error) {
+	return tabbedString(func(out io.Writer) error {
+		w := describehelper.NewPrefixWriter(out)
+
+		w.Write(IndentLevelZero, "Name:\t%s\n", jobSet.Name)
+		w.Write(IndentLevelZero, "Namespace:\t%s\n", jobSet.Namespace)
+		printLabelsMultiline(w, "Labels", jobSet.Labels)
+		printLabelsMultiline(w, "Annotations", jobSet.Annotations)
+		for _, val := range jobSet.Spec.ReplicatedJobs {
+			w.Write(IndentLevelZero, "ReplicatedJob Name: \t%s\n", val.Name)
+			describePodTemplate(&val.Template.Spec.Template, w)
+		}
 
 		return nil
 	})

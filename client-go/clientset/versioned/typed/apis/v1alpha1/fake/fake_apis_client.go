@@ -31,6 +31,10 @@ func (c *FakeKjobctlV1alpha1) ApplicationProfiles(namespace string) v1alpha1.App
 	return newFakeApplicationProfiles(c, namespace)
 }
 
+func (c *FakeKjobctlV1alpha1) JobSetTemplates(namespace string) v1alpha1.JobSetTemplateInterface {
+	return newFakeJobSetTemplates(c, namespace)
+}
+
 func (c *FakeKjobctlV1alpha1) JobTemplates(namespace string) v1alpha1.JobTemplateInterface {
 	return newFakeJobTemplates(c, namespace)
 }

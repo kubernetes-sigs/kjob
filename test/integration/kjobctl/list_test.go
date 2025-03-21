@@ -30,6 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/duration"
 	"k8s.io/cli-runtime/pkg/genericiooptions"
 	testingclock "k8s.io/utils/clock/testing"
+	jobsetapi "sigs.k8s.io/jobset/api/jobset/v1alpha2"
 
 	"sigs.k8s.io/kjob/apis/v1alpha1"
 	"sigs.k8s.io/kjob/pkg/cmd"
@@ -163,6 +164,80 @@ very-long-job-name   profile1                                                   
 				duration.HumanDuration(executeTime.Sub(rj2.CreationTimestamp.Time)),
 				duration.HumanDuration(executeTime.Sub(rj3.CreationTimestamp.Time)),
 			)))
+		})
+	})
+
+	ginkgo.When("List JobSets", func() {
+		var (
+			js1 *jobsetapi.JobSet
+			js2 *jobsetapi.JobSet
+			js3 *jobsetapi.JobSet
+		)
+
+		exampleJobSetSpec := jobsetapi.JobSetSpec{
+			ReplicatedJobs: []jobsetapi.ReplicatedJob{
+				{
+					Name: "test",
+					Template: batchv1.JobTemplateSpec{
+						Spec: batchv1.JobSpec{
+							Template: corev1.PodTemplateSpec{
+								Spec: corev1.PodSpec{
+									Containers: []corev1.Container{
+										{
+											Name:  "c",
+											Image: "busybox",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		ginkgo.JustBeforeEach(func() {
+			js1 = wrappers.MakeJobSet("rj1", ns.Name).
+				LocalQueue("test").
+				Profile("profile1").
+				Spec(exampleJobSetSpec).
+				Obj()
+			gomega.Expect(k8sClient.Create(ctx, js1)).To(gomega.Succeed())
+
+			js2 = wrappers.MakeJobSet("rj2", ns.Name).
+				LocalQueue("test").
+				Profile("profile1").
+				Spec(exampleJobSetSpec).
+				Obj()
+			gomega.Expect(k8sClient.Create(ctx, js2)).To(gomega.Succeed())
+
+			js3 = wrappers.MakeJobSet("very-long-job-name", ns.Name).
+				LocalQueue("test").
+				Profile("profile1").
+				Spec(exampleJobSetSpec).
+				Obj()
+			gomega.Expect(k8sClient.Create(ctx, js3)).To(gomega.Succeed())
+		})
+
+		// Simple client set that are using on unit tests not allow paging.
+		ginkgo.It("Should print jobset list with paging", func() {
+			streams, _, output, errOutput := genericiooptions.NewTestIOStreams()
+			configFlags := CreateConfigFlagsWithRestConfig(cfg, streams)
+			executeTime := time.Now()
+			kjobctl := cmd.NewKjobctlCmd(cmd.KjobctlOptions{ConfigFlags: configFlags, IOStreams: streams,
+				Clock: testingclock.NewFakeClock(executeTime)})
+
+			os.Setenv(list.KjobctlListRequestLimitEnvName, "1")
+			kjobctl.SetArgs([]string{"list", "jobset", "--namespace", ns.Name})
+			err := kjobctl.Execute()
+
+			gomega.Expect(err).NotTo(gomega.HaveOccurred(), "%s: %s", err, output)
+			gomega.Expect(errOutput.String()).Should(gomega.BeEmpty())
+			gomega.Expect(output.String()).Should(gomega.Equal(`NAME                 PROFILE    LOCAL QUEUE
+rj1                  profile1   test
+rj2                  profile1   test
+very-long-job-name   profile1   test
+`,
+			))
 		})
 	})
 

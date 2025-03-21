@@ -23,6 +23,7 @@ import (
 	"k8s.io/cli-runtime/pkg/resource"
 	"k8s.io/client-go/dynamic"
 	k8s "k8s.io/client-go/kubernetes"
+	jobsetversioned "sigs.k8s.io/jobset/client-go/clientset/versioned"
 	kueueversioned "sigs.k8s.io/kueue/client-go/clientset/versioned"
 
 	kjobctlversioned "sigs.k8s.io/kjob/client-go/clientset/versioned"
@@ -37,6 +38,7 @@ type ClientGetter interface {
 	KueueClientset() (kueueversioned.Interface, error)
 	KjobctlClientset() (kjobctlversioned.Interface, error)
 	RayClientset() (rayversioned.Interface, error)
+	JobSetClientset() (jobsetversioned.Interface, error)
 	DynamicClient() (dynamic.Interface, error)
 	NewResourceBuilder() *resource.Builder
 }
@@ -103,6 +105,20 @@ func (cg *clientGetterImpl) RayClientset() (rayversioned.Interface, error) {
 	}
 
 	clientset, err := rayversioned.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	return clientset, nil
+}
+
+func (cg *clientGetterImpl) JobSetClientset() (jobsetversioned.Interface, error) {
+	config, err := cg.ToRESTConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	clientset, err := jobsetversioned.NewForConfig(config)
 	if err != nil {
 		return nil, err
 	}
