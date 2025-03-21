@@ -93,6 +93,10 @@ spec:
                         - ntasks
                         - output
                         - partition
+                        - priority
+                        - time
+                        - pod-template-label
+                        - pod-template-annotation
                         type: string
                       maxItems: 14
                       type: array
