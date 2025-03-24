@@ -65,10 +65,20 @@ spec:
                     description: clusterSelector is used to select running rayclusters
                       by labels
                     type: object
-                  entrypoint:
+                  deletionPolicy:
                     description: |-
-                      INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-                      Important: Run "make" to regenerate code after modifying this file
+                      DeletionPolicy indicates what resources of the RayJob are deleted upon job completion.
+                      Valid values are 'DeleteCluster', 'DeleteWorkers', 'DeleteSelf' or 'DeleteNone'.
+                      If unset, deletion policy is based on 'spec.shutdownAfterJobFinishes'.
+                      This field requires the RayJobDeletionPolicy feature gate to be enabled.
+                    type: string
+                    x-kubernetes-validations:
+                    - message: the deletionPolicy field value must be either 'DeleteCluster',
+                        'DeleteWorkers', 'DeleteSelf', or 'DeleteNone'
+                      rule: self in ['DeleteCluster', 'DeleteWorkers', 'DeleteSelf',
+                        'DeleteNone']
+                  entrypoint:
+                    description: Entrypoint represents the command to start execution.
                     type: string
                   entrypointNumCpus:
                     description: EntrypointNumCpus specifies the number of cpus to
@@ -86,6 +96,21 @@ spec:
                   jobId:
                     description: If jobId is not set, a new jobId will be auto-generated.
                     type: string
+                  managedBy:
+                    description: |-
+                      ManagedBy is an optional configuration for the controller or entity that manages a RayJob.
+                      The value must be either 'ray.io/kuberay-operator' or 'kueue.x-k8s.io/multikueue'.
+                      The kuberay-operator reconciles a RayJob which doesn't have this field at all or
+                      the field value is the reserved string 'ray.io/kuberay-operator',
+                      but delegates reconciling the RayJob with 'kueue.x-k8s.io/multikueue' to the Kueue.
+                      The field is immutable.
+                    type: string
+                    x-kubernetes-validations:
+                    - message: the managedBy field is immutable
+                      rule: self == oldSelf
+                    - message: the managedBy field value must be either 'ray.io/kuberay-operator'
+                        or 'kueue.x-k8s.io/multikueue'
+                      rule: self in ['ray.io/kuberay-operator', 'kueue.x-k8s.io/multikueue']
                   metadata:
                     additionalProperties:
                       type: string
@@ -625,11 +650,220 @@ spec:
                         description: EnableInTreeAutoscaling indicates whether operator
                           should create in tree autoscaling configs
                         type: boolean
+                      gcsFaultToleranceOptions:
+                        description: GcsFaultToleranceOptions for enabling GCS FT
+                        properties:
+                          externalStorageNamespace:
+                            type: string
+                          redisAddress:
+                            type: string
+                          redisPassword:
+                            description: RedisCredential is the redis username/password
+                              or a reference to the source containing the username/password
+                            properties:
+                              value:
+                                type: string
+                              valueFrom:
+                                description: EnvVarSource represents a source for
+                                  the value of an EnvVar.
+                                properties:
+                                  configMapKeyRef:
+                                    description: Selects a key of a ConfigMap.
+                                    properties:
+                                      key:
+                                        description: The key to select.
+                                        type: string
+                                      name:
+                                        default: ""
+                                        description: |-
+                                          Name of the referent.
+                                          This field is effectively required, but due to backwards compatibility is
+                                          allowed to be empty. Instances of this type with an empty value here are
+                                          almost certainly wrong.
+                                          More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                        type: string
+                                      optional:
+                                        description: Specify whether the ConfigMap
+                                          or its key must be defined
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                    x-kubernetes-map-type: atomic
+                                  fieldRef:
+                                    description: |-
+                                      Selects a field of the pod: supports metadata.name, metadata.namespace, `metadata.labels['<KEY>']`, `metadata.annotations['<KEY>']`,
+                                      spec.nodeName, spec.serviceAccountName, status.hostIP, status.podIP, status.podIPs.
+                                    properties:
+                                      apiVersion:
+                                        description: Version of the schema the FieldPath
+                                          is written in terms of, defaults to "v1".
+                                        type: string
+                                      fieldPath:
+                                        description: Path of the field to select in
+                                          the specified API version.
+                                        type: string
+                                    required:
+                                    - fieldPath
+                                    type: object
+                                    x-kubernetes-map-type: atomic
+                                  resourceFieldRef:
+                                    description: |-
+                                      Selects a resource of the container: only resources limits and requests
+                                      (limits.cpu, limits.memory, limits.ephemeral-storage, requests.cpu, requests.memory and requests.ephemeral-storage) are currently supported.
+                                    properties:
+                                      containerName:
+                                        description: 'Container name: required for
+                                          volumes, optional for env vars'
+                                        type: string
+                                      divisor:
+                                        anyOf:
+                                        - type: integer
+                                        - type: string
+                                        description: Specifies the output format of
+                                          the exposed resources, defaults to "1"
+                                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                        x-kubernetes-int-or-string: true
+                                      resource:
+                                        description: 'Required: resource to select'
+                                        type: string
+                                    required:
+                                    - resource
+                                    type: object
+                                    x-kubernetes-map-type: atomic
+                                  secretKeyRef:
+                                    description: Selects a key of a secret in the
+                                      pod's namespace
+                                    properties:
+                                      key:
+                                        description: The key of the secret to select
+                                          from.  Must be a valid secret key.
+                                        type: string
+                                      name:
+                                        default: ""
+                                        description: |-
+                                          Name of the referent.
+                                          This field is effectively required, but due to backwards compatibility is
+                                          allowed to be empty. Instances of this type with an empty value here are
+                                          almost certainly wrong.
+                                          More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                        type: string
+                                      optional:
+                                        description: Specify whether the Secret or
+                                          its key must be defined
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                    x-kubernetes-map-type: atomic
+                                type: object
+                            type: object
+                          redisUsername:
+                            description: RedisCredential is the redis username/password
+                              or a reference to the source containing the username/password
+                            properties:
+                              value:
+                                type: string
+                              valueFrom:
+                                description: EnvVarSource represents a source for
+                                  the value of an EnvVar.
+                                properties:
+                                  configMapKeyRef:
+                                    description: Selects a key of a ConfigMap.
+                                    properties:
+                                      key:
+                                        description: The key to select.
+                                        type: string
+                                      name:
+                                        default: ""
+                                        description: |-
+                                          Name of the referent.
+                                          This field is effectively required, but due to backwards compatibility is
+                                          allowed to be empty. Instances of this type with an empty value here are
+                                          almost certainly wrong.
+                                          More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                        type: string
+                                      optional:
+                                        description: Specify whether the ConfigMap
+                                          or its key must be defined
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                    x-kubernetes-map-type: atomic
+                                  fieldRef:
+                                    description: |-
+                                      Selects a field of the pod: supports metadata.name, metadata.namespace, `metadata.labels['<KEY>']`, `metadata.annotations['<KEY>']`,
+                                      spec.nodeName, spec.serviceAccountName, status.hostIP, status.podIP, status.podIPs.
+                                    properties:
+                                      apiVersion:
+                                        description: Version of the schema the FieldPath
+                                          is written in terms of, defaults to "v1".
+                                        type: string
+                                      fieldPath:
+                                        description: Path of the field to select in
+                                          the specified API version.
+                                        type: string
+                                    required:
+                                    - fieldPath
+                                    type: object
+                                    x-kubernetes-map-type: atomic
+                                  resourceFieldRef:
+                                    description: |-
+                                      Selects a resource of the container: only resources limits and requests
+                                      (limits.cpu, limits.memory, limits.ephemeral-storage, requests.cpu, requests.memory and requests.ephemeral-storage) are currently supported.
+                                    properties:
+                                      containerName:
+                                        description: 'Container name: required for
+                                          volumes, optional for env vars'
+                                        type: string
+                                      divisor:
+                                        anyOf:
+                                        - type: integer
+                                        - type: string
+                                        description: Specifies the output format of
+                                          the exposed resources, defaults to "1"
+                                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                        x-kubernetes-int-or-string: true
+                                      resource:
+                                        description: 'Required: resource to select'
+                                        type: string
+                                    required:
+                                    - resource
+                                    type: object
+                                    x-kubernetes-map-type: atomic
+                                  secretKeyRef:
+                                    description: Selects a key of a secret in the
+                                      pod's namespace
+                                    properties:
+                                      key:
+                                        description: The key of the secret to select
+                                          from.  Must be a valid secret key.
+                                        type: string
+                                      name:
+                                        default: ""
+                                        description: |-
+                                          Name of the referent.
+                                          This field is effectively required, but due to backwards compatibility is
+                                          allowed to be empty. Instances of this type with an empty value here are
+                                          almost certainly wrong.
+                                          More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                        type: string
+                                      optional:
+                                        description: Specify whether the Secret or
+                                          its key must be defined
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                    x-kubernetes-map-type: atomic
+                                type: object
+                            type: object
+                        required:
+                        - redisAddress
+                        type: object
                       headGroupSpec:
-                        description: |-
-                          INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-                          Important: Run "make" to regenerate code after modifying this file
-                          HeadGroupSpecs are the spec for the head pod
+                        description: HeadGroupSpec is the spec for the head pod
                         properties:
                           enableIngress:
                             description: EnableIngress indicates whether operator
@@ -9434,6 +9668,21 @@ spec:
                         additionalProperties:
                           type: string
                         type: object
+                      managedBy:
+                        description: |-
+                          ManagedBy is an optional configuration for the controller or entity that manages a RayCluster.
+                          The value must be either 'ray.io/kuberay-operator' or 'kueue.x-k8s.io/multikueue'.
+                          The kuberay-operator reconciles a RayCluster which doesn't have this field at all or
+                          the field value is the reserved string 'ray.io/kuberay-operator',
+                          but delegates reconciling the RayCluster with 'kueue.x-k8s.io/multikueue' to the Kueue.
+                          The field is immutable.
+                        type: string
+                        x-kubernetes-validations:
+                        - message: the managedBy field is immutable
+                          rule: self == oldSelf
+                        - message: the managedBy field value must be either 'ray.io/kuberay-operator'
+                            or 'kueue.x-k8s.io/multikueue'
+                          rule: self in ['ray.io/kuberay-operator', 'kueue.x-k8s.io/multikueue']
                       rayVersion:
                         description: RayVersion is used to determine the command for
                           the Kubernetes Job managed by RayJob
@@ -9454,6 +9703,12 @@ spec:
                               description: we can have multiple worker groups, we
                                 distinguish them by name
                               type: string
+                            idleTimeoutSeconds:
+                              description: |-
+                                IdleTimeoutSeconds denotes the number of seconds to wait before the v2 autoscaler terminates an idle worker pod of this type.
+                                This value is only used with the Ray Autoscaler enabled and defaults to the value set by the AutoscalingConfig if not specified for this worker group.
+                              format: int32
+                              type: integer
                             maxReplicas:
                               default: 2147483647
                               description: MaxReplicas denotes the maximum number
@@ -9496,6 +9751,12 @@ spec:
                                     type: string
                                   type: array
                               type: object
+                            suspend:
+                              description: |-
+                                Suspend indicates whether a worker group should be suspended.
+                                A suspended worker group will have all pods deleted.
+                                This is not a user-facing API and is only used by RayJob DeletionPolicy.
+                              type: boolean
                             template:
                               description: Template is a pod template for the worker
                               properties:
@@ -17833,6 +18094,7 @@ spec:
                       SubmissionMode specifies how RayJob submits the Ray job to the RayCluster.
                       In "K8sJobMode", the KubeRay operator creates a submitter Kubernetes Job to submit the Ray job.
                       In "HTTPMode", the KubeRay operator sends a request to the RayCluster to create a Ray job.
+                      In "InteractiveMode", the KubeRay operator waits for a user to submit a job to the Ray cluster.
                     type: string
                   submitterConfig:
                     description: Configurations of submitter k8s job.
