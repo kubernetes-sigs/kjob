@@ -50,5 +50,5 @@ var _ = ginkgo.BeforeSuite(func() {
 	cfg = util.GetConfigWithContext("")
 	k8sClient = util.CreateClient(cfg)
 	restClient = util.CreateRestClient(cfg)
-	ctx = context.Background()
+	ctx = ginkgo.GinkgoT().Context()
 })

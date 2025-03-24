@@ -17,7 +17,6 @@ limitations under the License.
 package create
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"regexp"
@@ -1297,7 +1296,7 @@ export $(cat /slurm/env/$JOB_CONTAINER_INDEX/slurm.env | xargs)cd /mydir
 				}
 
 				unstructured, err := dynamicClient.Resource(mapping.Resource).Namespace(metav1.NamespaceDefault).
-					List(context.Background(), metav1.ListOptions{})
+					List(t.Context(), metav1.ListOptions{})
 				if err != nil {
 					t.Error(err)
 					return

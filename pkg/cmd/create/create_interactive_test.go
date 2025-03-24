@@ -17,7 +17,6 @@ limitations under the License.
 package create
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/url"
@@ -229,7 +228,7 @@ func TestCreateOptionsRunInteractive(t *testing.T) {
 					tc.createMutation(pod)
 				}
 
-				_, err = k8sClientset.CoreV1().Pods(pod.GetNamespace()).Create(context.Background(), pod, metav1.CreateOptions{})
+				_, err = k8sClientset.CoreV1().Pods(pod.GetNamespace()).Create(t.Context(), pod, metav1.CreateOptions{})
 				if err != nil {
 					return true, nil, err
 				}
@@ -243,7 +242,7 @@ func TestCreateOptionsRunInteractive(t *testing.T) {
 				WithDynamicClient(dynamicClient).
 				WithRESTMapper(restMapper)
 
-			gotErr := tc.options.Run(context.Background(), tcg, testStartTime)
+			gotErr := tc.options.Run(t.Context(), tcg, testStartTime)
 
 			var gotErrStr string
 			if gotErr != nil {
@@ -254,7 +253,7 @@ func TestCreateOptionsRunInteractive(t *testing.T) {
 				t.Errorf("Unexpected error (-want/+got)\n%s", diff)
 			}
 
-			gotPodList, err := k8sClientset.CoreV1().Pods(metav1.NamespaceDefault).List(context.Background(), metav1.ListOptions{})
+			gotPodList, err := k8sClientset.CoreV1().Pods(metav1.NamespaceDefault).List(t.Context(), metav1.ListOptions{})
 			if err != nil {
 				t.Fatal(err)
 			}

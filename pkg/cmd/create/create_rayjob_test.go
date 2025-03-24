@@ -17,7 +17,6 @@ limitations under the License.
 package create
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -368,7 +367,7 @@ func TestCreateRayJobCmd(t *testing.T) {
 				}
 
 				unstructured, err := dynamicClient.Resource(mapping.Resource).Namespace(metav1.NamespaceDefault).
-					List(context.Background(), metav1.ListOptions{})
+					List(t.Context(), metav1.ListOptions{})
 				if err != nil {
 					t.Error(err)
 					return

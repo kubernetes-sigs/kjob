@@ -17,7 +17,6 @@ limitations under the License.
 package delete
 
 import (
-	"context"
 	"slices"
 	"testing"
 
@@ -176,7 +175,7 @@ func TestRayJobCmd(t *testing.T) {
 				t.Errorf("Unexpected error output (-want/+got)\n%s", diff)
 			}
 
-			gotRayJobList, err := clientset.RayV1().RayJobs(tc.ns).List(context.Background(), metav1.ListOptions{})
+			gotRayJobList, err := clientset.RayV1().RayJobs(tc.ns).List(t.Context(), metav1.ListOptions{})
 			if err != nil {
 				t.Error(err)
 				return

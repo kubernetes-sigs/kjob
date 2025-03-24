@@ -17,7 +17,6 @@ limitations under the License.
 package delete
 
 import (
-	"context"
 	"slices"
 	"testing"
 
@@ -191,7 +190,7 @@ jobs.batch "j2" created in "Slurm" mode. Switch to the correct mode to delete it
 				t.Errorf("Unexpected error output (-want/+got)\n%s", diff)
 			}
 
-			gotJobList, err := clientset.BatchV1().Jobs(tc.ns).List(context.Background(), metav1.ListOptions{})
+			gotJobList, err := clientset.BatchV1().Jobs(tc.ns).List(t.Context(), metav1.ListOptions{})
 			if err != nil {
 				t.Error(err)
 				return
