@@ -1,8 +1,6 @@
 module sigs.k8s.io/kjob/hack/tools
 
-go 1.23.0
-
-toolchain go1.24.1
+go 1.24.1
 
 require (
 	github.com/golangci/golangci-lint v1.64.8
