@@ -29,6 +29,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
 	"k8s.io/client-go/tools/clientcmd"
+	jobsetversioned "sigs.k8s.io/jobset/client-go/clientset/versioned"
 	kueueversioned "sigs.k8s.io/kueue/client-go/clientset/versioned"
 
 	kjobctlversioned "sigs.k8s.io/kjob/client-go/clientset/versioned"
@@ -43,6 +44,7 @@ type TestClientGetter struct {
 	kueueClientset   kueueversioned.Interface
 	kjobctlClientset kjobctlversioned.Interface
 	rayClientset     rayversioned.Interface
+	jobSetClientset  jobsetversioned.Interface
 	dynamicClient    dynamic.Interface
 	restClient       resource.RESTClient
 	restConfig       *rest.Config
@@ -97,6 +99,11 @@ func (cg *TestClientGetter) WithKueueClientset(clientset kueueversioned.Interfac
 
 func (cg *TestClientGetter) WithRayClientset(clientset rayversioned.Interface) *TestClientGetter {
 	cg.rayClientset = clientset
+	return cg
+}
+
+func (cg *TestClientGetter) WithJobSetClientset(clientset jobsetversioned.Interface) *TestClientGetter {
+	cg.jobSetClientset = clientset
 	return cg
 }
 
