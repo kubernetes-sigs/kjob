@@ -74,6 +74,18 @@ sudo rm /usr/local/bin/kubectl-kjob
 
 **NOTE:** Run `make help` for more information on all potential `make` targets
 
+## Production Readiness status
+
+- ✔️ Test Coverage:
+  - ✔️ Unit Test [testgrid](https://testgrid.k8s.io/sig-apps#periodic-kjob-test-unit-main).
+  - ✔️ Integration Test [testgrid](https://testgrid.k8s.io/sig-apps#periodic-kjob-test-integration-main)
+  - ✔️ E2E Tests for Kubernetes
+    [1.29](https://testgrid.k8s.io/sig-apps#periodic-kjob-test-e2e-main-1-29),
+    [1.30](https://testgrid.k8s.io/sig-apps#periodic-kjob-test-e2e-main-1-30),
+    [1.31](https://testgrid.k8s.io/sig-apps#periodic-kjob-test-e2e-main-1-31),
+    [1.32](https://testgrid.k8s.io/sig-apps#periodic-kjob-test-e2e-main-1-32),
+    on Kind.
+
 ## License
 
 Copyright 2024 The Kubernetes Authors.
