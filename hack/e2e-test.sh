@@ -78,17 +78,12 @@ function cleanup {
         if [ ! -d "$ARTIFACTS" ]; then
             mkdir -p "$ARTIFACTS"
         fi
-        uninstall_kjobctl
         cluster_cleanup "$KIND_CLUSTER_NAME"
     fi
 }
 
 function install_kjobctl {
     cd "$SOURCE_DIR"/.. && make install
-}
-
-function uninstall_kjobctl {
-    cd "$SOURCE_DIR"/.. && make uninstall
 }
 
 trap cleanup EXIT
