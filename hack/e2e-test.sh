@@ -29,15 +29,15 @@ export E2E_TEST_BASH_IMAGE=registry.k8s.io/alpine-with-bash:1.0@sha256:095567245
 # $1 cluster name
 function cluster_create {
     $KIND create cluster --name "$1" --image "$E2E_KIND_VERSION" --wait 1m -v 5  > "$ARTIFACTS/$1-create.log" 2>&1 \
-		||  { echo "unable to start the $1 cluster "; cat "$ARTIFACTS/$1-create.log" ; }
-	kubectl config use-context "kind-$1"
+        ||  { echo "unable to start the $1 cluster "; cat "$ARTIFACTS/$1-create.log" ; }
+    kubectl config use-context "kind-$1"
     kubectl get nodes > "$ARTIFACTS/$1-nodes.log" || true
     kubectl describe pods -n kube-system > "$ARTIFACTS/$1-system-pods.log" || true
 }
 
 # $1 - cluster name
 function cluster_cleanup {
-	kubectl config use-context "kind-$1"
+    kubectl config use-context "kind-$1"
     $KIND export logs "$ARTIFACTS" --name "$1" || true
     kubectl describe pods -n kueue-system > "$ARTIFACTS/$1-kueue-system-pods.log" || true
     kubectl describe pods > "$ARTIFACTS/$1-default-pods.log" || true
@@ -50,7 +50,7 @@ function startup {
         if [ ! -d "$ARTIFACTS" ]; then
             mkdir -p "$ARTIFACTS"
         fi
-	cluster_create "$KIND_CLUSTER_NAME"
+        cluster_create "$KIND_CLUSTER_NAME"
     fi
 }
 
@@ -78,8 +78,8 @@ function cleanup {
         if [ ! -d "$ARTIFACTS" ]; then
             mkdir -p "$ARTIFACTS"
         fi
-    uninstall_kjobctl
-	cluster_cleanup "$KIND_CLUSTER_NAME"
+        uninstall_kjobctl
+        cluster_cleanup "$KIND_CLUSTER_NAME"
     fi
 }
 
