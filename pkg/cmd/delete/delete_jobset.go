@@ -39,7 +39,7 @@ import (
 
 var (
 	jobSetExample = templates.Examples(`
-		# Delete Job 
+		# Delete JobSet 
   		kjobctl delete jobset my-application-profile-job-k2wzd
 	`)
 )
@@ -47,8 +47,8 @@ var (
 type JobSetOptions struct {
 	PrintFlags *genericclioptions.PrintFlags
 
-	JobNames  []string
-	Namespace string
+	JobSetNames []string
+	Namespace   string
 
 	CascadeStrategy metav1.DeletionPropagation
 	DryRunStrategy  util.DryRunStrategy
@@ -68,13 +68,13 @@ func NewJobSetOptions(streams genericiooptions.IOStreams) *JobSetOptions {
 }
 
 func NewJobSetCmd(clientGetter util.ClientGetter, streams genericiooptions.IOStreams) *cobra.Command {
-	o := NewJobOptions(streams)
+	o := NewJobSetOptions(streams)
 
 	cmd := &cobra.Command{
 		Use:                   "jobset NAME [--cascade STRATEGY] [--dry-run STRATEGY]",
 		DisableFlagsInUseLine: true,
 		Short:                 "Delete JobSet",
-		Example:               jobExample,
+		Example:               jobSetExample,
 		Args:                  cobra.MinimumNArgs(1),
 		ValidArgsFunction:     completion.JobSetNameFunc(clientGetter),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -98,7 +98,7 @@ func NewJobSetCmd(clientGetter util.ClientGetter, streams genericiooptions.IOStr
 }
 
 func (o *JobSetOptions) Complete(clientGetter util.ClientGetter, cmd *cobra.Command, args []string) error {
-	o.JobNames = args
+	o.JobSetNames = args
 
 	var err error
 
@@ -140,7 +140,7 @@ func (o *JobSetOptions) Complete(clientGetter util.ClientGetter, cmd *cobra.Comm
 }
 
 func (o *JobSetOptions) Run(ctx context.Context) error {
-	for _, jobName := range o.JobNames {
+	for _, jobName := range o.JobSetNames {
 		jobSet, err := o.Client.JobSets(o.Namespace).Get(ctx, jobName, metav1.GetOptions{})
 		if client.IgnoreNotFound(err) != nil {
 			return err
@@ -153,7 +153,7 @@ func (o *JobSetOptions) Run(ctx context.Context) error {
 			fmt.Fprintf(o.ErrOut, "jobset \"%s\" not created via kjob\n", jobSet.Name)
 			continue
 		}
-		if jobSet.Labels[constants.ModeLabel] != string(v1alpha1.JobMode) {
+		if jobSet.Labels[constants.ModeLabel] != string(v1alpha1.JobSetMode) {
 			fmt.Fprintf(o.ErrOut, "jobset \"%s\" created in \"%s\" mode. Switch to the correct mode to delete it\n",
 				jobSet.Name, jobSet.Labels[constants.ModeLabel])
 			continue

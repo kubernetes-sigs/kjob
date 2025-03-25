@@ -138,6 +138,10 @@ func (cg *TestClientGetter) RayClientset() (rayversioned.Interface, error) {
 	return cg.rayClientset, nil
 }
 
+func (cg *TestClientGetter) JobSetClientset() (jobsetversioned.Interface, error) {
+	return cg.jobSetClientset, nil
+}
+
 func (cg *TestClientGetter) DynamicClient() (dynamic.Interface, error) {
 	return cg.dynamicClient, nil
 }

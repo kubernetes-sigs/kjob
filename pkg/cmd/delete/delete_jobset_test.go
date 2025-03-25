@@ -29,6 +29,7 @@ import (
 	jobsetapi "sigs.k8s.io/jobset/api/jobset/v1alpha2"
 	"sigs.k8s.io/jobset/client-go/clientset/versioned/fake"
 
+	"sigs.k8s.io/kjob/apis/v1alpha1"
 	cmdtesting "sigs.k8s.io/kjob/pkg/cmd/testing"
 	"sigs.k8s.io/kjob/pkg/testing/wrappers"
 )
@@ -43,82 +44,96 @@ func TestJobSetCmd(t *testing.T) {
 		wantOutErr     string
 		wantErr        string
 	}{
-		"shouldn't delete ray job because it is not found": {
-			args: []string{"rj"},
+		"shouldn't delete jobset because it is not found": {
+			args: []string{"j"},
 			objs: []runtime.Object{
-				wrappers.MakeJobSet("rj1", metav1.NamespaceDefault).Profile("p1").Obj(),
-				wrappers.MakeJobSet("rj2", metav1.NamespaceDefault).Profile("p2").Obj(),
+				wrappers.MakeJobSet("j1", metav1.NamespaceDefault).Profile("p1").Mode(v1alpha1.JobSetMode).Obj(),
+				wrappers.MakeJobSet("j2", metav1.NamespaceDefault).Profile("p2").Mode(v1alpha1.JobSetMode).Obj(),
 			},
 			wantJobSetJobs: []jobsetapi.JobSet{
-				*wrappers.MakeJobSet("rj1", metav1.NamespaceDefault).Profile("p1").Obj(),
-				*wrappers.MakeJobSet("rj2", metav1.NamespaceDefault).Profile("p2").Obj(),
+				*wrappers.MakeJobSet("j1", metav1.NamespaceDefault).Profile("p1").Mode(v1alpha1.JobSetMode).Obj(),
+				*wrappers.MakeJobSet("j2", metav1.NamespaceDefault).Profile("p2").Mode(v1alpha1.JobSetMode).Obj(),
 			},
-			wantOutErr: "sigs.k8s.io \"rj\" not found\n",
+			wantOutErr: "jobsets.jobset.x-k8s.io \"j\" not found\n",
 		},
-		"shouldn't delete ray job because it is not created via kjob": {
-			args: []string{"rj1"},
+		"shouldn't delete jobset because it is not created via kjob": {
+			args: []string{"j1"},
 			objs: []runtime.Object{
-				wrappers.MakeJobSet("rj1", metav1.NamespaceDefault).Obj(),
+				wrappers.MakeJobSet("j1", metav1.NamespaceDefault).Obj(),
 			},
 			wantJobSetJobs: []jobsetapi.JobSet{
-				*wrappers.MakeJobSet("rj1", metav1.NamespaceDefault).Obj(),
+				*wrappers.MakeJobSet("j1", metav1.NamespaceDefault).Obj(),
 			},
-			wantOutErr: "rayjobs.ray.io \"rj1\" not created via kjob\n",
+			wantOutErr: "jobset \"j1\" not created via kjob\n",
 		},
-		"should delete ray job": {
-			args: []string{"rj1"},
+		"shouldn't delete jobSet because it is not used for JobSet mode": {
+			args: []string{"j1", "j2"},
 			objs: []runtime.Object{
-				wrappers.MakeJobSet("rj1", metav1.NamespaceDefault).Profile("p1").Obj(),
-				wrappers.MakeJobSet("rj2", metav1.NamespaceDefault).Profile("p2").Obj(),
+				wrappers.MakeJobSet("j1", metav1.NamespaceDefault).Profile("p1").Obj(),
+				wrappers.MakeJobSet("j2", metav1.NamespaceDefault).Profile("p1").Mode(v1alpha1.SlurmMode).Obj(),
 			},
 			wantJobSetJobs: []jobsetapi.JobSet{
-				*wrappers.MakeJobSet("rj2", metav1.NamespaceDefault).Profile("p2").Obj(),
+				*wrappers.MakeJobSet("j1", metav1.NamespaceDefault).Profile("p1").Obj(),
+				*wrappers.MakeJobSet("j2", metav1.NamespaceDefault).Profile("p1").Mode(v1alpha1.SlurmMode).Obj(),
 			},
-			wantOut: "rayjob.ray.io/rj1 deleted\n",
+			wantOutErr: `jobset "j1" created in "" mode. Switch to the correct mode to delete it
+jobset "j2" created in "Slurm" mode. Switch to the correct mode to delete it
+`,
 		},
-		"should delete ray jobs": {
-			args: []string{"rj1", "rj2"},
+		"should delete jobSet": {
+			args: []string{"j1"},
 			objs: []runtime.Object{
-				wrappers.MakeJobSet("rj1", metav1.NamespaceDefault).Profile("p1").Obj(),
-				wrappers.MakeJobSet("rj2", metav1.NamespaceDefault).Profile("p2").Obj(),
-			},
-			wantOut: "rayjob.ray.io/rj1 deleted\nrayjob.ray.io/rj2 deleted\n",
-		},
-		"should delete only one ray job": {
-			args: []string{"rj1", "rj"},
-			objs: []runtime.Object{
-				wrappers.MakeJobSet("rj1", metav1.NamespaceDefault).Profile("p1").Obj(),
-				wrappers.MakeJobSet("rj2", metav1.NamespaceDefault).Profile("p2").Obj(),
+				wrappers.MakeJobSet("j1", metav1.NamespaceDefault).Profile("p1").Mode(v1alpha1.JobSetMode).Obj(),
+				wrappers.MakeJobSet("j2", metav1.NamespaceDefault).Profile("p2").Mode(v1alpha1.JobSetMode).Obj(),
 			},
 			wantJobSetJobs: []jobsetapi.JobSet{
-				*wrappers.MakeJobSet("rj2", metav1.NamespaceDefault).Profile("p2").Obj(),
+				*wrappers.MakeJobSet("j2", metav1.NamespaceDefault).Profile("p2").Mode(v1alpha1.JobSetMode).Obj(),
 			},
-			wantOut:    "rayjob.ray.io/rj1 deleted\n",
-			wantOutErr: "rayjobs.ray.io \"rj\" not found\n",
+			wantOut: "jobset.sigs.k8s.io/j1 deleted\n",
 		},
-		"shouldn't delete ray job with client dry run": {
-			args: []string{"rj1", "--dry-run", "client"},
+		"should delete jobSets": {
+			args: []string{"j1", "j2"},
 			objs: []runtime.Object{
-				wrappers.MakeJobSet("rj1", metav1.NamespaceDefault).Profile("p1").Obj(),
-				wrappers.MakeJobSet("rj2", metav1.NamespaceDefault).Profile("p2").Obj(),
+				wrappers.MakeJobSet("j1", metav1.NamespaceDefault).Profile("p1").Mode(v1alpha1.JobSetMode).Obj(),
+				wrappers.MakeJobSet("j2", metav1.NamespaceDefault).Profile("p2").Mode(v1alpha1.JobSetMode).Obj(),
+			},
+			wantOut: "jobset.sigs.k8s.io/j1 deleted\njobset.sigs.k8s.io/j2 deleted\n",
+		},
+		"should delete only one jobset": {
+			args: []string{"j1", "j"},
+			objs: []runtime.Object{
+				wrappers.MakeJobSet("j1", metav1.NamespaceDefault).Profile("p1").Mode(v1alpha1.JobSetMode).Obj(),
+				wrappers.MakeJobSet("j2", metav1.NamespaceDefault).Profile("p2").Mode(v1alpha1.JobSetMode).Obj(),
 			},
 			wantJobSetJobs: []jobsetapi.JobSet{
-				*wrappers.MakeJobSet("rj1", metav1.NamespaceDefault).Profile("p1").Obj(),
-				*wrappers.MakeJobSet("rj2", metav1.NamespaceDefault).Profile("p2").Obj(),
+				*wrappers.MakeJobSet("j2", metav1.NamespaceDefault).Profile("p2").Mode(v1alpha1.JobSetMode).Obj(),
 			},
-			wantOut: "rayjob.ray.io/rj1 deleted (client dry run)\n",
+			wantOut:    "jobset.sigs.k8s.io/j1 deleted\n",
+			wantOutErr: "jobsets.jobset.x-k8s.io \"j\" not found\n",
 		},
-		"shouldn't delete ray job with server dry run": {
-			args: []string{"rj1", "--dry-run", "server"},
+		"shouldn't delete jobSet with client dry run": {
+			args: []string{"j1", "--dry-run", "client"},
 			objs: []runtime.Object{
-				wrappers.MakeJobSet("rj1", metav1.NamespaceDefault).Profile("p1").Obj(),
-				wrappers.MakeJobSet("rj2", metav1.NamespaceDefault).Profile("p2").Obj(),
+				wrappers.MakeJobSet("j1", metav1.NamespaceDefault).Profile("p1").Mode(v1alpha1.JobSetMode).Obj(),
+				wrappers.MakeJobSet("j2", metav1.NamespaceDefault).Profile("p2").Mode(v1alpha1.JobSetMode).Obj(),
 			},
 			wantJobSetJobs: []jobsetapi.JobSet{
-				*wrappers.MakeJobSet("rj1", metav1.NamespaceDefault).Profile("p1").Obj(),
-				*wrappers.MakeJobSet("rj2", metav1.NamespaceDefault).Profile("p2").Obj(),
+				*wrappers.MakeJobSet("j1", metav1.NamespaceDefault).Profile("p1").Mode(v1alpha1.JobSetMode).Obj(),
+				*wrappers.MakeJobSet("j2", metav1.NamespaceDefault).Profile("p2").Mode(v1alpha1.JobSetMode).Obj(),
 			},
-			wantOut: "rayjob.ray.io/rj1 deleted (server dry run)\n",
+			wantOut: "jobset.sigs.k8s.io/j1 deleted (client dry run)\n",
+		},
+		"shouldn't delete job with server dry run": {
+			args: []string{"j1", "--dry-run", "server"},
+			objs: []runtime.Object{
+				wrappers.MakeJobSet("j1", metav1.NamespaceDefault).Profile("p1").Mode(v1alpha1.JobSetMode).Obj(),
+				wrappers.MakeJobSet("j2", metav1.NamespaceDefault).Profile("p2").Mode(v1alpha1.JobSetMode).Obj(),
+			},
+			wantJobSetJobs: []jobsetapi.JobSet{
+				*wrappers.MakeJobSet("j1", metav1.NamespaceDefault).Profile("p1").Mode(v1alpha1.JobSetMode).Obj(),
+				*wrappers.MakeJobSet("j2", metav1.NamespaceDefault).Profile("p2").Mode(v1alpha1.JobSetMode).Obj(),
+			},
+			wantOut: "jobset.sigs.k8s.io/j1 deleted (server dry run)\n",
 		},
 		"no args": {
 			args:    []string{},
@@ -183,7 +198,7 @@ func TestJobSetCmd(t *testing.T) {
 			}
 
 			if diff := cmp.Diff(tc.wantJobSetJobs, gotJobSetList.Items); diff != "" {
-				t.Errorf("Unexpected ray jobs (-want/+got)\n%s", diff)
+				t.Errorf("Unexpected jobsets (-want/+got)\n%s", diff)
 			}
 		})
 	}

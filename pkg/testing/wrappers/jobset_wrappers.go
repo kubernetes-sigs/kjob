@@ -30,7 +30,7 @@ import (
 // JobSetWrapper wraps a JobSet.
 type JobSetWrapper struct{ *jobsetapi.JobSet }
 
-// MakeRayCluster creates a wrapper for a RayCluster
+// MakeJobset creates a wrapper for a JobSet
 func MakeJobSet(name, ns string) *JobSetWrapper {
 	return &JobSetWrapper{
 		&jobsetapi.JobSet{
@@ -43,7 +43,7 @@ func MakeJobSet(name, ns string) *JobSetWrapper {
 	}
 }
 
-// Obj returns the inner RayCluster.
+// Obj returns the inner JobSet.
 func (j *JobSetWrapper) Obj() *jobsetapi.JobSet {
 	return j.JobSet
 }
