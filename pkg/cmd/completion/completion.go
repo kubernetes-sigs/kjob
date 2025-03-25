@@ -248,7 +248,7 @@ func RayClusterNameFunc(clientGetter util.ClientGetter) func(*cobra.Command, []s
 
 func JobSetNameFunc(clientGetter util.ClientGetter) func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
 	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		clientset, err := clientGetter.RayClientset()
+		clientset, err := clientGetter.JobSetClientset()
 		if err != nil {
 			return []string{}, cobra.ShellCompDirectiveError
 		}
@@ -259,15 +259,15 @@ func JobSetNameFunc(clientGetter util.ClientGetter) func(*cobra.Command, []strin
 		}
 
 		opts := metav1.ListOptions{LabelSelector: constants.ProfileLabel, Limit: completionLimit}
-		list, err := clientset.RayV1().RayClusters(namespace).List(cmd.Context(), opts)
+		list, err := clientset.JobsetV1alpha2().JobSets(namespace).List(cmd.Context(), opts)
 		if err != nil {
 			return []string{}, cobra.ShellCompDirectiveError
 		}
 
 		var validArgs []string
-		for _, rayCluster := range list.Items {
-			if !slices.Contains(args, rayCluster.Name) {
-				validArgs = append(validArgs, rayCluster.Name)
+		for _, jobSet := range list.Items {
+			if !slices.Contains(args, jobSet.Name) {
+				validArgs = append(validArgs, jobSet.Name)
 			}
 		}
 
