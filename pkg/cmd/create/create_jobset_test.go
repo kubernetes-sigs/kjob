@@ -22,8 +22,6 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	rayv1 "github.com/ray-project/kuberay/ray-operator/apis/ray/v1"
-	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -33,7 +31,7 @@ import (
 	"k8s.io/client-go/dynamic/fake"
 	k8sscheme "k8s.io/client-go/kubernetes/scheme"
 	clocktesting "k8s.io/utils/clock/testing"
-	kueue "sigs.k8s.io/kueue/apis/kueue/v1beta1"
+	jobsetapi "sigs.k8s.io/jobset/api/jobset/v1alpha2"
 	kueuefake "sigs.k8s.io/kueue/client-go/clientset/versioned/fake"
 
 	"sigs.k8s.io/kjob/apis/v1alpha1"
@@ -56,135 +54,29 @@ func TestCreateJobSetCmd(t *testing.T) {
 		wantOutErr  string
 		wantErr     string
 	}{
-		"should create job": {
-			args: []string{"job", "--profile", "profile"},
+		"should create jobSet": {
+			args: []string{"jobset", "--profile", "profile"},
 			kjobctlObjs: []runtime.Object{
-				wrappers.MakeJobTemplate("job-template", metav1.NamespaceDefault).Obj(),
+				wrappers.MakeJobSetTemplate("jobSet-template", metav1.NamespaceDefault).Obj(),
 				wrappers.MakeApplicationProfile("profile", metav1.NamespaceDefault).
 					WithSupportedMode(*wrappers.MakeSupportedMode(v1alpha1.JobSetMode, "jobSet-template").Obj()).
 					Obj(),
 			},
-			gvks: []schema.GroupVersionKind{{Group: "batch", Version: "v1", Kind: "Job"}},
+			gvks: []schema.GroupVersionKind{{Group: "sigs.k8s.io", Version: "v1alpha2", Kind: "JobSet"}},
 			wantLists: []runtime.Object{
-				&batchv1.JobList{
-					TypeMeta: metav1.TypeMeta{Kind: "JobList", APIVersion: "batch/v1"},
-					Items: []batchv1.Job{
-						*wrappers.MakeJob("", metav1.NamespaceDefault).
+				&jobsetapi.JobSetList{
+					TypeMeta: metav1.TypeMeta{Kind: "JobSetList", APIVersion: "sigs.k8s.io/v1alpha2"},
+					Items: []jobsetapi.JobSet{
+						*wrappers.MakeJobSet("", metav1.NamespaceDefault).
 							GenerateName("profile-job-").
 							Profile("profile").
-							Mode(v1alpha1.JobMode).
+							Mode(v1alpha1.JobSetMode).
 							Obj(),
 					},
 				},
 			},
 			// Fake dynamic client not generating name. That's why we have <unknown>.
-			wantOut: "job.batch/<unknown> created\n",
-		},
-		"should create job with pod template label and annotation": {
-			args: []string{
-				"job",
-				"--profile", "profile",
-				"--pod-template-label", "foo=bar",
-				"--pod-template-annotation", "foo=baz",
-			},
-			kjobctlObjs: []runtime.Object{
-				wrappers.MakeJobTemplate("job-template", metav1.NamespaceDefault).Obj(),
-				wrappers.MakeApplicationProfile("profile", metav1.NamespaceDefault).
-					WithSupportedMode(*wrappers.MakeSupportedMode(v1alpha1.JobMode, "job-template").Obj()).
-					Obj(),
-			},
-			gvks: []schema.GroupVersionKind{{Group: "batch", Version: "v1", Kind: "Job"}},
-			wantLists: []runtime.Object{
-				&batchv1.JobList{
-					TypeMeta: metav1.TypeMeta{Kind: "JobList", APIVersion: "batch/v1"},
-					Items: []batchv1.Job{
-						*wrappers.MakeJob("", metav1.NamespaceDefault).
-							GenerateName("profile-job-").
-							Profile("profile").
-							Mode(v1alpha1.JobMode).
-							PodTemplateLabel("foo", "bar").
-							PodTemplateAnnotation("foo", "baz").
-							Obj(),
-					},
-				},
-			},
-			// Fake dynamic client not generating name. That's why we have <unknown>.
-			wantOut: "job.batch/<unknown> created\n",
-		},
-		"should create job with client dry run": {
-			args: []string{"job", "--profile", "profile", "--dry-run", "client"},
-			kjobctlObjs: []runtime.Object{
-				wrappers.MakeJobTemplate("job-template", metav1.NamespaceDefault).Obj(),
-				wrappers.MakeApplicationProfile("profile", metav1.NamespaceDefault).
-					WithSupportedMode(*wrappers.MakeSupportedMode(v1alpha1.JobMode, "job-template").Obj()).
-					Obj(),
-			},
-			gvks: []schema.GroupVersionKind{{Group: "batch", Version: "v1", Kind: "Job"}},
-			wantLists: []runtime.Object{
-				&batchv1.JobList{
-					TypeMeta: metav1.TypeMeta{Kind: "JobList", APIVersion: "batch/v1"},
-					Items:    []batchv1.Job{},
-				},
-			},
-			// Fake dynamic client not generating name. That's why we have <unknown>.
-			wantOut: "job.batch/<unknown> created (client dry run)\n",
-		},
-		"should create job with short profile flag": {
-			args: []string{"job", "-p", "profile"},
-			kjobctlObjs: []runtime.Object{
-				wrappers.MakeJobTemplate("job-template", metav1.NamespaceDefault).Obj(),
-				wrappers.MakeApplicationProfile("profile", metav1.NamespaceDefault).
-					WithSupportedMode(*wrappers.MakeSupportedMode(v1alpha1.JobMode, "job-template").Obj()).
-					Obj(),
-			},
-			gvks: []schema.GroupVersionKind{{Group: "batch", Version: "v1", Kind: "Job"}},
-			wantLists: []runtime.Object{
-				&batchv1.JobList{
-					TypeMeta: metav1.TypeMeta{Kind: "JobList", APIVersion: "batch/v1"},
-					Items: []batchv1.Job{
-						*wrappers.MakeJob("", metav1.NamespaceDefault).
-							GenerateName("profile-job-").
-							Profile("profile").
-							Mode(v1alpha1.JobMode).
-							Obj(),
-					},
-				},
-			},
-			// Fake dynamic client not generating name. That's why we have <unknown>.
-			wantOut: "job.batch/<unknown> created\n",
-		},
-		"should create job with localqueue replacement": {
-			args: []string{"job", "--profile", "profile", "--localqueue", "lq1"},
-			kjobctlObjs: []runtime.Object{
-				wrappers.MakeJobTemplate("job-template", metav1.NamespaceDefault).Obj(),
-				wrappers.MakeApplicationProfile("profile", metav1.NamespaceDefault).
-					WithSupportedMode(*wrappers.MakeSupportedMode(v1alpha1.JobMode, "job-template").Obj()).
-					Obj(),
-			},
-			kueueObjs: []runtime.Object{
-				&kueue.LocalQueue{
-					ObjectMeta: metav1.ObjectMeta{
-						Namespace: metav1.NamespaceDefault,
-						Name:      "lq1",
-					},
-				},
-			},
-			gvks: []schema.GroupVersionKind{{Group: "batch", Version: "v1", Kind: "Job"}},
-			wantLists: []runtime.Object{
-				&batchv1.JobList{
-					TypeMeta: metav1.TypeMeta{Kind: "JobList", APIVersion: "batch/v1"},
-					Items: []batchv1.Job{
-						*wrappers.MakeJob("", metav1.NamespaceDefault).
-							GenerateName("profile-job-").
-							Profile("profile").
-							Mode(v1alpha1.JobMode).
-							LocalQueue("lq1").
-							Obj(),
-					},
-				},
-			},
-			// Fake dynamic client not generating name. That's why we have <unknown>.
-			wantOut: "job.batch/<unknown> created\n",
+			wantOut: "jobset.sigs.k8s.io/<unknown> created\n",
 		},
 	}
 	for name, tc := range testCases {
@@ -193,7 +85,7 @@ func TestCreateJobSetCmd(t *testing.T) {
 
 			scheme := runtime.NewScheme()
 			utilruntime.Must(k8sscheme.AddToScheme(scheme))
-			utilruntime.Must(rayv1.AddToScheme(scheme))
+			utilruntime.Must(jobsetapi.AddToScheme(scheme))
 
 			clientset := kjobctlfake.NewSimpleClientset(tc.kjobctlObjs...)
 			dynamicClient := fake.NewSimpleDynamicClient(scheme)

@@ -163,6 +163,19 @@ var (
 		--max-replicas small-group=5 \
 		--localqueue my-local-queue-name
 	`)
+	createJobSetLong = templates.LongDesc(`
+		Create a jobset.
+
+		JobSet is required for JobSet.
+		How to install JobSet you can find here https://jobset.sigs.k8s.io/.
+	`)
+	createJobSetExample = templates.Examples(`
+		# Create jobset 
+  		kjobctl create raycluster \
+		--profile my-application-profile \
+		--replicas small-group=1 \
+		--localqueue my-local-queue-name
+	`)
 	createSlurmExample = templates.Examples(`
 		# Create slurm 
 		kjobctl create slurm --profile my-application-profile -- \
@@ -292,6 +305,20 @@ var createModeSubcommands = map[string]modeSubcommand{
 			subcmd.Flags().Int32Var(&o.UserSpecifiedCompletions, completionsFlagName, 0,
 				"Completions specifies the desired number of successfully finished pods.")
 
+			withTimeFlag(subcmd.Flags(), &o.TimeLimit)
+		},
+	},
+	"jobset": {
+		ModeName: v1alpha1.JobSetMode,
+		Setup: func(clientGetter util.ClientGetter, subcmd *cobra.Command, o *CreateOptions) {
+			subcmd.Use += " [--replicas =REPLICAS]" +
+				" [--time TIME_LIMIT]"
+			subcmd.Short = "Create a jobSet"
+			subcmd.Long = createJobSetLong
+			subcmd.Example = createJobSetExample
+
+			subcmd.Flags().StringToIntVar(&o.Replicas, replicasFlagName, nil,
+				"Replicas is the number of desired Pods for this worker group.")
 			withTimeFlag(subcmd.Flags(), &o.TimeLimit)
 		},
 	},
