@@ -122,13 +122,13 @@ func describeJob(job *batchv1.Job) (string, error) {
 type JobSetDescriber struct{}
 
 func (d *JobSetDescriber) Describe(object *unstructured.Unstructured) (string, error) {
-	job := &batchv1.Job{}
+	job := &jobsetapi.JobSet{}
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(object.UnstructuredContent(), job)
 	if err != nil {
 		return "", err
 	}
 
-	return describeJob(job)
+	return describeJobSet(job)
 }
 
 func describeJobSet(jobSet *jobsetapi.JobSet) (string, error) {

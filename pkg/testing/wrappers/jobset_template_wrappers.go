@@ -17,9 +17,8 @@ limitations under the License.
 package wrappers
 
 import (
-	jobsetapi "sigs.k8s.io/jobset/api/jobset/v1alpha2"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	jobsetapi "sigs.k8s.io/jobset/api/jobset/v1alpha2"
 
 	"sigs.k8s.io/kjob/apis/v1alpha1"
 )
