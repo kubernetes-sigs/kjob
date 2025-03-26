@@ -34,7 +34,7 @@ type JobSetWrapper struct{ *jobsetapi.JobSet }
 func MakeJobSet(name, ns string) *JobSetWrapper {
 	return &JobSetWrapper{
 		&jobsetapi.JobSet{
-			TypeMeta: metav1.TypeMeta{Kind: "JobSet", APIVersion: "sigs.k8s.io/v1alpha2"},
+			TypeMeta: metav1.TypeMeta{Kind: "JobSet", APIVersion: "jobset.x-k8s.io/v1alpha2"},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      name,
 				Namespace: ns,

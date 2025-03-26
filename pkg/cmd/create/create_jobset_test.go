@@ -57,18 +57,18 @@ func TestCreateJobSetCmd(t *testing.T) {
 		"should create jobSet": {
 			args: []string{"jobset", "--profile", "profile"},
 			kjobctlObjs: []runtime.Object{
-				wrappers.MakeJobSetTemplate("jobSet-template", metav1.NamespaceDefault).Obj(),
+				wrappers.MakeJobSetTemplate("jobSet", metav1.NamespaceDefault).Obj(),
 				wrappers.MakeApplicationProfile("profile", metav1.NamespaceDefault).
-					WithSupportedMode(*wrappers.MakeSupportedMode(v1alpha1.JobSetMode, "jobSet-template").Obj()).
+					WithSupportedMode(*wrappers.MakeSupportedMode(v1alpha1.JobSetMode, "jobSet").Obj()).
 					Obj(),
 			},
-			gvks: []schema.GroupVersionKind{{Group: "sigs.k8s.io", Version: "v1alpha2", Kind: "JobSet"}},
+			gvks: []schema.GroupVersionKind{{Group: "jobset.x-k8s.io", Version: "v1alpha2", Kind: "JobSet"}},
 			wantLists: []runtime.Object{
 				&jobsetapi.JobSetList{
-					TypeMeta: metav1.TypeMeta{Kind: "JobSetList", APIVersion: "sigs.k8s.io/v1alpha2"},
+					TypeMeta: metav1.TypeMeta{Kind: "JobSetList", APIVersion: "jobset.x-k8s.io/v1alpha2"},
 					Items: []jobsetapi.JobSet{
 						*wrappers.MakeJobSet("", metav1.NamespaceDefault).
-							GenerateName("profile-job-").
+							GenerateName("profile-jobset-").
 							Profile("profile").
 							Mode(v1alpha1.JobSetMode).
 							Obj(),
@@ -76,7 +76,7 @@ func TestCreateJobSetCmd(t *testing.T) {
 				},
 			},
 			// Fake dynamic client not generating name. That's why we have <unknown>.
-			wantOut: "jobset.sigs.k8s.io/<unknown> created\n",
+			wantOut: "jobset.jobset.x-k8s.io/<unknown> created\n",
 		},
 	}
 	for name, tc := range testCases {

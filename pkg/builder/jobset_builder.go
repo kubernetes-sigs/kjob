@@ -45,7 +45,7 @@ func (b *jobSetBuilder) build(ctx context.Context) (runtime.Object, []runtime.Ob
 	jobSet := &jobsetapi.JobSet{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "JobSet",
-			APIVersion: "sigs.k8s.io/v1alpha2",
+			APIVersion: "jobset.x-k8s.io/v1alpha2",
 		},
 		ObjectMeta: objectMeta,
 		Spec:       template.Template.Spec,
