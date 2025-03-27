@@ -267,6 +267,12 @@ ray-operator-crd: ## Copy the CRDs from the ray-operator to the dep-crds directo
 	mkdir -p $(EXTERNAL_CRDS_DIR)/ray-operator/
 	cp -f $(RAY_ROOT)/config/crd/bases/* $(EXTERNAL_CRDS_DIR)/ray-operator/
 
+JOBSET_ROOT = $(shell $(GO_CMD) list -m -mod=readonly -f "{{.Dir}}" sigs.k8s.io/jobset)
+.PHONY: jobset-crd
+jobset-crd: ## Copy the CRDs from the jobset to the dep-crds directory.
+	mkdir -p $(EXTERNAL_CRDS_DIR)/jobset/
+	cp -f $(JOBSET_ROOT)/config/components/crd/bases/* $(EXTERNAL_CRDS_DIR)/jobset/
+
 # go-install-tool will 'go install' any package with custom target and name of binary, if it doesn't exist
 # $1 - target path with name of binary (ideally with version)
 # $2 - package url which can be installed
