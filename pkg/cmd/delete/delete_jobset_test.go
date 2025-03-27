@@ -89,7 +89,7 @@ jobset "j2" created in "Slurm" mode. Switch to the correct mode to delete it
 			wantJobSetJobs: []jobsetapi.JobSet{
 				*wrappers.MakeJobSet("j2", metav1.NamespaceDefault).Profile("p2").Mode(v1alpha1.JobSetMode).Obj(),
 			},
-			wantOut: "jobset.sigs.k8s.io/j1 deleted\n",
+			wantOut: "jobset.jobset.x-k8s.io/j1 deleted\n",
 		},
 		"should delete jobSets": {
 			args: []string{"j1", "j2"},
@@ -97,7 +97,7 @@ jobset "j2" created in "Slurm" mode. Switch to the correct mode to delete it
 				wrappers.MakeJobSet("j1", metav1.NamespaceDefault).Profile("p1").Mode(v1alpha1.JobSetMode).Obj(),
 				wrappers.MakeJobSet("j2", metav1.NamespaceDefault).Profile("p2").Mode(v1alpha1.JobSetMode).Obj(),
 			},
-			wantOut: "jobset.sigs.k8s.io/j1 deleted\njobset.sigs.k8s.io/j2 deleted\n",
+			wantOut: "jobset.jobset.x-k8s.io/j1 deleted\njobset.jobset.x-k8s.io/j2 deleted\n",
 		},
 		"should delete only one jobset": {
 			args: []string{"j1", "j"},
@@ -108,7 +108,7 @@ jobset "j2" created in "Slurm" mode. Switch to the correct mode to delete it
 			wantJobSetJobs: []jobsetapi.JobSet{
 				*wrappers.MakeJobSet("j2", metav1.NamespaceDefault).Profile("p2").Mode(v1alpha1.JobSetMode).Obj(),
 			},
-			wantOut:    "jobset.sigs.k8s.io/j1 deleted\n",
+			wantOut:    "jobset.jobset.x-k8s.io/j1 deleted\n",
 			wantOutErr: "jobsets.jobset.x-k8s.io \"j\" not found\n",
 		},
 		"shouldn't delete jobSet with client dry run": {
@@ -121,7 +121,7 @@ jobset "j2" created in "Slurm" mode. Switch to the correct mode to delete it
 				*wrappers.MakeJobSet("j1", metav1.NamespaceDefault).Profile("p1").Mode(v1alpha1.JobSetMode).Obj(),
 				*wrappers.MakeJobSet("j2", metav1.NamespaceDefault).Profile("p2").Mode(v1alpha1.JobSetMode).Obj(),
 			},
-			wantOut: "jobset.sigs.k8s.io/j1 deleted (client dry run)\n",
+			wantOut: "jobset.jobset.x-k8s.io/j1 deleted (client dry run)\n",
 		},
 		"shouldn't delete job with server dry run": {
 			args: []string{"j1", "--dry-run", "server"},
@@ -133,7 +133,7 @@ jobset "j2" created in "Slurm" mode. Switch to the correct mode to delete it
 				*wrappers.MakeJobSet("j1", metav1.NamespaceDefault).Profile("p1").Mode(v1alpha1.JobSetMode).Obj(),
 				*wrappers.MakeJobSet("j2", metav1.NamespaceDefault).Profile("p2").Mode(v1alpha1.JobSetMode).Obj(),
 			},
-			wantOut: "jobset.sigs.k8s.io/j1 deleted (server dry run)\n",
+			wantOut: "jobset.jobset.x-k8s.io/j1 deleted (server dry run)\n",
 		},
 		"no args": {
 			args:    []string{},
