@@ -149,7 +149,7 @@ test-unit: gomod-download gotestsum embeded-manifest ## Run unit tests.
 	$(GOTESTSUM) --junitfile $(ARTIFACTS)/junit-unit.xml -- $(GOFLAGS) $(GO_TEST_FLAGS) $(shell $(GO_CMD) list ./... | grep -v '/test/') -coverpkg=./... -coverprofile $(ARTIFACTS)/cover.out
 
 .PHONY: test-integration
-test-integration: gomod-download envtest ginkgo embeded-manifest ray-operator-crd ## Run integration tests.
+test-integration: gomod-download envtest ginkgo embeded-manifest ray-operator-crd jobset-crd ## Run integration tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" \
 	KUEUE_BIN=$(PROJECT_DIR)/bin \
 	ENVTEST_K8S_VERSION=$(ENVTEST_K8S_VERSION) \

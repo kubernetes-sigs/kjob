@@ -135,7 +135,7 @@ spec:
                   - message: request flag can be used only on Job, JobSet and Interactive
                       modes
                     rule: '!has(self.requiredFlags) || !(''request'' in self.requiredFlags)
-                      || self.name in [''Job'', ''JobSet'', Interactive'', ''RayJob'']'
+                      || self.name in [''Job'', ''JobSet'', ''Interactive'', ''RayJob'']'
                   - message: cmd flag can be used only on Job, JobSet, Interactive
                       and RayJob modes
                     rule: '!has(self.requiredFlags) || !(''cmd'' in self.requiredFlags)
