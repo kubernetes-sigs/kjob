@@ -1,5 +1,11 @@
 # kjob
 
+[![GoReport Widget]][GoReport Status]
+[![Latest Release](https://img.shields.io/github/v/release/kubernetes-sigs/kjob?include_prereleases)](https://github.com/kubernetes-sigs/kjob/releases/latest)
+
+[GoReport Widget]: https://goreportcard.com/badge/github.com/kubernetes-sigs/kjob
+[GoReport Status]: https://goreportcard.com/report/github.com/kubernetes-sigs/kjob
+
 Run AI/ML jobs based on the pre-defined templates
 
 ## Description
