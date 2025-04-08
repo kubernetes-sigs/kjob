@@ -43,6 +43,14 @@ import (
 	"sigs.k8s.io/kjob/pkg/parser"
 )
 
+const (
+	DefaultNodes                 = int32(1)
+	DefaultNTasks                = int32(1)
+	DefaultNTasksPerNode         = int32(1)
+	DefaultArrayIndexParallelism = int32(1)
+	DefaultArrayIndexStep        = int32(1)
+)
+
 var (
 	noNamespaceSpecifiedErr                = errors.New("no namespace specified")
 	noApplicationProfileSpecifiedErr       = errors.New("no application profile specified")

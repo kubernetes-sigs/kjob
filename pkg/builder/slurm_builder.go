@@ -403,41 +403,41 @@ func (b *slurmBuilder) isArrayJob() bool {
 }
 
 func (b *slurmBuilder) complete() error {
-	if b.nodes != nil && b.nTasks == nil && b.nTasksPerNode == nil {
+	nodes := ptr.Deref(b.nodes, DefaultNodes)
+	nTasks := ptr.Deref(b.nTasks, DefaultNTasks)
+	nTasksPerNode := ptr.Deref(b.nTasksPerNode, DefaultNTasksPerNode)
+
+	if nodes != DefaultNodes && nTasks == DefaultNTasks && nTasksPerNode == DefaultNTasksPerNode {
 		return nTasksOrNTasksPerNodeMustBeSpecifiedWithNodesErr
 	}
 
-	if b.nodes != nil && b.nTasks != nil && b.nTasksPerNode != nil && (*b.nTasks) != (*b.nodes)*(*b.nTasksPerNode) {
+	if nodes != DefaultNodes && nTasks != DefaultNTasks && nTasksPerNode != DefaultNTasksPerNode && nTasks != nodes*nTasksPerNode {
 		return invalidNodesNTasksOrNTasksPerNodeValueErr
 	}
 
-	nodes := ptr.Deref(b.nodes, 1)
-	nTasks := ptr.Deref(b.nTasks, 1)
-	nTasksPerNode := ptr.Deref(b.nTasksPerNode, 1)
-
 	switch {
-	case b.nodes == nil && b.nTasks != nil && b.nTasksPerNode != nil:
+	case nodes == DefaultNodes && nTasks != DefaultNTasks && nTasksPerNode != DefaultNTasksPerNode:
 		nodesFloat := float64(nTasks) / float64(nTasksPerNode)
 		nodes = int32(nodesFloat)
 		if nodesFloat > float64(nodes) {
 			return invalidNTasksOrNTasksPerNodeValueErr
 		}
 		b.nodes = ptr.To(nodes)
-	case b.nTasks != nil && b.nTasksPerNode == nil:
+	case nTasks != DefaultNTasks && nTasksPerNode == DefaultNTasksPerNode:
 		nTasksPerNodeFloat := float64(nTasks) / float64(nodes)
 		nTasksPerNode = int32(nTasksPerNodeFloat)
 		if nTasksPerNodeFloat > float64(nTasksPerNode) {
 			return invalidNodesOrNTasksValueErr
 		}
 		b.nTasksPerNode = ptr.To(nTasksPerNode)
-	case b.nTasks == nil && b.nTasksPerNode != nil:
+	case nTasks == DefaultNTasks && nTasksPerNode != DefaultNTasksPerNode:
 		nTasks = nodes * nTasksPerNode
 		b.nTasks = ptr.To(nTasks)
 	}
 
 	// Only one of --nodes or --array can be specified unless --nodes is set to 1.
 	if err := validate.ValidateMutuallyExclusiveFlags(map[string]bool{
-		string(v1alpha1.NodesFlag): ptr.Deref(b.nodes, 1) != 1,
+		string(v1alpha1.NodesFlag): nodes != DefaultNodes,
 		string(v1alpha1.ArrayFlag): b.array != "",
 	}); err != nil {
 		return err
@@ -471,20 +471,20 @@ func (b *slurmBuilder) complete() error {
 
 func (b *slurmBuilder) parallelism() int32 {
 	if b.isArrayJob() {
-		return ptr.Deref(b.arrayIndexes.Parallelism, 1)
+		return ptr.Deref(b.arrayIndexes.Parallelism, DefaultArrayIndexParallelism)
 	}
-	return ptr.Deref(b.nodes, 1)
+	return ptr.Deref(b.nodes, DefaultNodes)
 }
 
 func (b *slurmBuilder) completion() int32 {
 	if b.isArrayJob() {
 		return int32(b.arrayIndexes.Count())
 	}
-	return ptr.Deref(b.nodes, 1)
+	return ptr.Deref(b.nodes, DefaultNodes)
 }
 
 func (b *slurmBuilder) containers() int {
-	return int(ptr.Deref(b.nTasksPerNode, 1))
+	return int(ptr.Deref(b.nTasksPerNode, DefaultNTasksPerNode))
 }
 
 func (b *slurmBuilder) buildArrayIndexes() string {
@@ -532,8 +532,8 @@ type slurmInitEntrypointScript struct {
 }
 
 func (b *slurmBuilder) buildInitEntrypointScript(jobName string) (string, error) {
-	nTasks := ptr.Deref(b.nTasks, 1)
-	nTasksPerNode := ptr.Deref(b.nTasksPerNode, 1)
+	nTasks := ptr.Deref(b.nTasks, DefaultNTasks)
+	nTasksPerNode := ptr.Deref(b.nTasksPerNode, DefaultNTasksPerNode)
 
 	nNodes := b.parallelism()
 	nodeList := make([]string, nNodes)
@@ -576,7 +576,7 @@ func (b *slurmBuilder) buildInitEntrypointScript(jobName string) (string, error)
 		scriptValues.SlurmArrayTaskCount = int32(b.arrayIndexes.Count())
 		scriptValues.SlurmArrayTaskMax = b.arrayIndexes.Max()
 		scriptValues.SlurmArrayTaskMin = b.arrayIndexes.Min()
-		scriptValues.SlurmArrayTaskStep = ptr.Deref(b.arrayIndexes.Step, 1)
+		scriptValues.SlurmArrayTaskStep = ptr.Deref(b.arrayIndexes.Step, DefaultArrayIndexStep)
 	}
 
 	if b.firstNodeIP {

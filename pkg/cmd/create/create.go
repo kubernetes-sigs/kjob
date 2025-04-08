@@ -443,11 +443,11 @@ The minimum index value is 0. The maximum index value is 2147483647.`)
 				"How much memory a container requires, it multiplies the number of requested cpus per task by mem-per-cpu.")
 			o.SlurmFlagSet.StringVar(&o.UserSpecifiedMemPerGPU, memPerGPUFlagName, "",
 				"How much memory a container requires, it multiplies the number of requested gpus per task by mem-per-gpu.")
-			o.SlurmFlagSet.Int32VarP(&o.UserSpecifiedNodes, nodesFlagName, "N", 1,
+			o.SlurmFlagSet.Int32VarP(&o.UserSpecifiedNodes, nodesFlagName, "N", builder.DefaultNodes,
 				"Number of pods to be used at a time.")
-			o.SlurmFlagSet.Int32VarP(&o.UserSpecifiedNTasks, nTasksFlagName, "n", 1,
+			o.SlurmFlagSet.Int32VarP(&o.UserSpecifiedNTasks, nTasksFlagName, "n", builder.DefaultNTasks,
 				"Number of identical containers inside of a pod, usually 1.")
-			o.SlurmFlagSet.Int32Var(&o.UserSpecifiedNTasksPerNode, nTasksPerNodeFlagName, 1,
+			o.SlurmFlagSet.Int32Var(&o.UserSpecifiedNTasksPerNode, nTasksPerNodeFlagName, builder.DefaultNTasksPerNode,
 				"Request that ntasks be invoked on each node.")
 			o.SlurmFlagSet.StringVarP(&o.Output, outputFlagName, "o", "",
 				"Where to redirect the standard output stream of a task. If not passed it proceeds to stdout, and is available via kubectl logs.")
@@ -653,6 +653,10 @@ func (o *CreateOptions) Complete(clientGetter util.ClientGetter, cmd *cobra.Comm
 	}
 
 	if o.SlurmFlagSet.Changed(nodesFlagName) {
+		if o.UserSpecifiedNodes <= 0 {
+			return errors.New("--nodes must be greater than 0")
+		}
+
 		o.Nodes = &o.UserSpecifiedNodes
 	}
 
