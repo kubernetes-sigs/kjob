@@ -31,6 +31,11 @@ var (
 	invalidArrayFlagFormatErr = errors.New("invalid array flag format")
 )
 
+var (
+	commaIndexesRegex = regexp.MustCompile(`^[0-9]\d*(,[1-9]\d*)*$`)
+	rangeIndexesRegex = regexp.MustCompile(`(^[0-9]\d*-[1-9]\d*)(([:%])([1-9]\d*))?$`)
+)
+
 type ArrayIndexes struct {
 	Indexes     []int32
 	Step        *int32
@@ -73,9 +78,9 @@ func ParseArrayIndexes(str string) (ArrayIndexes, error) {
 		err         error
 	)
 
-	if regexp.MustCompile(`^[0-9]\d*(,[1-9]\d*)*$`).MatchString(str) {
+	if commaIndexesRegex.MatchString(str) {
 		indexes, err = parseCommaSeparatedIndexes(str)
-	} else if matches := regexp.MustCompile(`(^[0-9]\d*-[1-9]\d*)(([:%])([1-9]\d*))?$`).FindStringSubmatch(str); matches != nil {
+	} else if matches := rangeIndexesRegex.FindStringSubmatch(str); matches != nil {
 		var num int64
 
 		if matches[4] != "" {
