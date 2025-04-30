@@ -47,11 +47,11 @@ func TestBuilder(t *testing.T) {
 		wantErr     error
 	}{
 		"shouldn't build job because no namespace specified": {
-			wantErr: noNamespaceSpecifiedErr,
+			wantErr: errNoNamespaceSpecified,
 		},
 		"shouldn't build job because no application profile specified": {
 			namespace: metav1.NamespaceDefault,
-			wantErr:   noApplicationProfileSpecifiedErr,
+			wantErr:   errNoApplicationProfileSpecified,
 		},
 		"shouldn't build job because application profile not found": {
 			namespace: metav1.NamespaceDefault,
@@ -67,7 +67,7 @@ func TestBuilder(t *testing.T) {
 					WithSupportedMode(v1alpha1.SupportedMode{Name: v1alpha1.JobMode}).
 					Obj(),
 			},
-			wantErr: noApplicationProfileModeSpecifiedErr,
+			wantErr: errNoApplicationProfileModeSpecified,
 		},
 		"shouldn't build job because application profile mode not configured": {
 			namespace: metav1.NamespaceDefault,
@@ -78,7 +78,7 @@ func TestBuilder(t *testing.T) {
 					WithSupportedMode(v1alpha1.SupportedMode{Name: v1alpha1.InteractiveMode}).
 					Obj(),
 			},
-			wantErr: applicationProfileModeNotConfiguredErr,
+			wantErr: errApplicationProfileModeNotConfigured,
 		},
 		"shouldn't build job because invalid application profile mode": {
 			namespace: metav1.NamespaceDefault,
@@ -89,7 +89,7 @@ func TestBuilder(t *testing.T) {
 					WithSupportedMode(v1alpha1.SupportedMode{Name: v1alpha1.InteractiveMode}).
 					Obj(),
 			},
-			wantErr: invalidApplicationProfileModeErr,
+			wantErr: errInvalidApplicationProfileMode,
 		},
 		"shouldn't build job because command not specified with required flags": {
 			namespace: metav1.NamespaceDefault,
@@ -103,7 +103,7 @@ func TestBuilder(t *testing.T) {
 					}).
 					Obj(),
 			},
-			wantErr: noCommandSpecifiedErr,
+			wantErr: errNoCommandSpecified,
 		},
 		"shouldn't build job because parallelism not specified with required flags": {
 			namespace: metav1.NamespaceDefault,
@@ -117,7 +117,7 @@ func TestBuilder(t *testing.T) {
 					}).
 					Obj(),
 			},
-			wantErr: noParallelismSpecifiedErr,
+			wantErr: errNoParallelismSpecified,
 		},
 		"shouldn't build job because completions not specified with required flags": {
 			namespace: metav1.NamespaceDefault,
@@ -131,7 +131,7 @@ func TestBuilder(t *testing.T) {
 					}).
 					Obj(),
 			},
-			wantErr: noCompletionsSpecifiedErr,
+			wantErr: errNoCompletionsSpecified,
 		},
 		"shouldn't build job because replicas not specified with required flags": {
 			namespace: metav1.NamespaceDefault,
@@ -145,7 +145,7 @@ func TestBuilder(t *testing.T) {
 					}).
 					Obj(),
 			},
-			wantErr: noReplicasSpecifiedErr,
+			wantErr: errNoReplicasSpecified,
 		},
 		"shouldn't build job because min-replicas not specified with required flags": {
 			namespace: metav1.NamespaceDefault,
@@ -159,7 +159,7 @@ func TestBuilder(t *testing.T) {
 					}).
 					Obj(),
 			},
-			wantErr: noMinReplicasSpecifiedErr,
+			wantErr: errNoMinReplicasSpecified,
 		},
 		"shouldn't build job because max-replicas not specified with required flags": {
 			namespace: metav1.NamespaceDefault,
@@ -173,7 +173,7 @@ func TestBuilder(t *testing.T) {
 					}).
 					Obj(),
 			},
-			wantErr: noMaxReplicasSpecifiedErr,
+			wantErr: errNoMaxReplicasSpecified,
 		},
 		"shouldn't build job because request not specified with required flags": {
 			namespace: metav1.NamespaceDefault,
@@ -187,7 +187,7 @@ func TestBuilder(t *testing.T) {
 					}).
 					Obj(),
 			},
-			wantErr: noRequestsSpecifiedErr,
+			wantErr: errNoRequestsSpecified,
 		},
 		"shouldn't build job because local queue not specified with required flags": {
 			namespace: metav1.NamespaceDefault,
@@ -201,7 +201,7 @@ func TestBuilder(t *testing.T) {
 					}).
 					Obj(),
 			},
-			wantErr: noLocalQueueSpecifiedErr,
+			wantErr: errNoLocalQueueSpecified,
 		},
 		"shouldn't build job because raycluster not specified with required flags": {
 			namespace: metav1.NamespaceDefault,
@@ -215,7 +215,7 @@ func TestBuilder(t *testing.T) {
 					}).
 					Obj(),
 			},
-			wantErr: noRayClusterSpecifiedErr,
+			wantErr: errNoRayClusterSpecified,
 		},
 		"shouldn't build job because array not specified with required flags": {
 			namespace: metav1.NamespaceDefault,
@@ -229,7 +229,7 @@ func TestBuilder(t *testing.T) {
 					}).
 					Obj(),
 			},
-			wantErr: noArraySpecifiedErr,
+			wantErr: errNoArraySpecified,
 		},
 		"shouldn't build job because cpusPerTask not specified with required flags": {
 			namespace: metav1.NamespaceDefault,
@@ -243,7 +243,7 @@ func TestBuilder(t *testing.T) {
 					}).
 					Obj(),
 			},
-			wantErr: noCpusPerTaskSpecifiedErr,
+			wantErr: errNoCpusPerTaskSpecified,
 		},
 		"shouldn't build job because error not specified with required flags": {
 			namespace: metav1.NamespaceDefault,
@@ -257,7 +257,7 @@ func TestBuilder(t *testing.T) {
 					}).
 					Obj(),
 			},
-			wantErr: noErrorSpecifiedErr,
+			wantErr: errNoErrorSpecified,
 		},
 		"shouldn't build job because gpusPerTask not specified with required flags": {
 			namespace: metav1.NamespaceDefault,
@@ -271,7 +271,7 @@ func TestBuilder(t *testing.T) {
 					}).
 					Obj(),
 			},
-			wantErr: noGpusPerTaskSpecifiedErr,
+			wantErr: errNoGpusPerTaskSpecified,
 		},
 		"shouldn't build job because input not specified with required flags": {
 			namespace: metav1.NamespaceDefault,
@@ -285,7 +285,7 @@ func TestBuilder(t *testing.T) {
 					}).
 					Obj(),
 			},
-			wantErr: noInputSpecifiedErr,
+			wantErr: errNoInputSpecified,
 		},
 		"shouldn't build job because jobName not specified with required flags": {
 			namespace: metav1.NamespaceDefault,
@@ -299,7 +299,7 @@ func TestBuilder(t *testing.T) {
 					}).
 					Obj(),
 			},
-			wantErr: noJobNameSpecifiedErr,
+			wantErr: errNoJobNameSpecified,
 		},
 		"shouldn't build job because memPerCPU not specified with required flags": {
 			namespace: metav1.NamespaceDefault,
@@ -313,7 +313,7 @@ func TestBuilder(t *testing.T) {
 					}).
 					Obj(),
 			},
-			wantErr: noMemPerCPUSpecifiedErr,
+			wantErr: errNoMemPerCPUSpecified,
 		},
 		"shouldn't build job because memPerGPU not specified with required flags": {
 			namespace: metav1.NamespaceDefault,
@@ -327,7 +327,7 @@ func TestBuilder(t *testing.T) {
 					}).
 					Obj(),
 			},
-			wantErr: noMemPerGPUSpecifiedErr,
+			wantErr: errNoMemPerGPUSpecified,
 		},
 		"shouldn't build job because memPerTask not specified with required flags": {
 			namespace: metav1.NamespaceDefault,
@@ -341,7 +341,7 @@ func TestBuilder(t *testing.T) {
 					}).
 					Obj(),
 			},
-			wantErr: noMemPerTaskSpecifiedErr,
+			wantErr: errNoMemPerTaskSpecified,
 		},
 		"shouldn't build job because nodes not specified with required flags": {
 			namespace: metav1.NamespaceDefault,
@@ -355,7 +355,7 @@ func TestBuilder(t *testing.T) {
 					}).
 					Obj(),
 			},
-			wantErr: noNodesSpecifiedErr,
+			wantErr: errNoNodesSpecified,
 		},
 		"shouldn't build job because nTasks not specified with required flags": {
 			namespace: metav1.NamespaceDefault,
@@ -369,7 +369,7 @@ func TestBuilder(t *testing.T) {
 					}).
 					Obj(),
 			},
-			wantErr: noNTasksSpecifiedErr,
+			wantErr: errNoNTasksSpecified,
 		},
 		"shouldn't build job because output not specified with required flags": {
 			namespace: metav1.NamespaceDefault,
@@ -383,7 +383,7 @@ func TestBuilder(t *testing.T) {
 					}).
 					Obj(),
 			},
-			wantErr: noOutputSpecifiedErr,
+			wantErr: errNoOutputSpecified,
 		},
 		"shouldn't build job because partition not specified with required flags": {
 			namespace: metav1.NamespaceDefault,
@@ -397,7 +397,7 @@ func TestBuilder(t *testing.T) {
 					}).
 					Obj(),
 			},
-			wantErr: noPartitionSpecifiedErr,
+			wantErr: errNoPartitionSpecified,
 		},
 		"shouldn't build job because priority not specified with required flags": {
 			namespace: metav1.NamespaceDefault,
@@ -411,7 +411,7 @@ func TestBuilder(t *testing.T) {
 					}).
 					Obj(),
 			},
-			wantErr: noPrioritySpecifiedErr,
+			wantErr: errNoPrioritySpecified,
 		},
 		"shouldn't build job because pod template label not specified with required flags": {
 			namespace: metav1.NamespaceDefault,
@@ -425,7 +425,7 @@ func TestBuilder(t *testing.T) {
 					}).
 					Obj(),
 			},
-			wantErr: noPodTemplateLabelSpecifiedErr,
+			wantErr: errNoPodTemplateLabelSpecified,
 		},
 		"shouldn't build job because pod template annotation not specified with required flags": {
 			namespace: metav1.NamespaceDefault,
@@ -439,7 +439,7 @@ func TestBuilder(t *testing.T) {
 					}).
 					Obj(),
 			},
-			wantErr: noPodTemplateAnnotationSpecifiedErr,
+			wantErr: errNoPodTemplateAnnotationSpecified,
 		},
 		"should build job": {
 			namespace: metav1.NamespaceDefault,

@@ -23,7 +23,7 @@ import (
 )
 
 var (
-	invalidTimeFormatErr = errors.New("invalid time format")
+	errInvalidTimeFormat = errors.New("invalid time format")
 )
 
 // isValidTimeSpec validates that time format follows is supported.
@@ -88,7 +88,7 @@ func isValidTimeSpec(val string) bool {
 
 // TimeLimitToSeconds converts a string to an equivalent time value.
 // If val is empty, it returns nil. If format is invalid, it returns
-// invalidTimeFormatErr.
+// errInvalidTimeFormat.
 //
 // Possible formats:
 // - "minutes"
@@ -112,7 +112,7 @@ func TimeLimitToSeconds(val string) (*int32, error) {
 	}
 
 	if !isValidTimeSpec(val) {
-		return nil, invalidTimeFormatErr
+		return nil, errInvalidTimeFormat
 	}
 
 	var d, h, m, s int32

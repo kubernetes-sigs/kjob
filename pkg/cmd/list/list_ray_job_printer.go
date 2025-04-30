@@ -107,8 +107,8 @@ func (p *listRayJobPrinter) printRayJob(rayJob *rayv1.RayJob) metav1.TableRow {
 	}
 	row.Cells = []any{
 		rayJob.Name,
-		rayJob.ObjectMeta.Labels[constants.ProfileLabel],
-		rayJob.ObjectMeta.Labels[kueueconstants.QueueLabel],
+		rayJob.Labels[constants.ProfileLabel],
+		rayJob.Labels[kueueconstants.QueueLabel],
 		rayJob.Status.RayClusterName,
 		rayJob.Status.JobStatus,
 		rayJob.Status.JobDeploymentStatus,

@@ -58,7 +58,7 @@ func (j *RayJobWrapper) GenerateName(v string) *RayJobWrapper {
 
 // CreationTimestamp sets the .metadata.creationTimestamp
 func (j *RayJobWrapper) CreationTimestamp(t time.Time) *RayJobWrapper {
-	j.RayJob.ObjectMeta.CreationTimestamp = metav1.NewTime(t)
+	j.RayJob.CreationTimestamp = metav1.NewTime(t)
 	return j
 }
 
@@ -82,7 +82,7 @@ func (j *RayJobWrapper) Label(key, value string) *RayJobWrapper {
 	if j.Labels == nil {
 		j.Labels = make(map[string]string)
 	}
-	j.ObjectMeta.Labels[key] = value
+	j.Labels[key] = value
 	return j
 }
 
@@ -91,7 +91,7 @@ func (j *RayJobWrapper) Annotation(key, value string) *RayJobWrapper {
 	if j.Annotations == nil {
 		j.Annotations = make(map[string]string)
 	}
-	j.ObjectMeta.Annotations[key] = value
+	j.Annotations[key] = value
 	return j
 }
 
@@ -120,37 +120,37 @@ func (j *RayJobWrapper) Entrypoint(entrypoint string) *RayJobWrapper {
 
 // JobStatus set jobStatus.
 func (j *RayJobWrapper) JobStatus(jobStatus rayv1.JobStatus) *RayJobWrapper {
-	j.RayJob.Status.JobStatus = jobStatus
+	j.Status.JobStatus = jobStatus
 	return j
 }
 
 // JobDeploymentStatus set jobDeploymentStatus.
 func (j *RayJobWrapper) JobDeploymentStatus(jobDeploymentStatus rayv1.JobDeploymentStatus) *RayJobWrapper {
-	j.RayJob.Status.JobDeploymentStatus = jobDeploymentStatus
+	j.Status.JobDeploymentStatus = jobDeploymentStatus
 	return j
 }
 
 // Reason set reason.
 func (j *RayJobWrapper) Reason(reason rayv1.JobFailedReason) *RayJobWrapper {
-	j.RayJob.Status.Reason = reason
+	j.Status.Reason = reason
 	return j
 }
 
 // Message set message.
 func (j *RayJobWrapper) Message(message string) *RayJobWrapper {
-	j.RayJob.Status.Message = message
+	j.Status.Message = message
 	return j
 }
 
 // StartTime set startTime.
 func (j *RayJobWrapper) StartTime(startTime time.Time) *RayJobWrapper {
-	j.RayJob.Status.StartTime = ptr.To(metav1.NewTime(startTime))
+	j.Status.StartTime = ptr.To(metav1.NewTime(startTime))
 	return j
 }
 
 // EndTime set endTime.
 func (j *RayJobWrapper) EndTime(endTime time.Time) *RayJobWrapper {
-	j.RayJob.Status.EndTime = ptr.To(metav1.NewTime(endTime))
+	j.Status.EndTime = ptr.To(metav1.NewTime(endTime))
 	return j
 }
 
@@ -171,7 +171,7 @@ func (j *RayJobWrapper) WithRayClusterLabelSelector(v string) *RayJobWrapper {
 
 // RayClusterName set rayClusterName.
 func (j *RayJobWrapper) RayClusterName(rayClusterName string) *RayJobWrapper {
-	j.RayJob.Status.RayClusterName = rayClusterName
+	j.Status.RayClusterName = rayClusterName
 	return j
 }
 

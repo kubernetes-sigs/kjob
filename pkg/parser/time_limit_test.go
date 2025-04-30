@@ -48,15 +48,15 @@ func TestParseTimeLimit(t *testing.T) {
 		},
 		"incomplete formats 12-": {
 			val:     "12-",
-			wantErr: invalidTimeFormatErr,
+			wantErr: errInvalidTimeFormat,
 		},
 		"incomplete formats 12:": {
 			val:     "12:",
-			wantErr: invalidTimeFormatErr,
+			wantErr: errInvalidTimeFormat,
 		},
 		"incomplete formats 12-05:": {
 			val:     "12-05:",
-			wantErr: invalidTimeFormatErr,
+			wantErr: errInvalidTimeFormat,
 		},
 		"single digit minimal values 0": {
 			val: "0",
@@ -73,15 +73,15 @@ func TestParseTimeLimit(t *testing.T) {
 		},
 		"not supported chars": {
 			val:     "12-0m-23",
-			wantErr: invalidTimeFormatErr,
+			wantErr: errInvalidTimeFormat,
 		},
 		"more than one dashes": {
 			val:     "12-05-23",
-			wantErr: invalidTimeFormatErr,
+			wantErr: errInvalidTimeFormat,
 		},
 		"more than two colons": {
 			val:     "2:12:05:23",
-			wantErr: invalidTimeFormatErr,
+			wantErr: errInvalidTimeFormat,
 		},
 		"minutes": {
 			val:  "05",

@@ -561,7 +561,7 @@ func (o *CreateOptions) Complete(clientGetter util.ClientGetter, cmd *cobra.Comm
 			return errors.New("the --wait-timeout flag is required when --wait is set")
 		}
 		if len(o.StreamContainers) != 0 && !o.Wait {
-			return errors.New("the --stream-container can only be specified for streaming output.")
+			return errors.New("the --stream-container can only be specified for streaming output")
 		}
 		o.Script = slurmArgs[0]
 	}

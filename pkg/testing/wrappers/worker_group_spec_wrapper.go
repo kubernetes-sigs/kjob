@@ -37,7 +37,7 @@ func (w *WorkerGroupSpecWrapper) Obj() *rayv1.WorkerGroupSpec {
 // Clone WorkerGroupSpecWrapper.
 func (w *WorkerGroupSpecWrapper) Clone() *WorkerGroupSpecWrapper {
 	return &WorkerGroupSpecWrapper{
-		WorkerGroupSpec: *w.WorkerGroupSpec.DeepCopy(),
+		WorkerGroupSpec: *w.DeepCopy(),
 	}
 }
 

@@ -46,25 +46,25 @@ func (w *RayJobTemplateWrapper) Obj() *v1alpha1.RayJobTemplate {
 // Clone RayJobTemplateWrapper.
 func (w *RayJobTemplateWrapper) Clone() *RayJobTemplateWrapper {
 	return &RayJobTemplateWrapper{
-		RayJobTemplate: *w.RayJobTemplate.DeepCopy(),
+		RayJobTemplate: *w.DeepCopy(),
 	}
 }
 
 // Label sets the label key and value.
 func (w *RayJobTemplateWrapper) Label(key, value string) *RayJobTemplateWrapper {
-	if w.Template.ObjectMeta.Labels == nil {
-		w.Template.ObjectMeta.Labels = make(map[string]string)
+	if w.Template.Labels == nil {
+		w.Template.Labels = make(map[string]string)
 	}
-	w.Template.ObjectMeta.Labels[key] = value
+	w.Template.Labels[key] = value
 	return w
 }
 
 // Annotation sets the label key and value.
 func (w *RayJobTemplateWrapper) Annotation(key, value string) *RayJobTemplateWrapper {
-	if w.Template.ObjectMeta.Annotations == nil {
-		w.Template.ObjectMeta.Annotations = make(map[string]string)
+	if w.Template.Annotations == nil {
+		w.Template.Annotations = make(map[string]string)
 	}
-	w.Template.ObjectMeta.Annotations[key] = value
+	w.Template.Annotations[key] = value
 	return w
 }
 

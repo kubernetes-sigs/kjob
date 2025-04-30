@@ -100,8 +100,8 @@ func (p *listRayClusterPrinter) printRayCluster(rayCluster *rayv1.RayCluster) me
 	}
 	row.Cells = []any{
 		rayCluster.Name,
-		rayCluster.ObjectMeta.Labels[constants.ProfileLabel],
-		rayCluster.ObjectMeta.Labels[kueueconstants.QueueLabel],
+		rayCluster.Labels[constants.ProfileLabel],
+		rayCluster.Labels[kueueconstants.QueueLabel],
 		rayCluster.Status.DesiredWorkerReplicas,
 		rayCluster.Status.AvailableWorkerReplicas,
 		rayCluster.Status.DesiredCPU.String(),

@@ -116,7 +116,7 @@ func (j *JobWrapper) Label(key, value string) *JobWrapper {
 	if j.Labels == nil {
 		j.Labels = make(map[string]string)
 	}
-	j.ObjectMeta.Labels[key] = value
+	j.Labels[key] = value
 	return j
 }
 
@@ -125,7 +125,7 @@ func (j *JobWrapper) Annotation(key, value string) *JobWrapper {
 	if j.Annotations == nil {
 		j.Annotations = make(map[string]string)
 	}
-	j.ObjectMeta.Annotations[key] = value
+	j.Annotations[key] = value
 	return j
 }
 

@@ -18,7 +18,7 @@ package tools
 
 // Keep a reference to the code generators, so they are not removed by go mod tidy
 import (
-	_ "github.com/golangci/golangci-lint/pkg/exitcodes"
+	_ "github.com/golangci/golangci-lint/v2/pkg/exitcodes"
 	_ "github.com/onsi/ginkgo/v2/ginkgo/command"
 	_ "github.com/onsi/ginkgo/v2/ginkgo/run"
 	_ "gotest.tools/gotestsum/cmd"

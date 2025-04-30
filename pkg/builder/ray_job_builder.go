@@ -59,7 +59,7 @@ func (b *rayJobBuilder) build(ctx context.Context) (runtime.Object, []runtime.Ob
 	}
 
 	if len(b.rayCluster) != 0 {
-		delete(rayJob.ObjectMeta.Labels, kueueconstants.QueueLabel)
+		delete(rayJob.Labels, kueueconstants.QueueLabel)
 		rayJob.Spec.RayClusterSpec = nil
 		if rayJob.Spec.ClusterSelector == nil {
 			rayJob.Spec.ClusterSelector = map[string]string{}

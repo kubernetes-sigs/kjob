@@ -107,8 +107,8 @@ func (p *listJobPrinter) printJob(job *batchv1.Job) metav1.TableRow {
 	}
 	row.Cells = []any{
 		job.Name,
-		job.ObjectMeta.Labels[constants.ProfileLabel],
-		job.ObjectMeta.Labels[kueueconstants.QueueLabel],
+		job.Labels[constants.ProfileLabel],
+		job.Labels[kueueconstants.QueueLabel],
 		fmt.Sprintf("%d/%d", job.Status.Succeeded, ptr.Deref(job.Spec.Completions, 1)),
 		durationStr,
 		duration.HumanDuration(p.clock.Since(job.CreationTimestamp.Time)),

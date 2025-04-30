@@ -45,7 +45,7 @@ func (vb *VolumeBundleWrapper) Obj() *v1alpha1.VolumeBundle {
 
 // WithVolume add volume on the volumes.
 func (vb *VolumeBundleWrapper) WithVolume(name, localObjectReferenceName string) *VolumeBundleWrapper {
-	vb.VolumeBundle.Spec.Volumes = append(vb.VolumeBundle.Spec.Volumes, corev1.Volume{
+	vb.Spec.Volumes = append(vb.Spec.Volumes, corev1.Volume{
 		Name: name,
 		VolumeSource: corev1.VolumeSource{
 			ConfigMap: &corev1.ConfigMapVolumeSource{
@@ -60,7 +60,7 @@ func (vb *VolumeBundleWrapper) WithVolume(name, localObjectReferenceName string)
 
 // WithVolumeMount add volume mount on the volumes.
 func (vb *VolumeBundleWrapper) WithVolumeMount(volumeMount corev1.VolumeMount) *VolumeBundleWrapper {
-	vb.VolumeBundle.Spec.ContainerVolumeMounts = append(vb.VolumeBundle.Spec.ContainerVolumeMounts, volumeMount)
+	vb.Spec.ContainerVolumeMounts = append(vb.Spec.ContainerVolumeMounts, volumeMount)
 	return vb
 }
 

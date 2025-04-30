@@ -70,19 +70,19 @@ func (c *ContainerWrapper) WithRequest(resourceName corev1.ResourceName, quantit
 
 // WithResources set Resources.
 func (c *ContainerWrapper) WithResources(resourceRequirements corev1.ResourceRequirements) *ContainerWrapper {
-	c.Container.Resources = resourceRequirements
+	c.Resources = resourceRequirements
 	return c
 }
 
 // WithEnvVar add EnvVar to Env.
 func (c *ContainerWrapper) WithEnvVar(envVar corev1.EnvVar) *ContainerWrapper {
-	c.Container.Env = append(c.Container.Env, envVar)
+	c.Env = append(c.Env, envVar)
 	return c
 }
 
 // WithVolumeMount add VolumeMount to VolumeMounts.
 func (c *ContainerWrapper) WithVolumeMount(volumeMount corev1.VolumeMount) *ContainerWrapper {
-	c.Container.VolumeMounts = append(c.Container.VolumeMounts, volumeMount)
+	c.VolumeMounts = append(c.VolumeMounts, volumeMount)
 	return c
 }
 

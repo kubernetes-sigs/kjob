@@ -47,19 +47,19 @@ func (j *JobTemplateWrapper) Obj() *v1alpha1.JobTemplate {
 
 // Label sets the label key and value.
 func (j *JobTemplateWrapper) Label(key, value string) *JobTemplateWrapper {
-	if j.Template.ObjectMeta.Labels == nil {
-		j.Template.ObjectMeta.Labels = make(map[string]string)
+	if j.Template.Labels == nil {
+		j.Template.Labels = make(map[string]string)
 	}
-	j.Template.ObjectMeta.Labels[key] = value
+	j.Template.Labels[key] = value
 	return j
 }
 
 // Annotation sets the label key and value.
 func (j *JobTemplateWrapper) Annotation(key, value string) *JobTemplateWrapper {
-	if j.Template.ObjectMeta.Annotations == nil {
-		j.Template.ObjectMeta.Annotations = make(map[string]string)
+	if j.Template.Annotations == nil {
+		j.Template.Annotations = make(map[string]string)
 	}
-	j.Template.ObjectMeta.Annotations[key] = value
+	j.Template.Annotations[key] = value
 	return j
 }
 
@@ -102,7 +102,7 @@ func (j *JobTemplateWrapper) WithContainer(container corev1.Container) *JobTempl
 // Clone clone JobTemplateWrapper.
 func (j *JobTemplateWrapper) Clone() *JobTemplateWrapper {
 	return &JobTemplateWrapper{
-		JobTemplate: *j.JobTemplate.DeepCopy(),
+		JobTemplate: *j.DeepCopy(),
 	}
 }
 

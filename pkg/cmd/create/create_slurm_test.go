@@ -313,7 +313,7 @@ export $(cat /slurm/env/$JOB_CONTAINER_INDEX/slurm.env | xargs)
 			args: func(tc *createSlurmCmdTestCase) []string {
 				return []string{"slurm", "--profile", applicationProfileName, "--stream-container", "foo", "--", tc.tempFile}
 			},
-			wantErr: "the --stream-container can only be specified for streaming output.",
+			wantErr: "the --stream-container can only be specified for streaming output",
 		},
 		"should create slurm": {
 			beforeTest: beforeSlurmTest,

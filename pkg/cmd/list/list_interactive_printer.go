@@ -96,8 +96,8 @@ func (p *listInteractivePrinter) printPod(pod *corev1.Pod) metav1.TableRow {
 
 	row.Cells = []any{
 		pod.Name,
-		pod.ObjectMeta.Labels[constants.ProfileLabel],
-		pod.ObjectMeta.Labels[kueueconstants.QueueLabel],
+		pod.Labels[constants.ProfileLabel],
+		pod.Labels[kueueconstants.QueueLabel],
 		pod.Status.Phase,
 		duration.HumanDuration(p.clock.Since(pod.CreationTimestamp.Time)),
 	}

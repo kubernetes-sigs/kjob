@@ -121,8 +121,8 @@ func GetConfigWithContext(kContext string) *rest.Config {
 	gomega.ExpectWithOffset(1, cfg).NotTo(gomega.BeNil())
 
 	cfg.APIPath = "/api"
-	cfg.ContentConfig.GroupVersion = &schema.GroupVersion{Group: "", Version: "v1"}
-	cfg.ContentConfig.NegotiatedSerializer = scheme.Codecs.WithoutConversion()
+	cfg.GroupVersion = &schema.GroupVersion{Group: "", Version: "v1"}
+	cfg.NegotiatedSerializer = scheme.Codecs.WithoutConversion()
 
 	return cfg
 }

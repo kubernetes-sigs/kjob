@@ -46,25 +46,25 @@ func (w *RayClusterTemplateWrapper) Obj() *v1alpha1.RayClusterTemplate {
 // Clone RayClusterTemplateWrapper.
 func (w *RayClusterTemplateWrapper) Clone() *RayClusterTemplateWrapper {
 	return &RayClusterTemplateWrapper{
-		RayClusterTemplate: *w.RayClusterTemplate.DeepCopy(),
+		RayClusterTemplate: *w.DeepCopy(),
 	}
 }
 
 // Label sets the label key and value.
 func (w *RayClusterTemplateWrapper) Label(key, value string) *RayClusterTemplateWrapper {
-	if w.Template.ObjectMeta.Labels == nil {
-		w.Template.ObjectMeta.Labels = make(map[string]string)
+	if w.Template.Labels == nil {
+		w.Template.Labels = make(map[string]string)
 	}
-	w.Template.ObjectMeta.Labels[key] = value
+	w.Template.Labels[key] = value
 	return w
 }
 
 // Annotation sets the label key and value.
 func (w *RayClusterTemplateWrapper) Annotation(key, value string) *RayClusterTemplateWrapper {
-	if w.Template.ObjectMeta.Annotations == nil {
-		w.Template.ObjectMeta.Annotations = make(map[string]string)
+	if w.Template.Annotations == nil {
+		w.Template.Annotations = make(map[string]string)
 	}
-	w.Template.ObjectMeta.Annotations[key] = value
+	w.Template.Annotations[key] = value
 	return w
 }
 

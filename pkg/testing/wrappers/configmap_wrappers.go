@@ -77,7 +77,7 @@ func (w *ConfigMapWrapper) Label(key, value string) *ConfigMapWrapper {
 	if w.Labels == nil {
 		w.Labels = make(map[string]string)
 	}
-	w.ObjectMeta.Labels[key] = value
+	w.Labels[key] = value
 	return w
 }
 

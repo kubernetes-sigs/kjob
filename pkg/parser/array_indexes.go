@@ -28,7 +28,7 @@ import (
 )
 
 var (
-	invalidArrayFlagFormatErr = errors.New("invalid array flag format")
+	errInvalidArrayFlagFormat = errors.New("invalid array flag format")
 )
 
 var (
@@ -86,7 +86,7 @@ func ParseArrayIndexes(str string) (ArrayIndexes, error) {
 		if matches[4] != "" {
 			num, err = strconv.ParseInt(matches[4], 10, 32)
 			if err != nil {
-				return arrayIndexes, invalidArrayFlagFormatErr
+				return arrayIndexes, errInvalidArrayFlagFormat
 			}
 		}
 
@@ -99,7 +99,7 @@ func ParseArrayIndexes(str string) (ArrayIndexes, error) {
 
 		indexes, err = parseRangeIndexes(matches[1], step)
 	} else {
-		return arrayIndexes, invalidArrayFlagFormatErr
+		return arrayIndexes, errInvalidArrayFlagFormat
 	}
 
 	if err != nil {
@@ -121,26 +121,26 @@ func parseRangeIndexes(str string, step *int32) ([]int32, error) {
 	}
 
 	if *step <= 0 {
-		return nil, invalidArrayFlagFormatErr
+		return nil, errInvalidArrayFlagFormat
 	}
 
 	parts := strings.Split(str, "-")
 	if len(parts) != 2 {
-		return nil, invalidArrayFlagFormatErr
+		return nil, errInvalidArrayFlagFormat
 	}
 
 	from, err := strconv.ParseInt(parts[0], 10, 32)
 	if err != nil {
-		return nil, invalidArrayFlagFormatErr
+		return nil, errInvalidArrayFlagFormat
 	}
 
 	to, err := strconv.ParseInt(parts[1], 10, 32)
 	if err != nil {
-		return nil, invalidArrayFlagFormatErr
+		return nil, errInvalidArrayFlagFormat
 	}
 
 	if from > to {
-		return nil, invalidArrayFlagFormatErr
+		return nil, errInvalidArrayFlagFormat
 	}
 
 	var indexes []int32
@@ -159,14 +159,14 @@ func parseCommaSeparatedIndexes(str string) ([]int32, error) {
 	for _, strIndex := range strIndexes {
 		num, err := strconv.ParseInt(strIndex, 10, 32)
 		if err != nil {
-			return nil, invalidArrayFlagFormatErr
+			return nil, errInvalidArrayFlagFormat
 		}
 		index := int32(num)
 		if index < maxValue {
-			return nil, invalidArrayFlagFormatErr
+			return nil, errInvalidArrayFlagFormat
 		}
 		if set.Has(index) {
-			return nil, invalidArrayFlagFormatErr
+			return nil, errInvalidArrayFlagFormat
 		}
 		set.Insert(index)
 		maxValue = index

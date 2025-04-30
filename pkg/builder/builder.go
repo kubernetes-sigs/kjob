@@ -44,37 +44,37 @@ import (
 )
 
 var (
-	noNamespaceSpecifiedErr                = errors.New("no namespace specified")
-	noApplicationProfileSpecifiedErr       = errors.New("no application profile specified")
-	noApplicationProfileModeSpecifiedErr   = errors.New("no application profile mode specified")
-	invalidApplicationProfileModeErr       = errors.New("invalid application profile mode")
-	applicationProfileModeNotConfiguredErr = errors.New("application profile mode not configured")
-	noCommandSpecifiedErr                  = errors.New("no command specified")
-	noParallelismSpecifiedErr              = errors.New("no parallelism specified")
-	noCompletionsSpecifiedErr              = errors.New("no completions specified")
-	noReplicasSpecifiedErr                 = errors.New("no replicas specified")
-	noMinReplicasSpecifiedErr              = errors.New("no min-replicas specified")
-	noMaxReplicasSpecifiedErr              = errors.New("no max-replicas specified")
-	noRequestsSpecifiedErr                 = errors.New("no requests specified")
-	noLocalQueueSpecifiedErr               = errors.New("no local queue specified")
-	noRayClusterSpecifiedErr               = errors.New("no raycluster specified")
-	noArraySpecifiedErr                    = errors.New("no array specified")
-	noCpusPerTaskSpecifiedErr              = errors.New("no cpus-per-task specified")
-	noErrorSpecifiedErr                    = errors.New("no error specified")
-	noGpusPerTaskSpecifiedErr              = errors.New("no gpus-per-task specified")
-	noInputSpecifiedErr                    = errors.New("no input specified")
-	noJobNameSpecifiedErr                  = errors.New("no job-name specified")
-	noMemPerCPUSpecifiedErr                = errors.New("no mem-per-cpu specified")
-	noMemPerGPUSpecifiedErr                = errors.New("no mem-per-gpu specified")
-	noMemPerTaskSpecifiedErr               = errors.New("no mem-per-task specified")
-	noNodesSpecifiedErr                    = errors.New("no nodes specified")
-	noNTasksSpecifiedErr                   = errors.New("no ntasks specified")
-	noOutputSpecifiedErr                   = errors.New("no output specified")
-	noPartitionSpecifiedErr                = errors.New("no partition specified")
-	noPrioritySpecifiedErr                 = errors.New("no priority specified")
-	noTimeSpecifiedErr                     = errors.New("no time specified")
-	noPodTemplateLabelSpecifiedErr         = errors.New("no pod template label specified")
-	noPodTemplateAnnotationSpecifiedErr    = errors.New("no pod template annotation specified")
+	errNoNamespaceSpecified                = errors.New("no namespace specified")
+	errNoApplicationProfileSpecified       = errors.New("no application profile specified")
+	errNoApplicationProfileModeSpecified   = errors.New("no application profile mode specified")
+	errInvalidApplicationProfileMode       = errors.New("invalid application profile mode")
+	errApplicationProfileModeNotConfigured = errors.New("application profile mode not configured")
+	errNoCommandSpecified                  = errors.New("no command specified")
+	errNoParallelismSpecified              = errors.New("no parallelism specified")
+	errNoCompletionsSpecified              = errors.New("no completions specified")
+	errNoReplicasSpecified                 = errors.New("no replicas specified")
+	errNoMinReplicasSpecified              = errors.New("no min-replicas specified")
+	errNoMaxReplicasSpecified              = errors.New("no max-replicas specified")
+	errNoRequestsSpecified                 = errors.New("no requests specified")
+	errNoLocalQueueSpecified               = errors.New("no local queue specified")
+	errNoRayClusterSpecified               = errors.New("no raycluster specified")
+	errNoArraySpecified                    = errors.New("no array specified")
+	errNoCpusPerTaskSpecified              = errors.New("no cpus-per-task specified")
+	errNoErrorSpecified                    = errors.New("no error specified")
+	errNoGpusPerTaskSpecified              = errors.New("no gpus-per-task specified")
+	errNoInputSpecified                    = errors.New("no input specified")
+	errNoJobNameSpecified                  = errors.New("no job-name specified")
+	errNoMemPerCPUSpecified                = errors.New("no mem-per-cpu specified")
+	errNoMemPerGPUSpecified                = errors.New("no mem-per-gpu specified")
+	errNoMemPerTaskSpecified               = errors.New("no mem-per-task specified")
+	errNoNodesSpecified                    = errors.New("no nodes specified")
+	errNoNTasksSpecified                   = errors.New("no ntasks specified")
+	errNoOutputSpecified                   = errors.New("no output specified")
+	errNoPartitionSpecified                = errors.New("no partition specified")
+	errNoPrioritySpecified                 = errors.New("no priority specified")
+	errNoTimeSpecified                     = errors.New("no time specified")
+	errNoPodTemplateLabelSpecified         = errors.New("no pod template label specified")
+	errNoPodTemplateAnnotationSpecified    = errors.New("no pod template annotation specified")
 )
 
 type builder interface {
@@ -336,15 +336,15 @@ func (b *Builder) WithWorkerContainers(workerContainers []string) *Builder {
 
 func (b *Builder) validateGeneral(ctx context.Context) error {
 	if b.namespace == "" {
-		return noNamespaceSpecifiedErr
+		return errNoNamespaceSpecified
 	}
 
 	if b.profileName == "" {
-		return noApplicationProfileSpecifiedErr
+		return errNoApplicationProfileSpecified
 	}
 
 	if b.modeName == "" {
-		return noApplicationProfileModeSpecifiedErr
+		return errNoApplicationProfileModeSpecified
 	}
 
 	// check that local queue exists
@@ -381,7 +381,7 @@ func (b *Builder) complete(ctx context.Context) error {
 	}
 
 	if b.mode == nil {
-		return applicationProfileModeNotConfiguredErr
+		return errApplicationProfileModeNotConfigured
 	}
 
 	for _, name := range b.profile.Spec.VolumeBundles {
@@ -397,107 +397,107 @@ func (b *Builder) complete(ctx context.Context) error {
 
 func (b *Builder) validateFlags() error {
 	if slices.Contains(b.mode.RequiredFlags, v1alpha1.CmdFlag) && len(b.command) == 0 {
-		return noCommandSpecifiedErr
+		return errNoCommandSpecified
 	}
 
 	if slices.Contains(b.mode.RequiredFlags, v1alpha1.ParallelismFlag) && b.parallelism == nil {
-		return noParallelismSpecifiedErr
+		return errNoParallelismSpecified
 	}
 
 	if slices.Contains(b.mode.RequiredFlags, v1alpha1.CompletionsFlag) && b.completions == nil {
-		return noCompletionsSpecifiedErr
+		return errNoCompletionsSpecified
 	}
 
 	if slices.Contains(b.mode.RequiredFlags, v1alpha1.ReplicasFlag) && b.replicas == nil {
-		return noReplicasSpecifiedErr
+		return errNoReplicasSpecified
 	}
 
 	if slices.Contains(b.mode.RequiredFlags, v1alpha1.MinReplicasFlag) && b.minReplicas == nil {
-		return noMinReplicasSpecifiedErr
+		return errNoMinReplicasSpecified
 	}
 
 	if slices.Contains(b.mode.RequiredFlags, v1alpha1.MaxReplicasFlag) && b.maxReplicas == nil {
-		return noMaxReplicasSpecifiedErr
+		return errNoMaxReplicasSpecified
 	}
 
 	if slices.Contains(b.mode.RequiredFlags, v1alpha1.RequestFlag) && b.requests == nil {
-		return noRequestsSpecifiedErr
+		return errNoRequestsSpecified
 	}
 
 	if slices.Contains(b.mode.RequiredFlags, v1alpha1.LocalQueueFlag) && b.localQueue == "" {
-		return noLocalQueueSpecifiedErr
+		return errNoLocalQueueSpecified
 	}
 
 	if slices.Contains(b.mode.RequiredFlags, v1alpha1.RayClusterFlag) && b.rayCluster == "" {
-		return noRayClusterSpecifiedErr
+		return errNoRayClusterSpecified
 	}
 
 	if slices.Contains(b.mode.RequiredFlags, v1alpha1.ArrayFlag) && b.array == "" {
-		return noArraySpecifiedErr
+		return errNoArraySpecified
 	}
 
 	if slices.Contains(b.mode.RequiredFlags, v1alpha1.CpusPerTaskFlag) && b.cpusPerTask == nil {
-		return noCpusPerTaskSpecifiedErr
+		return errNoCpusPerTaskSpecified
 	}
 
 	if slices.Contains(b.mode.RequiredFlags, v1alpha1.ErrorFlag) && b.error == "" {
-		return noErrorSpecifiedErr
+		return errNoErrorSpecified
 	}
 
 	if slices.Contains(b.mode.RequiredFlags, v1alpha1.GpusPerTaskFlag) && b.gpusPerTask == nil {
-		return noGpusPerTaskSpecifiedErr
+		return errNoGpusPerTaskSpecified
 	}
 
 	if slices.Contains(b.mode.RequiredFlags, v1alpha1.InputFlag) && b.input == "" {
-		return noInputSpecifiedErr
+		return errNoInputSpecified
 	}
 
 	if slices.Contains(b.mode.RequiredFlags, v1alpha1.JobNameFlag) && b.jobName == "" {
-		return noJobNameSpecifiedErr
+		return errNoJobNameSpecified
 	}
 
 	if slices.Contains(b.mode.RequiredFlags, v1alpha1.MemPerCPUFlag) && b.memPerCPU == nil {
-		return noMemPerCPUSpecifiedErr
+		return errNoMemPerCPUSpecified
 	}
 
 	if slices.Contains(b.mode.RequiredFlags, v1alpha1.MemPerGPUFlag) && b.memPerGPU == nil {
-		return noMemPerGPUSpecifiedErr
+		return errNoMemPerGPUSpecified
 	}
 
 	if slices.Contains(b.mode.RequiredFlags, v1alpha1.MemPerTaskFlag) && b.memPerTask == nil {
-		return noMemPerTaskSpecifiedErr
+		return errNoMemPerTaskSpecified
 	}
 
 	if slices.Contains(b.mode.RequiredFlags, v1alpha1.NodesFlag) && b.nodes == nil {
-		return noNodesSpecifiedErr
+		return errNoNodesSpecified
 	}
 
 	if slices.Contains(b.mode.RequiredFlags, v1alpha1.NTasksFlag) && b.nTasks == nil {
-		return noNTasksSpecifiedErr
+		return errNoNTasksSpecified
 	}
 
 	if slices.Contains(b.mode.RequiredFlags, v1alpha1.OutputFlag) && b.output == "" {
-		return noOutputSpecifiedErr
+		return errNoOutputSpecified
 	}
 
 	if slices.Contains(b.mode.RequiredFlags, v1alpha1.PartitionFlag) && b.partition == "" {
-		return noPartitionSpecifiedErr
+		return errNoPartitionSpecified
 	}
 
 	if slices.Contains(b.mode.RequiredFlags, v1alpha1.PriorityFlag) && b.priority == "" {
-		return noPrioritySpecifiedErr
+		return errNoPrioritySpecified
 	}
 
 	if slices.Contains(b.mode.RequiredFlags, v1alpha1.TimeFlag) && b.timeLimit == "" {
-		return noTimeSpecifiedErr
+		return errNoTimeSpecified
 	}
 
 	if slices.Contains(b.mode.RequiredFlags, v1alpha1.PodTemplateLabelFlag) && b.podTemplateLabels == nil {
-		return noPodTemplateLabelSpecifiedErr
+		return errNoPodTemplateLabelSpecified
 	}
 
 	if slices.Contains(b.mode.RequiredFlags, v1alpha1.PodTemplateAnnotationFlag) && b.podTemplateAnnotations == nil {
-		return noPodTemplateAnnotationSpecifiedErr
+		return errNoPodTemplateAnnotationSpecified
 	}
 
 	return nil
@@ -528,7 +528,7 @@ func (b *Builder) Do(ctx context.Context) (runtime.Object, []runtime.Object, err
 	}
 
 	if bImpl == nil {
-		return nil, nil, invalidApplicationProfileModeErr
+		return nil, nil, errInvalidApplicationProfileMode
 	}
 
 	if err := b.complete(ctx); err != nil {

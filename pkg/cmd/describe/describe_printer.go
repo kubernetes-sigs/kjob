@@ -97,10 +97,10 @@ func describeJob(job *batchv1.Job) (string, error) {
 			w.Write(IndentLevelZero, "Completions:\t<unset>\n")
 		}
 		if job.Status.StartTime != nil {
-			w.Write(IndentLevelZero, "Start Time:\t%s\n", job.Status.StartTime.Time.Format(time.RFC1123Z))
+			w.Write(IndentLevelZero, "Start Time:\t%s\n", job.Status.StartTime.Format(time.RFC1123Z))
 		}
 		if job.Status.CompletionTime != nil {
-			w.Write(IndentLevelZero, "Completed At:\t%s\n", job.Status.CompletionTime.Time.Format(time.RFC1123Z))
+			w.Write(IndentLevelZero, "Completed At:\t%s\n", job.Status.CompletionTime.Format(time.RFC1123Z))
 		}
 		if job.Status.StartTime != nil && job.Status.CompletionTime != nil {
 			w.Write(IndentLevelZero, "Duration:\t%s\n", duration.HumanDuration(job.Status.CompletionTime.Sub(job.Status.StartTime.Time)))
@@ -137,7 +137,7 @@ func describePod(pod *corev1.Pod) (string, error) {
 		w.Write(IndentLevelZero, "Name:\t%s\n", pod.Name)
 		w.Write(IndentLevelZero, "Namespace:\t%s\n", pod.Namespace)
 		if pod.Status.StartTime != nil {
-			w.Write(IndentLevelZero, "Start Time:\t%s\n", pod.Status.StartTime.Time.Format(time.RFC1123Z))
+			w.Write(IndentLevelZero, "Start Time:\t%s\n", pod.Status.StartTime.Format(time.RFC1123Z))
 		}
 		printLabelsMultiline(w, "Labels", pod.Labels)
 

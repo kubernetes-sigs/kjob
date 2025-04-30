@@ -61,7 +61,7 @@ const (
 )
 
 var (
-	noScriptSpecifiedErr = errors.New("no script specified")
+	errNoScriptSpecified = errors.New("no script specified")
 )
 
 var (
@@ -98,15 +98,15 @@ var _ builder = (*slurmBuilder)(nil)
 
 func (b *slurmBuilder) validateGeneral() error {
 	if len(b.script) == 0 {
-		return noScriptSpecifiedErr
+		return errNoScriptSpecified
 	}
 
 	if b.memPerCPU != nil && b.cpusPerTask == nil {
-		return noCpusPerTaskSpecifiedErr
+		return errNoCpusPerTaskSpecified
 	}
 
 	if b.memPerGPU != nil && b.gpusPerTask == nil {
-		return noGpusPerTaskSpecifiedErr
+		return errNoGpusPerTaskSpecified
 	}
 
 	return nil

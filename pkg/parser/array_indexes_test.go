@@ -43,11 +43,11 @@ func TestParseSlurmArrayIndexes(t *testing.T) {
 		},
 		"should parse 1,4,5, because duplicate indexes": {
 			array:   "1,1,4,5",
-			wantErr: invalidArrayFlagFormatErr.Error(),
+			wantErr: errInvalidArrayFlagFormat.Error(),
 		},
 		"shouldn't parse 4,1,5, because invalid sequence": {
 			array:   "4,1,5",
-			wantErr: invalidArrayFlagFormatErr.Error(),
+			wantErr: errInvalidArrayFlagFormat.Error(),
 		},
 		"should parse 1-5": {
 			array: "1-5",
@@ -57,7 +57,7 @@ func TestParseSlurmArrayIndexes(t *testing.T) {
 		},
 		"shouldn't parse 5-1, because from > to": {
 			array:   "5-1",
-			wantErr: invalidArrayFlagFormatErr.Error(),
+			wantErr: errInvalidArrayFlagFormat.Error(),
 		},
 		"should parse 3-9:3": {
 			array: "3-9:3",
@@ -75,11 +75,11 @@ func TestParseSlurmArrayIndexes(t *testing.T) {
 		},
 		"shouldn't parse 1-5?2": {
 			array:   "1-5?2",
-			wantErr: invalidArrayFlagFormatErr.Error(),
+			wantErr: errInvalidArrayFlagFormat.Error(),
 		},
 		"shouldn't parse 1-5:2147483648, because value out of range": {
 			array:   "1-5:2147483648",
-			wantErr: invalidArrayFlagFormatErr.Error(),
+			wantErr: errInvalidArrayFlagFormat.Error(),
 		},
 		"should parse 0-5": {
 			array: "0-5",

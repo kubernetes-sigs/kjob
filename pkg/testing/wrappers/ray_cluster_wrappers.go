@@ -57,7 +57,7 @@ func (j *RayClusterWrapper) GenerateName(v string) *RayClusterWrapper {
 
 // CreationTimestamp sets the .metadata.creationTimestamp
 func (j *RayClusterWrapper) CreationTimestamp(t time.Time) *RayClusterWrapper {
-	j.RayCluster.ObjectMeta.CreationTimestamp = metav1.NewTime(t)
+	j.RayCluster.CreationTimestamp = metav1.NewTime(t)
 	return j
 }
 
@@ -81,7 +81,7 @@ func (j *RayClusterWrapper) Label(key, value string) *RayClusterWrapper {
 	if j.Labels == nil {
 		j.Labels = make(map[string]string)
 	}
-	j.ObjectMeta.Labels[key] = value
+	j.Labels[key] = value
 	return j
 }
 
@@ -90,7 +90,7 @@ func (j *RayClusterWrapper) Annotation(key, value string) *RayClusterWrapper {
 	if j.Annotations == nil {
 		j.Annotations = make(map[string]string)
 	}
-	j.ObjectMeta.Annotations[key] = value
+	j.Annotations[key] = value
 	return j
 }
 
@@ -108,67 +108,67 @@ func (j *RayClusterWrapper) Spec(spec rayv1.RayClusterSpec) *RayClusterWrapper {
 
 // DesiredWorkerReplicas set DesiredWorkerReplicas.
 func (j *RayClusterWrapper) DesiredWorkerReplicas(desiredWorkerReplicas int32) *RayClusterWrapper {
-	j.RayCluster.Status.DesiredWorkerReplicas = desiredWorkerReplicas
+	j.Status.DesiredWorkerReplicas = desiredWorkerReplicas
 	return j
 }
 
 // ReadyWorkerReplicas set ReadyWorkerReplicas.
 func (j *RayClusterWrapper) ReadyWorkerReplicas(readyWorkerReplicas int32) *RayClusterWrapper {
-	j.RayCluster.Status.ReadyWorkerReplicas = readyWorkerReplicas
+	j.Status.ReadyWorkerReplicas = readyWorkerReplicas
 	return j
 }
 
 // AvailableWorkerReplicas set AvailableWorkerReplicas.
 func (j *RayClusterWrapper) AvailableWorkerReplicas(availableWorkerReplicas int32) *RayClusterWrapper {
-	j.RayCluster.Status.AvailableWorkerReplicas = availableWorkerReplicas
+	j.Status.AvailableWorkerReplicas = availableWorkerReplicas
 	return j
 }
 
 // DesiredCPU set DesiredCPU.
 func (j *RayClusterWrapper) DesiredCPU(desiredCPU resource.Quantity) *RayClusterWrapper {
-	j.RayCluster.Status.DesiredCPU = desiredCPU
+	j.Status.DesiredCPU = desiredCPU
 	return j
 }
 
 // DesiredMemory set DesiredMemory.
 func (j *RayClusterWrapper) DesiredMemory(desiredMemory resource.Quantity) *RayClusterWrapper {
-	j.RayCluster.Status.DesiredMemory = desiredMemory
+	j.Status.DesiredMemory = desiredMemory
 	return j
 }
 
 // DesiredGPU set DesiredGPU.
 func (j *RayClusterWrapper) DesiredGPU(desiredGPU resource.Quantity) *RayClusterWrapper {
-	j.RayCluster.Status.DesiredGPU = desiredGPU
+	j.Status.DesiredGPU = desiredGPU
 	return j
 }
 
 // DesiredTPU set DesiredTPU.
 func (j *RayClusterWrapper) DesiredTPU(desiredTPU resource.Quantity) *RayClusterWrapper {
-	j.RayCluster.Status.DesiredTPU = desiredTPU
+	j.Status.DesiredTPU = desiredTPU
 	return j
 }
 
 // MinWorkerReplicas set MinWorkerReplicas.
 func (j *RayClusterWrapper) MinWorkerReplicas(minWorkerReplicas int32) *RayClusterWrapper {
-	j.RayCluster.Status.MinWorkerReplicas = minWorkerReplicas
+	j.Status.MinWorkerReplicas = minWorkerReplicas
 	return j
 }
 
 // MaxWorkerReplicas set MaxWorkerReplicas.
 func (j *RayClusterWrapper) MaxWorkerReplicas(maxWorkerReplicas int32) *RayClusterWrapper {
-	j.RayCluster.Status.MaxWorkerReplicas = maxWorkerReplicas
+	j.Status.MaxWorkerReplicas = maxWorkerReplicas
 	return j
 }
 
 // State set State.
 func (j *RayClusterWrapper) State(state rayv1.ClusterState) *RayClusterWrapper {
-	j.RayCluster.Status.State = state
+	j.Status.State = state
 	return j
 }
 
 // Reason set Reason.
 func (j *RayClusterWrapper) Reason(reason string) *RayClusterWrapper {
-	j.RayCluster.Status.Reason = reason
+	j.Status.Reason = reason
 	return j
 }
 

@@ -45,7 +45,7 @@ func (w *RayClusterSpecWrapper) Obj() *rayv1.RayClusterSpec {
 // Clone RayClusterSpecWrapper.
 func (w *RayClusterSpecWrapper) Clone() *RayClusterSpecWrapper {
 	return &RayClusterSpecWrapper{
-		RayClusterSpec: *w.RayClusterSpec.DeepCopy(),
+		RayClusterSpec: *w.DeepCopy(),
 	}
 }
 
@@ -57,7 +57,7 @@ func (w *RayClusterSpecWrapper) HeadGroupSpec(spec rayv1.HeadGroupSpec) *RayClus
 
 // WithWorkerGroupSpec add worker group to the ray cluster spec.
 func (w *RayClusterSpecWrapper) WithWorkerGroupSpec(spec rayv1.WorkerGroupSpec) *RayClusterSpecWrapper {
-	w.RayClusterSpec.WorkerGroupSpecs = append(w.RayClusterSpec.WorkerGroupSpecs, spec)
+	w.WorkerGroupSpecs = append(w.WorkerGroupSpecs, spec)
 
 	return w
 }
@@ -77,8 +77,8 @@ func (w *RayClusterSpecWrapper) WithVolume(name, localObjectReferenceName string
 			},
 		})
 
-	for index := range w.RayClusterSpec.WorkerGroupSpecs {
-		workerGroupSpec := &w.RayClusterSpec.WorkerGroupSpecs[index]
+	for index := range w.WorkerGroupSpecs {
+		workerGroupSpec := &w.WorkerGroupSpecs[index]
 		workerGroupSpec.Template.Spec.Volumes =
 			append(workerGroupSpec.Template.Spec.Volumes, corev1.Volume{
 				Name: name,
@@ -107,8 +107,8 @@ func (w *RayClusterSpecWrapper) WithEnvVar(envVar corev1.EnvVar) *RayClusterSpec
 		container.Env = append(container.Env, envVar)
 	}
 
-	for i := range w.RayClusterSpec.WorkerGroupSpecs {
-		workerGroupSpec := &w.RayClusterSpec.WorkerGroupSpecs[i]
+	for i := range w.WorkerGroupSpecs {
+		workerGroupSpec := &w.WorkerGroupSpecs[i]
 		for j := range workerGroupSpec.Template.Spec.InitContainers {
 			container := &workerGroupSpec.Template.Spec.InitContainers[j]
 			container.Env = append(container.Env, envVar)
@@ -134,8 +134,8 @@ func (w *RayClusterSpecWrapper) WithVolumeMount(volumeMount corev1.VolumeMount) 
 		container.VolumeMounts = append(container.VolumeMounts, volumeMount)
 	}
 
-	for i := range w.RayClusterSpec.WorkerGroupSpecs {
-		workerGroupSpec := &w.RayClusterSpec.WorkerGroupSpecs[i]
+	for i := range w.WorkerGroupSpecs {
+		workerGroupSpec := &w.WorkerGroupSpecs[i]
 		for j := range workerGroupSpec.Template.Spec.InitContainers {
 			container := &workerGroupSpec.Template.Spec.InitContainers[j]
 			container.VolumeMounts = append(container.VolumeMounts, volumeMount)
@@ -151,7 +151,7 @@ func (w *RayClusterSpecWrapper) WithVolumeMount(volumeMount corev1.VolumeMount) 
 
 // Replicas set Replicas on WorkerGroupSpec.
 func (w *RayClusterSpecWrapper) Replicas(groupName string, replicas int32) *RayClusterSpecWrapper {
-	for i := range w.RayClusterSpec.WorkerGroupSpecs {
+	for i := range w.WorkerGroupSpecs {
 		if w.RayClusterSpec.WorkerGroupSpecs[i].GroupName == groupName {
 			w.RayClusterSpec.WorkerGroupSpecs[i].Replicas = &replicas
 			break
@@ -163,7 +163,7 @@ func (w *RayClusterSpecWrapper) Replicas(groupName string, replicas int32) *RayC
 
 // MinReplicas set MinReplicas on WorkerGroupSpec.
 func (w *RayClusterSpecWrapper) MinReplicas(groupName string, minReplicas int32) *RayClusterSpecWrapper {
-	for i := range w.RayClusterSpec.WorkerGroupSpecs {
+	for i := range w.WorkerGroupSpecs {
 		if w.RayClusterSpec.WorkerGroupSpecs[i].GroupName == groupName {
 			w.RayClusterSpec.WorkerGroupSpecs[i].MinReplicas = &minReplicas
 			break
@@ -175,7 +175,7 @@ func (w *RayClusterSpecWrapper) MinReplicas(groupName string, minReplicas int32)
 
 // MaxReplicas set MaxReplicas on WorkerGroupSpec.
 func (w *RayClusterSpecWrapper) MaxReplicas(groupName string, maxReplicas int32) *RayClusterSpecWrapper {
-	for i := range w.RayClusterSpec.WorkerGroupSpecs {
+	for i := range w.WorkerGroupSpecs {
 		if w.RayClusterSpec.WorkerGroupSpecs[i].GroupName == groupName {
 			w.RayClusterSpec.WorkerGroupSpecs[i].MaxReplicas = &maxReplicas
 			break

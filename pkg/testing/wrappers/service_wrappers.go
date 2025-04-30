@@ -66,22 +66,22 @@ func (w *ServiceWrapper) Label(key, value string) *ServiceWrapper {
 	if w.Labels == nil {
 		w.Labels = make(map[string]string)
 	}
-	w.ObjectMeta.Labels[key] = value
+	w.Labels[key] = value
 	return w
 }
 
 // ClusterIP sets clusterIP.
 func (w *ServiceWrapper) ClusterIP(clusterIP string) *ServiceWrapper {
-	w.Service.Spec.ClusterIP = clusterIP
+	w.Spec.ClusterIP = clusterIP
 	return w
 }
 
 // Selector sets the selector key and value.
 func (w *ServiceWrapper) Selector(key, value string) *ServiceWrapper {
-	if w.Service.Spec.Selector == nil {
-		w.Service.Spec.Selector = make(map[string]string)
+	if w.Spec.Selector == nil {
+		w.Spec.Selector = make(map[string]string)
 	}
-	w.Service.Spec.Selector[key] = value
+	w.Spec.Selector[key] = value
 	return w
 }
 

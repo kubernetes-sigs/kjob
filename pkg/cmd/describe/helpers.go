@@ -403,64 +403,64 @@ func describeVolumes(volumes []corev1.Volume, w describehelper.PrefixWriter, spa
 		}
 		w.Write(IndentLevelOne, "%s%v:\n", nameIndent, volume.Name)
 		switch {
-		case volume.VolumeSource.HostPath != nil:
-			printHostPathVolumeSource(volume.VolumeSource.HostPath, w)
-		case volume.VolumeSource.EmptyDir != nil:
-			printEmptyDirVolumeSource(volume.VolumeSource.EmptyDir, w)
-		case volume.VolumeSource.GCEPersistentDisk != nil:
-			printGCEPersistentDiskVolumeSource(volume.VolumeSource.GCEPersistentDisk, w)
-		case volume.VolumeSource.AWSElasticBlockStore != nil:
-			printAWSElasticBlockStoreVolumeSource(volume.VolumeSource.AWSElasticBlockStore, w)
-		case volume.VolumeSource.GitRepo != nil:
-			printGitRepoVolumeSource(volume.VolumeSource.GitRepo, w)
-		case volume.VolumeSource.Secret != nil:
-			printSecretVolumeSource(volume.VolumeSource.Secret, w)
-		case volume.VolumeSource.ConfigMap != nil:
-			printConfigMapVolumeSource(volume.VolumeSource.ConfigMap, w)
-		case volume.VolumeSource.NFS != nil:
-			printNFSVolumeSource(volume.VolumeSource.NFS, w)
-		case volume.VolumeSource.ISCSI != nil:
-			printISCSIVolumeSource(volume.VolumeSource.ISCSI, w)
-		case volume.VolumeSource.Glusterfs != nil:
-			printGlusterfsVolumeSource(volume.VolumeSource.Glusterfs, w)
-		case volume.VolumeSource.PersistentVolumeClaim != nil:
-			printPersistentVolumeClaimVolumeSource(volume.VolumeSource.PersistentVolumeClaim, w)
-		case volume.VolumeSource.Ephemeral != nil:
-			printEphemeralVolumeSource(volume.VolumeSource.Ephemeral, w)
-		case volume.VolumeSource.RBD != nil:
-			printRBDVolumeSource(volume.VolumeSource.RBD, w)
-		case volume.VolumeSource.Quobyte != nil:
-			printQuobyteVolumeSource(volume.VolumeSource.Quobyte, w)
-		case volume.VolumeSource.DownwardAPI != nil:
-			printDownwardAPIVolumeSource(volume.VolumeSource.DownwardAPI, w)
-		case volume.VolumeSource.AzureDisk != nil:
-			printAzureDiskVolumeSource(volume.VolumeSource.AzureDisk, w)
-		case volume.VolumeSource.VsphereVolume != nil:
-			printVsphereVolumeSource(volume.VolumeSource.VsphereVolume, w)
-		case volume.VolumeSource.Cinder != nil:
-			printCinderVolumeSource(volume.VolumeSource.Cinder, w)
-		case volume.VolumeSource.PhotonPersistentDisk != nil:
-			printPhotonPersistentDiskVolumeSource(volume.VolumeSource.PhotonPersistentDisk, w)
-		case volume.VolumeSource.PortworxVolume != nil:
-			printPortworxVolumeSource(volume.VolumeSource.PortworxVolume, w)
-		case volume.VolumeSource.ScaleIO != nil:
-			printScaleIOVolumeSource(volume.VolumeSource.ScaleIO, w)
-		case volume.VolumeSource.CephFS != nil:
-			printCephFSVolumeSource(volume.VolumeSource.CephFS, w)
-		case volume.VolumeSource.StorageOS != nil:
-			printStorageOSVolumeSource(volume.VolumeSource.StorageOS, w)
-		case volume.VolumeSource.FC != nil:
-			printFCVolumeSource(volume.VolumeSource.FC, w)
-		case volume.VolumeSource.AzureFile != nil:
-			printAzureFileVolumeSource(volume.VolumeSource.AzureFile, w)
-		case volume.VolumeSource.FlexVolume != nil:
-			printFlexVolumeSource(volume.VolumeSource.FlexVolume, w)
-		case volume.VolumeSource.Flocker != nil:
-			printFlockerVolumeSource(volume.VolumeSource.Flocker, w)
-		case volume.VolumeSource.Projected != nil:
-			printProjectedVolumeSource(volume.VolumeSource.Projected, w)
-		case volume.VolumeSource.CSI != nil:
-			printCSIVolumeSource(volume.VolumeSource.CSI, w)
+		case volume.HostPath != nil:
+			printHostPathVolumeSource(volume.HostPath, w)
+		case volume.EmptyDir != nil:
+			printEmptyDirVolumeSource(volume.EmptyDir, w)
+		case volume.GCEPersistentDisk != nil:
+			printGCEPersistentDiskVolumeSource(volume.GCEPersistentDisk, w)
+		case volume.AWSElasticBlockStore != nil:
+			printAWSElasticBlockStoreVolumeSource(volume.AWSElasticBlockStore, w)
+		case volume.GitRepo != nil:
+			printGitRepoVolumeSource(volume.GitRepo, w)
+		case volume.Secret != nil:
+			printSecretVolumeSource(volume.Secret, w)
+		case volume.ConfigMap != nil:
+			printConfigMapVolumeSource(volume.ConfigMap, w)
+		case volume.NFS != nil:
+			printNFSVolumeSource(volume.NFS, w)
+		case volume.ISCSI != nil:
+			printISCSIVolumeSource(volume.ISCSI, w)
+		case volume.Glusterfs != nil:
+			printGlusterfsVolumeSource(volume.Glusterfs, w)
+		case volume.PersistentVolumeClaim != nil:
+			printPersistentVolumeClaimVolumeSource(volume.PersistentVolumeClaim, w)
+		case volume.Ephemeral != nil:
+			printEphemeralVolumeSource(volume.Ephemeral, w)
+		case volume.RBD != nil:
+			printRBDVolumeSource(volume.RBD, w)
+		case volume.Quobyte != nil:
+			printQuobyteVolumeSource(volume.Quobyte, w)
+		case volume.DownwardAPI != nil:
+			printDownwardAPIVolumeSource(volume.DownwardAPI, w)
+		case volume.AzureDisk != nil:
+			printAzureDiskVolumeSource(volume.AzureDisk, w)
+		case volume.VsphereVolume != nil:
+			printVsphereVolumeSource(volume.VsphereVolume, w)
+		case volume.Cinder != nil:
+			printCinderVolumeSource(volume.Cinder, w)
+		case volume.PhotonPersistentDisk != nil:
+			printPhotonPersistentDiskVolumeSource(volume.PhotonPersistentDisk, w)
+		case volume.PortworxVolume != nil:
+			printPortworxVolumeSource(volume.PortworxVolume, w)
+		case volume.ScaleIO != nil:
+			printScaleIOVolumeSource(volume.ScaleIO, w)
+		case volume.CephFS != nil:
+			printCephFSVolumeSource(volume.CephFS, w)
+		case volume.StorageOS != nil:
+			printStorageOSVolumeSource(volume.StorageOS, w)
+		case volume.FC != nil:
+			printFCVolumeSource(volume.FC, w)
+		case volume.AzureFile != nil:
+			printAzureFileVolumeSource(volume.AzureFile, w)
+		case volume.FlexVolume != nil:
+			printFlexVolumeSource(volume.FlexVolume, w)
+		case volume.Flocker != nil:
+			printFlockerVolumeSource(volume.Flocker, w)
+		case volume.Projected != nil:
+			printProjectedVolumeSource(volume.Projected, w)
+		case volume.CSI != nil:
+			printCSIVolumeSource(volume.CSI, w)
 		default:
 			w.Write(IndentLevelOne, "<unknown>\n")
 		}
@@ -635,8 +635,8 @@ func printPersistentVolumeClaim(w describehelper.PrefixWriter, pvc *corev1.Persi
 	}
 	w.Write(IndentLevelZero, "StorageClass:\t%s\n", storageutil.GetPersistentVolumeClaimClass(pvc))
 	if isFullPVC {
-		if pvc.ObjectMeta.DeletionTimestamp != nil {
-			w.Write(IndentLevelZero, "Status:\tTerminating (lasts %s)\n", translateTimestampSince(*pvc.ObjectMeta.DeletionTimestamp))
+		if pvc.DeletionTimestamp != nil {
+			w.Write(IndentLevelZero, "Status:\tTerminating (lasts %s)\n", translateTimestampSince(*pvc.DeletionTimestamp))
 		} else {
 			w.Write(IndentLevelZero, "Status:\t%v\n", pvc.Status.Phase)
 		}
@@ -644,7 +644,7 @@ func printPersistentVolumeClaim(w describehelper.PrefixWriter, pvc *corev1.Persi
 	w.Write(IndentLevelZero, "Volume:\t%s\n", pvc.Spec.VolumeName)
 	printLabelsMultiline(w, "Labels", pvc.Labels)
 	if isFullPVC {
-		w.Write(IndentLevelZero, "Finalizers:\t%v\n", pvc.ObjectMeta.Finalizers)
+		w.Write(IndentLevelZero, "Finalizers:\t%v\n", pvc.Finalizers)
 	}
 	storage := pvc.Spec.Resources.Requests[corev1.ResourceStorage]
 	capacity := ""

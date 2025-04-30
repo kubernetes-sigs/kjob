@@ -42,37 +42,37 @@ func (p *PodTemplateWrapper) Obj() *corev1.PodTemplate {
 // Clone clone PodTemplateWrapper.
 func (p *PodTemplateWrapper) Clone() *PodTemplateWrapper {
 	return &PodTemplateWrapper{
-		PodTemplate: *p.PodTemplate.DeepCopy(),
+		PodTemplate: *p.DeepCopy(),
 	}
 }
 
 // Label sets the label key and value.
 func (p *PodTemplateWrapper) Label(key, value string) *PodTemplateWrapper {
-	if p.Template.ObjectMeta.Labels == nil {
-		p.Template.ObjectMeta.Labels = make(map[string]string)
+	if p.Template.Labels == nil {
+		p.Template.Labels = make(map[string]string)
 	}
-	p.Template.ObjectMeta.Labels[key] = value
+	p.Template.Labels[key] = value
 	return p
 }
 
 // Annotation sets the label key and value.
 func (p *PodTemplateWrapper) Annotation(key, value string) *PodTemplateWrapper {
-	if p.Template.ObjectMeta.Annotations == nil {
-		p.Template.ObjectMeta.Annotations = make(map[string]string)
+	if p.Template.Annotations == nil {
+		p.Template.Annotations = make(map[string]string)
 	}
-	p.Template.ObjectMeta.Annotations[key] = value
+	p.Template.Annotations[key] = value
 	return p
 }
 
 // WithInitContainer add container to the pod template.
 func (p *PodTemplateWrapper) WithInitContainer(container corev1.Container) *PodTemplateWrapper {
-	p.PodTemplate.Template.Spec.InitContainers = append(p.PodTemplate.Template.Spec.InitContainers, container)
+	p.Template.Spec.InitContainers = append(p.Template.Spec.InitContainers, container)
 	return p
 }
 
 // WithContainer add container to the pod template.
 func (p *PodTemplateWrapper) WithContainer(container corev1.Container) *PodTemplateWrapper {
-	p.PodTemplate.Template.Spec.Containers = append(p.PodTemplate.Template.Spec.Containers, container)
+	p.Template.Spec.Containers = append(p.Template.Spec.Containers, container)
 	return p
 }
 

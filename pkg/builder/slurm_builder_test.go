@@ -261,21 +261,21 @@ export $(cat /slurm/env/$JOB_CONTAINER_INDEX/slurm.env | xargs)
 		"shouldn't build slurm job because script not specified": {
 			profile:     applicationProfileName,
 			kjobctlObjs: []runtime.Object{baseApplicationProfileWrapper.DeepCopy()},
-			wantErr:     noScriptSpecifiedErr,
+			wantErr:     errNoScriptSpecified,
 		},
 		"shouldn't build slurm job with --mem-per-cpu because no --cpus-per-task specified": {
 			beforeTest:  beforeSlurmTest,
 			profile:     applicationProfileName,
 			memPerCPU:   ptr.To(resource.MustParse("1")),
 			kjobctlObjs: []runtime.Object{baseApplicationProfileWrapper.DeepCopy()},
-			wantErr:     noCpusPerTaskSpecifiedErr,
+			wantErr:     errNoCpusPerTaskSpecified,
 		},
 		"shouldn't build slurm job with --mem-per-cpu because no --gpus-per-task specified": {
 			beforeTest:  beforeSlurmTest,
 			profile:     applicationProfileName,
 			memPerGPU:   ptr.To(resource.MustParse("1")),
 			kjobctlObjs: []runtime.Object{baseApplicationProfileWrapper.DeepCopy()},
-			wantErr:     noGpusPerTaskSpecifiedErr,
+			wantErr:     errNoGpusPerTaskSpecified,
 		},
 		"shouldn't build slurm job because --mem-per-cpu and --mem-per-gpu flags mutually exclusive": {
 			beforeTest:  beforeSlurmTest,

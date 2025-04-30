@@ -71,7 +71,7 @@ func (j *PodWrapper) Label(key, value string) *PodWrapper {
 	if j.Labels == nil {
 		j.Labels = make(map[string]string)
 	}
-	j.ObjectMeta.Labels[key] = value
+	j.Labels[key] = value
 	return j
 }
 
@@ -80,7 +80,7 @@ func (j *PodWrapper) Annotation(key, value string) *PodWrapper {
 	if j.Annotations == nil {
 		j.Annotations = make(map[string]string)
 	}
-	j.ObjectMeta.Annotations[key] = value
+	j.Annotations[key] = value
 	return j
 }
 
