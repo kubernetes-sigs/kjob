@@ -145,10 +145,10 @@ func TestCreateSlurmCmd(t *testing.T) {
 		CompletionMode(batchv1.IndexedCompletion).
 		Profile(applicationProfileName).
 		Mode(v1alpha1.SlurmMode).
+		Parallelism(1).
 		Subdomain("profile-slurm").
 		WithInitContainer(*baseJobInitContainerWrapper.DeepCopy()).
 		WithContainer(*baseJobContainerWrapper.DeepCopy()).
-		WithEnvVarIndexValue("JOB_CONTAINER_INDEX").
 		WithVolume(corev1.Volume{
 			Name: "slurm-scripts",
 			VolumeSource: corev1.VolumeSource{
@@ -182,30 +182,11 @@ set -o nounset
 set -o pipefail
 set -x
 
-# External variables
-# JOB_COMPLETION_INDEX - completion index of the job.
-# POD_IP               - current pod IP
+mkdir -p /slurm/env
 
-array_indexes="0"
-container_indexes=$(echo "$array_indexes" | awk -F';' -v idx="$JOB_COMPLETION_INDEX" '{print $((idx + 1))}')
+job_id=$(expr $JOB_COMPLETION_INDEX + 1)
 
-for i in $(seq 0 1)
-do
-  container_index=$(echo "$container_indexes" | awk -F',' -v idx="$i" '{print $((idx + 1))}')
-
-	if [ -z "$container_index" ]; then
-		break
-	fi
-
-	mkdir -p /slurm/env/$i
-
-
-	cat << EOF > /slurm/env/$i/slurm.env
-SLURM_ARRAY_JOB_ID=1
-SLURM_ARRAY_TASK_COUNT=1
-SLURM_ARRAY_TASK_MAX=0
-SLURM_ARRAY_TASK_MIN=0
-SLURM_TASKS_PER_NODE=1
+cat << EOF > /slurm/env/slurm.env
 SLURM_CPUS_PER_TASK=
 SLURM_CPUS_ON_NODE=
 SLURM_JOB_CPUS_PER_NODE=
@@ -214,21 +195,23 @@ SLURM_MEM_PER_CPU=
 SLURM_MEM_PER_GPU=
 SLURM_MEM_PER_NODE=
 SLURM_GPUS=
+
+SLURM_TASKS_PER_NODE=
 SLURM_NTASKS=1
 SLURM_NTASKS_PER_NODE=1
 SLURM_NPROCS=1
+SLURM_JOB_NUM_NODES=1
 SLURM_NNODES=1
+
 SLURM_SUBMIT_DIR=/slurm/scripts
 SLURM_SUBMIT_HOST=$HOSTNAME
-SLURM_JOB_NODELIST=profile-slurm-0.profile-slurm
-SLURM_JOB_FIRST_NODE=profile-slurm-0.profile-slurm
-SLURM_JOB_ID=$(expr $JOB_COMPLETION_INDEX \* 1 + $i + 1)
-SLURM_JOBID=$(expr $JOB_COMPLETION_INDEX \* 1 + $i + 1)
-SLURM_ARRAY_TASK_ID=$container_index
-SLURM_JOB_FIRST_NODE_IP=${SLURM_JOB_FIRST_NODE_IP:-""}
-EOF
 
-done
+SLURM_JOB_NODELIST=profile-slurm-42x6g-0.profile-slurm-42x6g
+SLURM_JOB_FIRST_NODE=profile-slurm-42x6g-0.profile-slurm-42x6g
+
+SLURM_JOB_ID=$job_id
+SLURM_JOBID=$job_id
+EOF
 `,
 			"entrypoint.sh": `#!/usr/local/bin/bash
 
@@ -236,16 +219,13 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-# External variables
-# JOB_CONTAINER_INDEX 	- container index in the container template.
-
-if [ ! -d "/slurm/env/$JOB_CONTAINER_INDEX" ]; then
+if [ ! -d "/slurm/env" ]; then
 	exit 0
 fi
 
 SBATCH_JOB_NAME=
 
-export $(cat /slurm/env/$JOB_CONTAINER_INDEX/slurm.env | xargs)
+export $(cat /slurm/env/slurm.env | xargs)
 
 /slurm/scripts/script
 `,
@@ -315,6 +295,18 @@ export $(cat /slurm/env/$JOB_CONTAINER_INDEX/slurm.env | xargs)
 			},
 			wantErr: "the --stream-container can only be specified for streaming output",
 		},
+		"shouldn't create slurm because the ntasks flag should be greater than 0": {
+			args: func(tc *createSlurmCmdTestCase) []string {
+				return []string{"slurm", "--profile", applicationProfileName, "--", tc.tempFile, "--ntasks", "0"}
+			},
+			wantErr: "--ntasks must be greater than 0",
+		},
+		"shouldn't create slurm because the ntasks-per-node flag should be greater than 0": {
+			args: func(tc *createSlurmCmdTestCase) []string {
+				return []string{"slurm", "--profile", applicationProfileName, "--", tc.tempFile, "--ntasks-per-node", "0"}
+			},
+			wantErr: "--ntasks-per-node must be greater than 0",
+		},
 		"should create slurm": {
 			beforeTest: beforeSlurmTest,
 			args: func(tc *createSlurmCmdTestCase) []string {
@@ -340,9 +332,9 @@ export $(cat /slurm/env/$JOB_CONTAINER_INDEX/slurm.env | xargs)
 					"--pod-template-label", "foo=bar",
 					"--pod-template-annotation", "foo=baz",
 					"--",
-					"--array", "0-25",
-					"--nodes", "2",
-					"--ntasks", "3",
+					"--array", "1-5%3",
+					"--nodes", "1",
+					"--ntasks", "4",
 					"--input", "\\\\/home/%u/%x/stderr%%-%A-%a-%j-%N-%n-%t.out",
 					"--output", "/home/%u/%x/stdout%%-%A-%a-%j-%N-%n-%t.out",
 					"--error", "/home/%u/%x/stderr%%-%A-%a-%j-%N-%n-%t.out",
@@ -367,8 +359,8 @@ export $(cat /slurm/env/$JOB_CONTAINER_INDEX/slurm.env | xargs)
 			},
 			wantJobs: []batchv1.Job{
 				*baseJobWrapper.Clone().
-					Parallelism(2).
-					Completions(9).
+					Parallelism(3).
+					Completions(5).
 					LocalQueue("lq1").
 					PodTemplateLabel("foo", "bar").
 					PodTemplateAnnotation("foo", "baz").
@@ -386,8 +378,10 @@ export $(cat /slurm/env/$JOB_CONTAINER_INDEX/slurm.env | xargs)
 						*baseJobContainerWrapper.Clone().Name("c1-2").
 							WithRequest(corev1.ResourceCPU, resource.MustParse("2")).
 							Obj(),
+						*baseJobContainerWrapper.Clone().Name("c1-3").
+							WithRequest(corev1.ResourceCPU, resource.MustParse("2")).
+							Obj(),
 					).
-					WithEnvVarIndexValue("JOB_CONTAINER_INDEX").
 					Obj(),
 			},
 			wantConfigMaps: []corev1.ConfigMap{
@@ -399,76 +393,71 @@ set -o nounset
 set -o pipefail
 set -x
 
-# External variables
-# JOB_COMPLETION_INDEX - completion index of the job.
-# POD_IP               - current pod IP
+mkdir -p /slurm/env
 
-array_indexes="0,1,2;3,4,5;6,7,8;9,10,11;12,13,14;15,16,17;18,19,20;21,22,23;24,25"
-container_indexes=$(echo "$array_indexes" | awk -F';' -v idx="$JOB_COMPLETION_INDEX" '{print $((idx + 1))}')
+job_id=$(expr $JOB_COMPLETION_INDEX + 1)
 
-for i in $(seq 0 3)
-do
-  container_index=$(echo "$container_indexes" | awk -F',' -v idx="$i" '{print $((idx + 1))}')
-
-	if [ -z "$container_index" ]; then
-		break
-	fi
-
-	mkdir -p /slurm/env/$i
-
-
-  if [[ "$JOB_COMPLETION_INDEX" -eq 0 ]]; then
-    SLURM_JOB_FIRST_NODE_IP=${POD_IP}
-  else
-    timeout=29
-    start_time=$(date +%s)
-    while true; do
-      ip=$(nslookup "profile-slurm-r8njg-0.profile-slurm-r8njg" | grep "Address 1" | awk 'NR==2 {print $3}') || true
-      if [[ -n "$ip" ]]; then
-        SLURM_JOB_FIRST_NODE_IP=$ip
-        break
-      else
-        current_time=$(date +%s)
-        elapsed_time=$((current_time - start_time))
-        if [ "$elapsed_time" -ge "$timeout" ]; then
-          echo "Timeout reached, IP address for the first node (profile-slurm-r8njg-0.profile-slurm-r8njg) not found."
-          break
-        fi
-        echo "IP Address for the first node (profile-slurm-r8njg-0.profile-slurm-r8njg) not found, retrying..."
-        sleep 1
-      fi
-    done
-  fi
-
-	cat << EOF > /slurm/env/$i/slurm.env
-SLURM_ARRAY_JOB_ID=1
-SLURM_ARRAY_TASK_COUNT=26
-SLURM_ARRAY_TASK_MAX=25
-SLURM_ARRAY_TASK_MIN=0
-SLURM_TASKS_PER_NODE=3
+cat << EOF > /slurm/env/slurm.env
 SLURM_CPUS_PER_TASK=2
-SLURM_CPUS_ON_NODE=8
-SLURM_JOB_CPUS_PER_NODE=8
+SLURM_CPUS_ON_NODE=10
+SLURM_JOB_CPUS_PER_NODE=10
 SLURM_CPUS_PER_GPU=
 SLURM_MEM_PER_CPU=
 SLURM_MEM_PER_GPU=
 SLURM_MEM_PER_NODE=
 SLURM_GPUS=
-SLURM_NTASKS=3
-SLURM_NTASKS_PER_NODE=3
-SLURM_NPROCS=3
-SLURM_NNODES=2
+
+SLURM_TASKS_PER_NODE=
+SLURM_NTASKS=4
+SLURM_NTASKS_PER_NODE=4
+SLURM_NPROCS=4
+SLURM_JOB_NUM_NODES=5
+SLURM_NNODES=5
+
 SLURM_SUBMIT_DIR=/slurm/scripts
 SLURM_SUBMIT_HOST=$HOSTNAME
-SLURM_JOB_NODELIST=profile-slurm-fpxnj-0.profile-slurm-fpxnj,profile-slurm-fpxnj-1.profile-slurm-fpxnj
-SLURM_JOB_FIRST_NODE=profile-slurm-fpxnj-0.profile-slurm-fpxnj
-SLURM_JOB_ID=$(expr $JOB_COMPLETION_INDEX \* 3 + $i + 1)
-SLURM_JOBID=$(expr $JOB_COMPLETION_INDEX \* 3 + $i + 1)
-SLURM_ARRAY_TASK_ID=$container_index
-SLURM_JOB_FIRST_NODE_IP=${SLURM_JOB_FIRST_NODE_IP:-""}
+
+SLURM_JOB_NODELIST=profile-slurm-rx4jc-0.profile-slurm-rx4jc,profile-slurm-rx4jc-1.profile-slurm-rx4jc,profile-slurm-rx4jc-2.profile-slurm-rx4jc,profile-slurm-rx4jc-3.profile-slurm-rx4jc,profile-slurm-rx4jc-4.profile-slurm-rx4jc
+SLURM_JOB_FIRST_NODE=profile-slurm-rx4jc-0.profile-slurm-rx4jc
+
+SLURM_JOB_ID=$job_id
+SLURM_JOBID=$job_id
 EOF
 
-done
+array_indexes="1,2,3,4,5"
+array_task_id=$(echo "$array_indexes" | awk -F',' -v idx="$JOB_COMPLETION_INDEX" '{print $((idx + 1))}')
+
+cat << EOF >> /slurm/env/slurm.env
+SLURM_ARRAY_JOB_ID=1
+SLURM_ARRAY_TASK_ID=$array_task_id
+SLURM_ARRAY_TASK_COUNT=5
+SLURM_ARRAY_TASK_MAX=5
+SLURM_ARRAY_TASK_MIN=1
+SLURM_ARRAY_TASK_STEP=1
+EOF
+
+if [[ "$JOB_COMPLETION_INDEX" -eq 0 ]]; then
+  echo "SLURM_JOB_FIRST_NODE_IP=${POD_IP}" >> /slurm/env/slurm.env
+else
+  timeout=29
+  start_time=$(date +%s)
+  while true; do
+    ip=$(nslookup "profile-slurm-rx4jc-0.profile-slurm-rx4jc" | grep "Address 1" | awk 'NR==2 {print $3}') || true
+    if [[ -n "$ip" ]]; then
+      echo "SLURM_JOB_FIRST_NODE_IP=$ip" >> /slurm/env/slurm.env
+      break
+    else
+      current_time=$(date +%s)
+      elapsed_time=$((current_time - start_time))
+      if [ "$elapsed_time" -ge "$timeout" ]; then
+        echo "Timeout reached, IP address for the first node (profile-slurm-rx4jc-0.profile-slurm-rx4jc) not found."
+        break
+      fi
+      echo "IP Address for the first node (profile-slurm-rx4jc-0.profile-slurm-rx4jc) not found, retrying..."
+      sleep 1
+    fi
+  done
+fi
 `).
 					DataValue("entrypoint.sh", `#!/usr/local/bin/bash
 
@@ -476,16 +465,13 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-# External variables
-# JOB_CONTAINER_INDEX 	- container index in the container template.
-
-if [ ! -d "/slurm/env/$JOB_CONTAINER_INDEX" ]; then
+if [ ! -d "/slurm/env" ]; then
 	exit 0
 fi
 
 SBATCH_JOB_NAME=job-name
 
-export $(cat /slurm/env/$JOB_CONTAINER_INDEX/slurm.env | xargs)cd /mydir
+export $(cat /slurm/env/slurm.env | xargs)cd /mydir
 
 /slurm/scripts/script </home/%u/%x/stderr%%-%A-%a-%j-%N-%n-%t.out 1> >(tee /home/${USER_ID}/${SBATCH_JOB_NAME}/stdout%-${SLURM_ARRAY_JOB_ID}-${SLURM_ARRAY_TASK_ID}-${SLURM_JOB_ID}-${HOSTNAME}-${JOB_COMPLETION_INDEX}-${SLURM_ARRAY_TASK_ID}.out) 2> >(tee /home/${USER_ID}/${SBATCH_JOB_NAME}/stderr%-${SLURM_ARRAY_JOB_ID}-${SLURM_ARRAY_TASK_ID}-${SLURM_JOB_ID}-${HOSTNAME}-${JOB_COMPLETION_INDEX}-${SLURM_ARRAY_TASK_ID}.out >&2)
 `).
@@ -508,7 +494,6 @@ export $(cat /slurm/env/$JOB_CONTAINER_INDEX/slurm.env | xargs)cd /mydir
 						*baseJobContainerWrapper.Clone().Name("c1-1").Obj(),
 						*baseJobContainerWrapper.Clone().Name("c1-2").Obj(),
 					).
-					WithEnvVarIndexValue("JOB_CONTAINER_INDEX").
 					Obj(),
 			},
 			cmpOpts:        cmpOptsIgnoreConfigMapAndService,
@@ -541,7 +526,6 @@ export $(cat /slurm/env/$JOB_CONTAINER_INDEX/slurm.env | xargs)cd /mydir
 							}).
 							Obj(),
 					).
-					WithEnvVarIndexValue("JOB_CONTAINER_INDEX").
 					Obj(),
 			},
 			cmpOpts:        cmpOptsIgnoreConfigMapAndService,
@@ -574,7 +558,6 @@ export $(cat /slurm/env/$JOB_CONTAINER_INDEX/slurm.env | xargs)cd /mydir
 							}).
 							Obj(),
 					).
-					WithEnvVarIndexValue("JOB_CONTAINER_INDEX").
 					Obj(),
 			},
 			cmpOpts:        cmpOptsIgnoreConfigMapAndService,
@@ -609,7 +592,6 @@ export $(cat /slurm/env/$JOB_CONTAINER_INDEX/slurm.env | xargs)cd /mydir
 							}).
 							Obj(),
 					).
-					WithEnvVarIndexValue("JOB_CONTAINER_INDEX").
 					Obj(),
 			},
 			cmpOpts:        cmpOptsIgnoreConfigMapAndService,
@@ -639,34 +621,32 @@ export $(cat /slurm/env/$JOB_CONTAINER_INDEX/slurm.env | xargs)cd /mydir
 				baseJobTemplateWrapperWithTwoContainers.DeepCopy(),
 				baseApplicationProfileWrapper.DeepCopy(),
 			},
-			wantJobs: []batchv1.Job{
-				*baseJobWrapper.Clone().
-					Containers(
-						*baseJobContainerWrapper.Clone().Name("c1").
-							WithResources(corev1.ResourceRequirements{
-								Requests: corev1.ResourceList{
-									corev1.ResourceMemory: resource.MustParse("2G"),
-								},
-								Limits: corev1.ResourceList{
-									"volta":  resource.MustParse("3"),
-									"kepler": resource.MustParse("1"),
-								},
-							}).
-							Obj(),
-						*baseJobContainerWrapper.Clone().Name("c2").
-							WithResources(corev1.ResourceRequirements{
-								Requests: corev1.ResourceList{
-									corev1.ResourceMemory: resource.MustParse("2G"),
-								},
-								Limits: corev1.ResourceList{
-									"volta":  resource.MustParse("3"),
-									"kepler": resource.MustParse("1"),
-								},
-							}).
-							Obj(),
-					).
-					WithEnvVarIndexValue("JOB_CONTAINER_INDEX").
-					Obj(),
+			wantJobs: []batchv1.Job{*baseJobWrapper.Clone().
+				Containers(
+					*baseJobContainerWrapper.Clone().Name("c1").
+						WithResources(corev1.ResourceRequirements{
+							Requests: corev1.ResourceList{
+								corev1.ResourceMemory: resource.MustParse("2G"),
+							},
+							Limits: corev1.ResourceList{
+								"volta":  resource.MustParse("3"),
+								"kepler": resource.MustParse("1"),
+							},
+						}).
+						Obj(),
+					*baseJobContainerWrapper.Clone().Name("c2").
+						WithResources(corev1.ResourceRequirements{
+							Requests: corev1.ResourceList{
+								corev1.ResourceMemory: resource.MustParse("2G"),
+							},
+							Limits: corev1.ResourceList{
+								"volta":  resource.MustParse("3"),
+								"kepler": resource.MustParse("1"),
+							},
+						}).
+						Obj(),
+				).
+				Obj(),
 			},
 			cmpOpts:        cmpOptsIgnoreConfigMapAndService,
 			wantOutPattern: wantOutPatternSuccess,
