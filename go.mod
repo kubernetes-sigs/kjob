@@ -20,7 +20,7 @@ require (
 	k8s.io/kubectl v0.32.5
 	k8s.io/utils v0.0.0-20241210054802-24370beab758
 	sigs.k8s.io/controller-runtime v0.20.4
-	sigs.k8s.io/kueue v0.11.3
+	sigs.k8s.io/kueue v0.11.4
 )
 
 require (
