@@ -94,6 +94,7 @@ const (
 	memPerGPUFlagName             = string(v1alpha1.MemPerGPUFlag)
 	nodesFlagName                 = string(v1alpha1.NodesFlag)
 	nTasksFlagName                = string(v1alpha1.NTasksFlag)
+	nTasksPerNodeFlagName         = string(v1alpha1.NTasksPerNodeFlag)
 	outputFlagName                = string(v1alpha1.OutputFlag)
 	errorFlagName                 = string(v1alpha1.ErrorFlag)
 	inputFlagName                 = string(v1alpha1.InputFlag)
@@ -218,6 +219,7 @@ type CreateOptions struct {
 	MemPerGPU                *apiresource.Quantity
 	Nodes                    *int32
 	NTasks                   *int32
+	NTasksPerNode            *int32
 	Output                   string
 	Error                    string
 	Input                    string
@@ -232,18 +234,19 @@ type CreateOptions struct {
 	PodTemplateLabels        map[string]string
 	PodTemplateAnnotations   map[string]string
 
-	UserSpecifiedCommand     string
-	UserSpecifiedParallelism int32
-	UserSpecifiedCompletions int32
-	UserSpecifiedRequest     map[string]string
-	UserSpecifiedCpusPerTask string
-	UserSpecifiedGpusPerTask string
-	UserSpecifiedMemPerNode  string
-	UserSpecifiedMemPerTask  string
-	UserSpecifiedMemPerCPU   string
-	UserSpecifiedMemPerGPU   string
-	UserSpecifiedNodes       int32
-	UserSpecifiedNTasks      int32
+	UserSpecifiedCommand       string
+	UserSpecifiedParallelism   int32
+	UserSpecifiedCompletions   int32
+	UserSpecifiedRequest       map[string]string
+	UserSpecifiedCpusPerTask   string
+	UserSpecifiedGpusPerTask   string
+	UserSpecifiedMemPerNode    string
+	UserSpecifiedMemPerTask    string
+	UserSpecifiedMemPerCPU     string
+	UserSpecifiedMemPerGPU     string
+	UserSpecifiedNodes         int32
+	UserSpecifiedNTasks        int32
+	UserSpecifiedNTasksPerNode int32
 
 	PrintObj printers.ResourcePrinterFunc
 
@@ -392,6 +395,7 @@ var createModeSubcommands = map[string]modeSubcommand{
 				" [--mem-per-gpu QUANTITY]" +
 				" [--nodes COUNT]" +
 				" [--ntasks COUNT]" +
+				" [--ntasks-per-node COUNT]" +
 				" [--output FILENAME_PATTERN]" +
 				" [--error FILENAME_PATTERN]" +
 				" [--input FILENAME_PATTERN]" +
@@ -439,10 +443,12 @@ The minimum index value is 0. The maximum index value is 2147483647.`)
 				"How much memory a container requires, it multiplies the number of requested cpus per task by mem-per-cpu.")
 			o.SlurmFlagSet.StringVar(&o.UserSpecifiedMemPerGPU, memPerGPUFlagName, "",
 				"How much memory a container requires, it multiplies the number of requested gpus per task by mem-per-gpu.")
-			o.SlurmFlagSet.Int32VarP(&o.UserSpecifiedNodes, nodesFlagName, "N", 0,
+			o.SlurmFlagSet.Int32VarP(&o.UserSpecifiedNodes, nodesFlagName, "N", builder.DefaultNodes,
 				"Number of pods to be used at a time.")
-			o.SlurmFlagSet.Int32VarP(&o.UserSpecifiedNTasks, nTasksFlagName, "n", 1,
+			o.SlurmFlagSet.Int32VarP(&o.UserSpecifiedNTasks, nTasksFlagName, "n", builder.DefaultNTasks,
 				"Number of identical containers inside of a pod, usually 1.")
+			o.SlurmFlagSet.Int32Var(&o.UserSpecifiedNTasksPerNode, nTasksPerNodeFlagName, builder.DefaultNTasksPerNode,
+				"Request that ntasks be invoked on each node.")
 			o.SlurmFlagSet.StringVarP(&o.Output, outputFlagName, "o", "",
 				"Where to redirect the standard output stream of a task. If not passed it proceeds to stdout, and is available via kubectl logs.")
 			o.SlurmFlagSet.StringVarP(&o.Error, errorFlagName, "e", "",
@@ -647,15 +653,27 @@ func (o *CreateOptions) Complete(clientGetter util.ClientGetter, cmd *cobra.Comm
 	}
 
 	if o.SlurmFlagSet.Changed(nodesFlagName) {
+		if o.UserSpecifiedNodes <= 0 {
+			return errors.New("--nodes must be greater than 0")
+		}
+
 		o.Nodes = &o.UserSpecifiedNodes
 	}
 
 	if o.SlurmFlagSet.Changed(nTasksFlagName) {
 		if o.UserSpecifiedNTasks <= 0 {
-			return errors.New("--nTasks must be greater than 0")
+			return errors.New("--ntasks must be greater than 0")
 		}
 
 		o.NTasks = &o.UserSpecifiedNTasks
+	}
+
+	if o.SlurmFlagSet.Changed(nTasksPerNodeFlagName) {
+		if o.UserSpecifiedNTasksPerNode <= 0 {
+			return errors.New("--ntasks-per-node must be greater than 0")
+		}
+
+		o.NTasksPerNode = &o.UserSpecifiedNTasksPerNode
 	}
 
 	o.DryRunStrategy, err = util.GetDryRunStrategy(cmd)
@@ -712,6 +730,7 @@ func (o *CreateOptions) Run(ctx context.Context, clientGetter util.ClientGetter,
 		WithMemPerGPU(o.MemPerGPU).
 		WithNodes(o.Nodes).
 		WithNTasks(o.NTasks).
+		WithNTasksPerNode(o.NTasksPerNode).
 		WithOutput(o.Output).
 		WithError(o.Error).
 		WithInput(o.Input).

@@ -26,18 +26,18 @@ import (
 func TestParseSlurmArrayIndexes(t *testing.T) {
 	testCases := map[string]struct {
 		array            string
-		wantArrayIndexes ArrayIndexes
+		wantArrayIndexes *ArrayIndexes
 		wantErr          string
 	}{
 		"should parse 0": {
 			array: "0",
-			wantArrayIndexes: ArrayIndexes{
+			wantArrayIndexes: &ArrayIndexes{
 				Indexes: []int32{0},
 			},
 		},
 		"should parse 1,4,5": {
 			array: "1,4,5",
-			wantArrayIndexes: ArrayIndexes{
+			wantArrayIndexes: &ArrayIndexes{
 				Indexes: []int32{1, 4, 5},
 			},
 		},
@@ -51,7 +51,7 @@ func TestParseSlurmArrayIndexes(t *testing.T) {
 		},
 		"should parse 1-5": {
 			array: "1-5",
-			wantArrayIndexes: ArrayIndexes{
+			wantArrayIndexes: &ArrayIndexes{
 				Indexes: []int32{1, 2, 3, 4, 5},
 			},
 		},
@@ -61,14 +61,14 @@ func TestParseSlurmArrayIndexes(t *testing.T) {
 		},
 		"should parse 3-9:3": {
 			array: "3-9:3",
-			wantArrayIndexes: ArrayIndexes{
+			wantArrayIndexes: &ArrayIndexes{
 				Indexes: []int32{3, 6, 9},
 				Step:    ptr.To[int32](3),
 			},
 		},
 		"should parse 1-5%2": {
 			array: "1-5%2",
-			wantArrayIndexes: ArrayIndexes{
+			wantArrayIndexes: &ArrayIndexes{
 				Indexes:     []int32{1, 2, 3, 4, 5},
 				Parallelism: ptr.To[int32](2),
 			},
@@ -83,13 +83,13 @@ func TestParseSlurmArrayIndexes(t *testing.T) {
 		},
 		"should parse 0-5": {
 			array: "0-5",
-			wantArrayIndexes: ArrayIndexes{
+			wantArrayIndexes: &ArrayIndexes{
 				Indexes: []int32{0, 1, 2, 3, 4, 5},
 			},
 		},
 		"should parse 0,2,4": {
 			array: "0,2,4",
-			wantArrayIndexes: ArrayIndexes{
+			wantArrayIndexes: &ArrayIndexes{
 				Indexes: []int32{0, 2, 4},
 			},
 		},

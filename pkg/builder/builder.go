@@ -43,6 +43,14 @@ import (
 	"sigs.k8s.io/kjob/pkg/parser"
 )
 
+const (
+	DefaultNodes                 = int32(1)
+	DefaultNTasks                = int32(1)
+	DefaultNTasksPerNode         = int32(1)
+	DefaultArrayIndexParallelism = int32(1)
+	DefaultArrayIndexStep        = int32(1)
+)
+
 var (
 	errNoNamespaceSpecified                = errors.New("no namespace specified")
 	errNoApplicationProfileSpecified       = errors.New("no application profile specified")
@@ -69,6 +77,7 @@ var (
 	errNoMemPerTaskSpecified               = errors.New("no mem-per-task specified")
 	errNoNodesSpecified                    = errors.New("no nodes specified")
 	errNoNTasksSpecified                   = errors.New("no ntasks specified")
+	errNoNTasksPerNodeSpecified            = errors.New("no ntasks-per-node specified")
 	errNoOutputSpecified                   = errors.New("no output specified")
 	errNoPartitionSpecified                = errors.New("no partition specified")
 	errNoPrioritySpecified                 = errors.New("no priority specified")
@@ -113,6 +122,7 @@ type Builder struct {
 	memPerTask               *resource.Quantity
 	nodes                    *int32
 	nTasks                   *int32
+	nTasksPerNode            *int32
 	output                   string
 	partition                string
 	priority                 string
@@ -261,6 +271,11 @@ func (b *Builder) WithNodes(nodes *int32) *Builder {
 
 func (b *Builder) WithNTasks(nTasks *int32) *Builder {
 	b.nTasks = nTasks
+	return b
+}
+
+func (b *Builder) WithNTasksPerNode(nTasksPerNode *int32) *Builder {
+	b.nTasksPerNode = nTasksPerNode
 	return b
 }
 
@@ -474,6 +489,10 @@ func (b *Builder) validateFlags() error {
 
 	if slices.Contains(b.mode.RequiredFlags, v1alpha1.NTasksFlag) && b.nTasks == nil {
 		return errNoNTasksSpecified
+	}
+
+	if slices.Contains(b.mode.RequiredFlags, v1alpha1.NTasksPerNodeFlag) && b.nTasksPerNode == nil {
+		return errNoNTasksPerNodeSpecified
 	}
 
 	if slices.Contains(b.mode.RequiredFlags, v1alpha1.OutputFlag) && b.output == "" {

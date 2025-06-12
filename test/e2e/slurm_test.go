@@ -19,6 +19,7 @@ package e2e
 import (
 	"bytes"
 	"fmt"
+	"maps"
 	"os"
 	"os/exec"
 	"regexp"
@@ -37,7 +38,7 @@ import (
 	"sigs.k8s.io/kjob/apis/v1alpha1"
 	kjobctlconstants "sigs.k8s.io/kjob/pkg/constants"
 	"sigs.k8s.io/kjob/pkg/testing/wrappers"
-	kjobutil "sigs.k8s.io/kjob/pkg/util/maps"
+	utilmaps "sigs.k8s.io/kjob/pkg/util/maps"
 	"sigs.k8s.io/kjob/test/util"
 )
 
@@ -46,7 +47,7 @@ const (
 	BatchJobCompletionIndexLabel = "batch.kubernetes.io/job-completion-index"
 )
 
-var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, func() {
+var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, ginkgo.ContinueOnFailure, func() {
 	var (
 		ns          *corev1.Namespace
 		profile     *v1alpha1.ApplicationProfile
@@ -151,7 +152,7 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, func() {
 
 			for containerName, expectContainerVars := range expectPod {
 				ginkgo.By(fmt.Sprintf("Check env variables in index %d and container name %s", completionIndex, containerName), func() {
-					wantOut := kjobutil.MergeKeepFirst(expectContainerVars, expectCommonVars)
+					wantOut := utilmaps.MergeKeepFirst(expectContainerVars, expectCommonVars)
 					if withFirstNodeIP {
 						wantOut["SLURM_JOB_FIRST_NODE_IP"] = firstPod.Status.PodIP
 					}
@@ -161,11 +162,12 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, func() {
 						g.Expect(err).NotTo(gomega.HaveOccurred())
 						g.Expect(string(outErr)).To(gomega.BeEmpty())
 						g.Expect(parseSlurmEnvOutput(out)).To(gomega.BeComparableTo(wantOut,
-							cmpopts.AcyclicTransformer("RemoveGeneratedNameSuffixInMap", func(m map[string]string) map[string]string {
-								for key, val := range m {
-									m[key] = regexp.MustCompile("(profile-slurm)(-.{5})").ReplaceAllString(val, "$1")
+							cmpopts.AcyclicTransformer("RemoveGeneratedNameSuffixInMap", func(original map[string]string) map[string]string {
+								replaced := maps.Clone(original)
+								for key, val := range replaced {
+									replaced[key] = regexp.MustCompile("(profile-slurm)(-.{5})").ReplaceAllString(val, "$1")
 								}
-								return m
+								return replaced
 							}),
 						))
 					}, util.Timeout, util.Interval).Should(gomega.Succeed())
@@ -183,63 +185,59 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, func() {
 			int32(1), int32(1),
 			map[string]string{
 				"SLURM_NTASKS_PER_NODE":   "1",
-				"SLURM_ARRAY_JOB_ID":      "1",
 				"SLURM_MEM_PER_CPU":       "",
 				"SLURM_GPUS":              "",
+				"SLURM_JOB_NUM_NODES":     "1",
 				"SLURM_NNODES":            "1",
 				"SLURM_MEM_PER_GPU":       "",
 				"SLURM_NTASKS":            "1",
-				"SLURM_ARRAY_TASK_COUNT":  "1",
-				"SLURM_TASKS_PER_NODE":    "1",
+				"SLURM_TASKS_PER_NODE":    "",
 				"SLURM_CPUS_PER_TASK":     "",
-				"SLURM_ARRAY_TASK_MAX":    "0",
 				"SLURM_CPUS_PER_GPU":      "",
 				"SLURM_SUBMIT_DIR":        "/slurm/scripts",
 				"SLURM_NPROCS":            "1",
 				"SLURM_CPUS_ON_NODE":      "",
-				"SLURM_ARRAY_TASK_MIN":    "0",
 				"SLURM_JOB_NODELIST":      "profile-slurm-xxxxx-0.profile-slurm-xxxxx",
 				"SLURM_JOB_CPUS_PER_NODE": "",
-				"SLURM_JOB_FIRST_NODE":    "profile-slurm-xxxxx-1.profile-slurm-xxxxx",
+				"SLURM_JOB_FIRST_NODE":    "profile-slurm-xxxxx-0.profile-slurm-xxxxx",
 				"SLURM_MEM_PER_NODE":      "",
-				"SLURM_JOB_FIRST_NODE_IP": "",
+				"SLURM_JOB_ID":            "1",
+				"SLURM_JOBID":             "1",
+				"SLURM_SUBMIT_HOST":       "profile-slurm-xxxxx-0",
 			},
 			[]map[string]map[string]string{
 				{
-					"c1": {
-						"SLURM_ARRAY_TASK_ID": "0",
-						"SLURM_JOB_ID":        "1",
-						"SLURM_JOBID":         "1",
-						"SLURM_SUBMIT_HOST":   "profile-slurm-xxxxx-0",
-					},
+					"c1": {},
 				},
 			},
 			false,
 		),
 		ginkgo.Entry(
 			"with --first-node-ip",
-			[]string{"--first-node-ip"}, []string{"--array", "1-5%2", "--nodes", "2", "--ntasks", "2"},
-			int32(3), int32(2),
+			[]string{"--first-node-ip"}, []string{"--array", "1-5%2", "--ntasks", "2"},
+			int32(5), int32(2),
 			map[string]string{
 				"SLURM_NTASKS_PER_NODE":   "2",
 				"SLURM_ARRAY_JOB_ID":      "1",
 				"SLURM_MEM_PER_CPU":       "",
 				"SLURM_GPUS":              "",
-				"SLURM_NNODES":            "2",
+				"SLURM_JOB_NUM_NODES":     "5",
+				"SLURM_NNODES":            "5",
 				"SLURM_MEM_PER_GPU":       "",
 				"SLURM_NTASKS":            "2",
 				"SLURM_ARRAY_TASK_COUNT":  "5",
-				"SLURM_TASKS_PER_NODE":    "2",
+				"SLURM_TASKS_PER_NODE":    "",
 				"SLURM_CPUS_PER_TASK":     "",
 				"SLURM_ARRAY_TASK_MAX":    "5",
+				"SLURM_ARRAY_TASK_STEP":   "1",
 				"SLURM_CPUS_PER_GPU":      "",
 				"SLURM_SUBMIT_DIR":        "/slurm/scripts",
 				"SLURM_NPROCS":            "2",
 				"SLURM_CPUS_ON_NODE":      "",
 				"SLURM_ARRAY_TASK_MIN":    "1",
-				"SLURM_JOB_NODELIST":      "profile-slurm-xxxxx-0.profile-slurm-xxxxx,profile-slurm-xxxxx-1.profile-slurm-xxxxx",
+				"SLURM_JOB_NODELIST":      "profile-slurm-xxxxx-0.profile-slurm-xxxxx,profile-slurm-xxxxx-1.profile-slurm-xxxxx,profile-slurm-xxxxx-2.profile-slurm-xxxxx,profile-slurm-xxxxx-3.profile-slurm-xxxxx,profile-slurm-xxxxx-4.profile-slurm-xxxxx",
 				"SLURM_JOB_CPUS_PER_NODE": "",
-				"SLURM_JOB_FIRST_NODE":    "profile-slurm-xxxxx-1.profile-slurm-xxxxx",
+				"SLURM_JOB_FIRST_NODE":    "profile-slurm-xxxxx-0.profile-slurm-xxxxx",
 				"SLURM_MEM_PER_NODE":      "",
 				"SLURM_JOB_FIRST_NODE_IP": "",
 			},
@@ -252,10 +250,24 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, func() {
 						"SLURM_SUBMIT_HOST":   "profile-slurm-xxxxx-0",
 					},
 					"c1-1": {
+						"SLURM_ARRAY_TASK_ID": "1",
+						"SLURM_JOB_ID":        "1",
+						"SLURM_JOBID":         "1",
+						"SLURM_SUBMIT_HOST":   "profile-slurm-xxxxx-0",
+					},
+				},
+				{
+					"c1-0": {
 						"SLURM_ARRAY_TASK_ID": "2",
 						"SLURM_JOB_ID":        "2",
 						"SLURM_JOBID":         "2",
-						"SLURM_SUBMIT_HOST":   "profile-slurm-xxxxx-0",
+						"SLURM_SUBMIT_HOST":   "profile-slurm-xxxxx-1",
+					},
+					"c1-1": {
+						"SLURM_ARRAY_TASK_ID": "2",
+						"SLURM_JOB_ID":        "2",
+						"SLURM_JOBID":         "2",
+						"SLURM_SUBMIT_HOST":   "profile-slurm-xxxxx-1",
 					},
 				},
 				{
@@ -263,13 +275,27 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, func() {
 						"SLURM_ARRAY_TASK_ID": "3",
 						"SLURM_JOB_ID":        "3",
 						"SLURM_JOBID":         "3",
-						"SLURM_SUBMIT_HOST":   "profile-slurm-xxxxx-1",
+						"SLURM_SUBMIT_HOST":   "profile-slurm-xxxxx-2",
+					},
+					"c1-1": {
+						"SLURM_ARRAY_TASK_ID": "3",
+						"SLURM_JOB_ID":        "3",
+						"SLURM_JOBID":         "3",
+						"SLURM_SUBMIT_HOST":   "profile-slurm-xxxxx-2",
+					},
+				},
+				{
+					"c1-0": {
+						"SLURM_ARRAY_TASK_ID": "4",
+						"SLURM_JOB_ID":        "4",
+						"SLURM_JOBID":         "4",
+						"SLURM_SUBMIT_HOST":   "profile-slurm-xxxxx-3",
 					},
 					"c1-1": {
 						"SLURM_ARRAY_TASK_ID": "4",
 						"SLURM_JOB_ID":        "4",
 						"SLURM_JOBID":         "4",
-						"SLURM_SUBMIT_HOST":   "profile-slurm-xxxxx-1",
+						"SLURM_SUBMIT_HOST":   "profile-slurm-xxxxx-3",
 					},
 				},
 				{
@@ -277,11 +303,174 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, func() {
 						"SLURM_ARRAY_TASK_ID": "5",
 						"SLURM_JOB_ID":        "5",
 						"SLURM_JOBID":         "5",
-						"SLURM_SUBMIT_HOST":   "profile-slurm-xxxxx-2",
+						"SLURM_SUBMIT_HOST":   "profile-slurm-xxxxx-4",
+					},
+					"c1-1": {
+						"SLURM_ARRAY_TASK_ID": "5",
+						"SLURM_JOB_ID":        "5",
+						"SLURM_JOBID":         "5",
+						"SLURM_SUBMIT_HOST":   "profile-slurm-xxxxx-4",
 					},
 				},
 			},
 			true,
+		),
+		ginkgo.Entry(
+			"with --ntask-per-node and --nodes",
+			[]string{}, []string{"--ntasks-per-node", "3", "--nodes", "2"},
+			int32(2), int32(2),
+			map[string]string{
+				"SLURM_NTASKS_PER_NODE":   "3",
+				"SLURM_MEM_PER_CPU":       "",
+				"SLURM_GPUS":              "",
+				"SLURM_JOB_NUM_NODES":     "2",
+				"SLURM_NNODES":            "2",
+				"SLURM_MEM_PER_GPU":       "",
+				"SLURM_NTASKS":            "6",
+				"SLURM_TASKS_PER_NODE":    "",
+				"SLURM_CPUS_PER_TASK":     "",
+				"SLURM_CPUS_PER_GPU":      "",
+				"SLURM_SUBMIT_DIR":        "/slurm/scripts",
+				"SLURM_NPROCS":            "6",
+				"SLURM_CPUS_ON_NODE":      "",
+				"SLURM_JOB_NODELIST":      "profile-slurm-xxxxx-0.profile-slurm-xxxxx,profile-slurm-xxxxx-1.profile-slurm-xxxxx",
+				"SLURM_JOB_CPUS_PER_NODE": "",
+				"SLURM_JOB_FIRST_NODE":    "profile-slurm-xxxxx-0.profile-slurm-xxxxx",
+				"SLURM_MEM_PER_NODE":      "",
+			},
+			[]map[string]map[string]string{
+				{
+					"c1-0": {
+						"SLURM_JOB_ID":      "1",
+						"SLURM_JOBID":       "1",
+						"SLURM_SUBMIT_HOST": "profile-slurm-xxxxx-0",
+					},
+					"c1-1": {
+						"SLURM_JOB_ID":      "1",
+						"SLURM_JOBID":       "1",
+						"SLURM_SUBMIT_HOST": "profile-slurm-xxxxx-0",
+					},
+					"c1-2": {
+						"SLURM_JOB_ID":      "1",
+						"SLURM_JOBID":       "1",
+						"SLURM_SUBMIT_HOST": "profile-slurm-xxxxx-0",
+					},
+				},
+				{
+					"c1-0": {
+						"SLURM_JOB_ID":      "2",
+						"SLURM_JOBID":       "2",
+						"SLURM_SUBMIT_HOST": "profile-slurm-xxxxx-1",
+					},
+					"c1-1": {
+						"SLURM_JOB_ID":      "2",
+						"SLURM_JOBID":       "2",
+						"SLURM_SUBMIT_HOST": "profile-slurm-xxxxx-1",
+					},
+					"c1-2": {
+						"SLURM_JOB_ID":      "2",
+						"SLURM_JOBID":       "2",
+						"SLURM_SUBMIT_HOST": "profile-slurm-xxxxx-1",
+					},
+				},
+			},
+			false,
+		),
+		ginkgo.Entry(
+			"with --ntask-per-node and --array",
+			[]string{}, []string{"--ntasks-per-node", "5", "--array", "1-3%2"},
+			int32(3), int32(2),
+			map[string]string{
+				"SLURM_NTASKS_PER_NODE":   "5",
+				"SLURM_ARRAY_JOB_ID":      "1",
+				"SLURM_MEM_PER_CPU":       "",
+				"SLURM_GPUS":              "",
+				"SLURM_JOB_NUM_NODES":     "3",
+				"SLURM_NNODES":            "3",
+				"SLURM_MEM_PER_GPU":       "",
+				"SLURM_NTASKS":            "5",
+				"SLURM_ARRAY_TASK_COUNT":  "3",
+				"SLURM_TASKS_PER_NODE":    "",
+				"SLURM_CPUS_PER_TASK":     "",
+				"SLURM_ARRAY_TASK_MAX":    "3",
+				"SLURM_ARRAY_TASK_STEP":   "1",
+				"SLURM_CPUS_PER_GPU":      "",
+				"SLURM_SUBMIT_DIR":        "/slurm/scripts",
+				"SLURM_NPROCS":            "5",
+				"SLURM_CPUS_ON_NODE":      "",
+				"SLURM_ARRAY_TASK_MIN":    "1",
+				"SLURM_JOB_NODELIST":      "profile-slurm-xxxxx-0.profile-slurm-xxxxx,profile-slurm-xxxxx-1.profile-slurm-xxxxx,profile-slurm-xxxxx-2.profile-slurm-xxxxx",
+				"SLURM_JOB_CPUS_PER_NODE": "",
+				"SLURM_JOB_FIRST_NODE":    "profile-slurm-xxxxx-0.profile-slurm-xxxxx",
+				"SLURM_MEM_PER_NODE":      "",
+			},
+			[]map[string]map[string]string{
+				{
+					"c1-0": {
+						"SLURM_ARRAY_TASK_ID": "1",
+						"SLURM_JOB_ID":        "1",
+						"SLURM_JOBID":         "1",
+						"SLURM_SUBMIT_HOST":   "profile-slurm-xxxxx-0",
+					},
+					"c1-1": {
+						"SLURM_ARRAY_TASK_ID": "1",
+						"SLURM_JOB_ID":        "1",
+						"SLURM_JOBID":         "1",
+						"SLURM_SUBMIT_HOST":   "profile-slurm-xxxxx-0",
+					},
+					"c1-2": {
+						"SLURM_ARRAY_TASK_ID": "1",
+						"SLURM_JOB_ID":        "1",
+						"SLURM_JOBID":         "1",
+						"SLURM_SUBMIT_HOST":   "profile-slurm-xxxxx-0",
+					},
+					"c1-3": {
+						"SLURM_ARRAY_TASK_ID": "1",
+						"SLURM_JOB_ID":        "1",
+						"SLURM_JOBID":         "1",
+						"SLURM_SUBMIT_HOST":   "profile-slurm-xxxxx-0",
+					},
+					"c1-4": {
+						"SLURM_ARRAY_TASK_ID": "1",
+						"SLURM_JOB_ID":        "1",
+						"SLURM_JOBID":         "1",
+						"SLURM_SUBMIT_HOST":   "profile-slurm-xxxxx-0",
+					},
+				},
+				{
+					"c1-0": {
+						"SLURM_ARRAY_TASK_ID": "2",
+						"SLURM_JOB_ID":        "2",
+						"SLURM_JOBID":         "2",
+						"SLURM_SUBMIT_HOST":   "profile-slurm-xxxxx-1",
+					},
+					"c1-1": {
+						"SLURM_ARRAY_TASK_ID": "2",
+						"SLURM_JOB_ID":        "2",
+						"SLURM_JOBID":         "2",
+						"SLURM_SUBMIT_HOST":   "profile-slurm-xxxxx-1",
+					},
+					"c1-2": {
+						"SLURM_ARRAY_TASK_ID": "2",
+						"SLURM_JOB_ID":        "2",
+						"SLURM_JOBID":         "2",
+						"SLURM_SUBMIT_HOST":   "profile-slurm-xxxxx-1",
+					},
+					"c1-3": {
+						"SLURM_ARRAY_TASK_ID": "2",
+						"SLURM_JOB_ID":        "2",
+						"SLURM_JOBID":         "2",
+						"SLURM_SUBMIT_HOST":   "profile-slurm-xxxxx-1",
+					},
+					"c1-4": {
+						"SLURM_ARRAY_TASK_ID": "2",
+						"SLURM_JOB_ID":        "2",
+						"SLURM_JOBID":         "2",
+						"SLURM_SUBMIT_HOST":   "profile-slurm-xxxxx-1",
+					},
+				},
+			},
+			false,
 		),
 	)
 
