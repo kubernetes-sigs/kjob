@@ -1,13 +1,13 @@
 module sigs.k8s.io/kjob
 
-go 1.24.1
+go 1.24.2
 
 require (
 	github.com/go-logr/logr v1.4.3
 	github.com/google/go-cmp v0.7.0
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.37.0
-	github.com/ray-project/kuberay/ray-operator v1.3.2
+	github.com/ray-project/kuberay/ray-operator v1.4.0
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.6
 	go.uber.org/zap v1.27.0
@@ -18,7 +18,7 @@ require (
 	k8s.io/component-base v0.33.1
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/kubectl v0.33.1
-	k8s.io/utils v0.0.0-20250321185631-1f6e0b77f77e
+	k8s.io/utils v0.0.0-20250502105355-0f33e8f1c979
 	sigs.k8s.io/controller-runtime v0.21.0
 	sigs.k8s.io/kueue v0.12.2
 )
@@ -32,6 +32,7 @@ require (
 	github.com/chai2010/gettext-go v1.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/emicklei/go-restful/v3 v3.12.2 // indirect
+	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/evanphx/json-patch/v5 v5.9.11 // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
 	github.com/fatih/camelcase v1.0.0 // indirect
@@ -90,8 +91,8 @@ require (
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/apiextensions-apiserver v0.33.0 // indirect
-	k8s.io/apiserver v0.33.0 // indirect
+	k8s.io/apiextensions-apiserver v0.33.1 // indirect
+	k8s.io/apiserver v0.33.1 // indirect
 	k8s.io/component-helpers v0.33.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
