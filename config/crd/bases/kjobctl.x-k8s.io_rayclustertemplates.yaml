@@ -228,12 +228,12 @@ spec:
                         type: integer
                       image:
                         description: Image optionally overrides the autoscaler's container
-                          image. This override is for provided for autoscaler testing
+                          image. This override is provided for autoscaler testing
                           and development.
                         type: string
                       imagePullPolicy:
                         description: ImagePullPolicy optionally overrides the autoscaler
-                          container's image pull policy. This override is for provided
+                          container's image pull policy. This override is provided
                           for autoscaler testing and development.
                         type: string
                       resources:
@@ -503,6 +503,17 @@ spec:
                         - Default
                         - Aggressive
                         - Conservative
+                        type: string
+                      version:
+                        description: |-
+                          Version is the version of the Ray autoscaler.
+                          Setting this to v1 will explicitly use autoscaler v1.
+                          Setting this to v2 will explicitly use autoscaler v2.
+                          If this isn't set, the Ray version determines the autoscaler version.
+                          In Ray 2.47.0 and later, the default autoscaler version is v2. It's v1 before that.
+                        enum:
+                        - v1
+                        - v2
                         type: string
                       volumeMounts:
                         description: Optional list of volumeMounts.  This is needed
@@ -1320,7 +1331,7 @@ spec:
                         type: string
                       template:
                         description: Template is the exact pod template used in K8s
-                          depoyments, statefulsets, etc.
+                          deployments, statefulsets, etc.
                         properties:
                           metadata:
                             description: |-
@@ -9508,7 +9519,6 @@ spec:
                             type: object
                         type: object
                     required:
-                    - rayStartParams
                     - template
                     type: object
                   headServiceAnnotations:
@@ -17834,7 +17844,6 @@ spec:
                       - groupName
                       - maxReplicas
                       - minReplicas
-                      - rayStartParams
                       - template
                       type: object
                     type: array
