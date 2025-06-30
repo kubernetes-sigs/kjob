@@ -25,13 +25,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"sigs.k8s.io/kjob/apis/v1alpha1"
-	"sigs.k8s.io/kjob/pkg/cmd/util"
+	"sigs.k8s.io/kjob/pkg/cmd/helpers"
 	"sigs.k8s.io/kjob/pkg/constants"
 )
 
 const completionLimit = 100
 
-func NamespaceNameFunc(clientGetter util.ClientGetter) func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
+func NamespaceNameFunc(clientGetter helpers.ClientGetter) func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
 	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		clientSet, err := clientGetter.K8sClientset()
 		if err != nil {
@@ -52,7 +52,7 @@ func NamespaceNameFunc(clientGetter util.ClientGetter) func(*cobra.Command, []st
 	}
 }
 
-func ContextsFunc(clientGetter util.ClientGetter) func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
+func ContextsFunc(clientGetter helpers.ClientGetter) func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
 	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		config, err := clientGetter.ToRawKubeConfigLoader().RawConfig()
 		if err != nil {
@@ -68,7 +68,7 @@ func ContextsFunc(clientGetter util.ClientGetter) func(*cobra.Command, []string,
 	}
 }
 
-func ClustersFunc(clientGetter util.ClientGetter) func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
+func ClustersFunc(clientGetter helpers.ClientGetter) func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
 	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		config, err := clientGetter.ToRawKubeConfigLoader().RawConfig()
 		if err != nil {
@@ -84,7 +84,7 @@ func ClustersFunc(clientGetter util.ClientGetter) func(*cobra.Command, []string,
 	}
 }
 
-func UsersFunc(clientGetter util.ClientGetter) func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
+func UsersFunc(clientGetter helpers.ClientGetter) func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
 	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		config, err := clientGetter.ToRawKubeConfigLoader().RawConfig()
 		if err != nil {
@@ -100,7 +100,7 @@ func UsersFunc(clientGetter util.ClientGetter) func(*cobra.Command, []string, st
 	}
 }
 
-func ApplicationProfileNameFunc(clientGetter util.ClientGetter) func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
+func ApplicationProfileNameFunc(clientGetter helpers.ClientGetter) func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
 	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		clientSet, err := clientGetter.KjobctlClientset()
 		if err != nil {
@@ -128,7 +128,7 @@ func ApplicationProfileNameFunc(clientGetter util.ClientGetter) func(*cobra.Comm
 	}
 }
 
-func LocalQueueNameFunc(clientGetter util.ClientGetter) func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
+func LocalQueueNameFunc(clientGetter helpers.ClientGetter) func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
 	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		clientSet, err := clientGetter.KueueClientset()
 		if err != nil {
@@ -156,7 +156,7 @@ func LocalQueueNameFunc(clientGetter util.ClientGetter) func(*cobra.Command, []s
 	}
 }
 
-func JobNameFunc(clientGetter util.ClientGetter, mode v1alpha1.ApplicationProfileMode) func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
+func JobNameFunc(clientGetter helpers.ClientGetter, mode v1alpha1.ApplicationProfileMode) func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
 	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		clientset, err := clientGetter.K8sClientset()
 		if err != nil {
@@ -188,7 +188,7 @@ func JobNameFunc(clientGetter util.ClientGetter, mode v1alpha1.ApplicationProfil
 	}
 }
 
-func RayJobNameFunc(clientGetter util.ClientGetter) func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
+func RayJobNameFunc(clientGetter helpers.ClientGetter) func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
 	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		clientset, err := clientGetter.RayClientset()
 		if err != nil {
@@ -217,7 +217,7 @@ func RayJobNameFunc(clientGetter util.ClientGetter) func(*cobra.Command, []strin
 	}
 }
 
-func RayClusterNameFunc(clientGetter util.ClientGetter) func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
+func RayClusterNameFunc(clientGetter helpers.ClientGetter) func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
 	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		clientset, err := clientGetter.RayClientset()
 		if err != nil {
@@ -246,7 +246,7 @@ func RayClusterNameFunc(clientGetter util.ClientGetter) func(*cobra.Command, []s
 	}
 }
 
-func PodNameFunc(clientGetter util.ClientGetter) func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
+func PodNameFunc(clientGetter helpers.ClientGetter) func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
 	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		clientset, err := clientGetter.K8sClientset()
 		if err != nil {

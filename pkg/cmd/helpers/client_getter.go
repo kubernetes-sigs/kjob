@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package util
+package helpers
 
 import (
 	rayversioned "github.com/ray-project/kuberay/ray-operator/pkg/client/clientset/versioned"

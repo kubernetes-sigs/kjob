@@ -33,7 +33,7 @@ import (
 
 	"sigs.k8s.io/kjob/apis/v1alpha1"
 	"sigs.k8s.io/kjob/pkg/cmd/completion"
-	"sigs.k8s.io/kjob/pkg/cmd/util"
+	"sigs.k8s.io/kjob/pkg/cmd/helpers"
 	"sigs.k8s.io/kjob/pkg/constants"
 )
 
@@ -51,7 +51,7 @@ type JobOptions struct {
 	Namespace string
 
 	CascadeStrategy metav1.DeletionPropagation
-	DryRunStrategy  util.DryRunStrategy
+	DryRunStrategy  helpers.DryRunStrategy
 
 	Client batchv1.BatchV1Interface
 
@@ -67,7 +67,7 @@ func NewJobOptions(streams genericiooptions.IOStreams) *JobOptions {
 	}
 }
 
-func NewJobCmd(clientGetter util.ClientGetter, streams genericiooptions.IOStreams) *cobra.Command {
+func NewJobCmd(clientGetter helpers.ClientGetter, streams genericiooptions.IOStreams) *cobra.Command {
 	o := NewJobOptions(streams)
 
 	cmd := &cobra.Command{
@@ -90,14 +90,14 @@ func NewJobCmd(clientGetter util.ClientGetter, streams genericiooptions.IOStream
 	}
 
 	addCascadingFlag(cmd)
-	util.AddDryRunFlag(cmd)
+	helpers.AddDryRunFlag(cmd)
 
 	o.PrintFlags.AddFlags(cmd)
 
 	return cmd
 }
 
-func (o *JobOptions) Complete(clientGetter util.ClientGetter, cmd *cobra.Command, args []string) error {
+func (o *JobOptions) Complete(clientGetter helpers.ClientGetter, cmd *cobra.Command, args []string) error {
 	o.JobNames = args
 
 	var err error
@@ -107,12 +107,12 @@ func (o *JobOptions) Complete(clientGetter util.ClientGetter, cmd *cobra.Command
 		return err
 	}
 
-	o.DryRunStrategy, err = util.GetDryRunStrategy(cmd)
+	o.DryRunStrategy, err = helpers.GetDryRunStrategy(cmd)
 	if err != nil {
 		return err
 	}
 
-	err = util.PrintFlagsWithDryRunStrategy(o.PrintFlags, o.DryRunStrategy)
+	err = helpers.PrintFlagsWithDryRunStrategy(o.PrintFlags, o.DryRunStrategy)
 	if err != nil {
 		return err
 	}
@@ -159,12 +159,12 @@ func (o *JobOptions) Run(ctx context.Context) error {
 			continue
 		}
 
-		if o.DryRunStrategy != util.DryRunClient {
+		if o.DryRunStrategy != helpers.DryRunClient {
 			deleteOptions := metav1.DeleteOptions{
 				PropagationPolicy: ptr.To(o.CascadeStrategy),
 			}
 
-			if o.DryRunStrategy == util.DryRunServer {
+			if o.DryRunStrategy == helpers.DryRunServer {
 				deleteOptions.DryRun = []string{metav1.DryRunAll}
 			}
 

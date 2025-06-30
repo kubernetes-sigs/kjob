@@ -33,11 +33,11 @@ import (
 
 	kjobctlversioned "sigs.k8s.io/kjob/client-go/clientset/versioned"
 	kjobctlfake "sigs.k8s.io/kjob/client-go/clientset/versioned/fake"
-	"sigs.k8s.io/kjob/pkg/cmd/util"
+	"sigs.k8s.io/kjob/pkg/cmd/helpers"
 )
 
 type TestClientGetter struct {
-	util.ClientGetter
+	helpers.ClientGetter
 
 	k8sClientset     k8s.Interface
 	kueueClientset   kueueversioned.Interface
@@ -58,7 +58,7 @@ func NewTestClientGetter() *TestClientGetter {
 		WithClientConfig(clientConfig).
 		WithNamespace(metav1.NamespaceDefault)
 	return &TestClientGetter{
-		ClientGetter:     util.NewClientGetter(configFlags),
+		ClientGetter:     helpers.NewClientGetter(configFlags),
 		kjobctlClientset: kjobctlfake.NewSimpleClientset(),
 		k8sClientset:     k8sfake.NewSimpleClientset(),
 		restConfig:       restConfig,

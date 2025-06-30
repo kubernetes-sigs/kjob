@@ -36,7 +36,7 @@ import (
 	"sigs.k8s.io/kjob/pkg/cmd"
 	"sigs.k8s.io/kjob/pkg/constants"
 	"sigs.k8s.io/kjob/pkg/testing/wrappers"
-	"sigs.k8s.io/kjob/test/util"
+	"sigs.k8s.io/kjob/test/helpers"
 )
 
 var _ = ginkgo.Describe("Kjobctl Create", ginkgo.Ordered, ginkgo.ContinueOnFailure, func() {
@@ -48,7 +48,7 @@ var _ = ginkgo.Describe("Kjobctl Create", ginkgo.Ordered, ginkgo.ContinueOnFailu
 	})
 
 	ginkgo.AfterEach(func() {
-		gomega.Expect(util.DeleteNamespace(ctx, k8sClient, ns)).To(gomega.Succeed())
+		gomega.Expect(helpers.DeleteNamespace(ctx, k8sClient, ns)).To(gomega.Succeed())
 	})
 
 	ginkgo.When("Create a Job", func() {

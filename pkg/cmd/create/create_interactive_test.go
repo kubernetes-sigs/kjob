@@ -44,8 +44,8 @@ import (
 
 	"sigs.k8s.io/kjob/apis/v1alpha1"
 	kjobctlfake "sigs.k8s.io/kjob/client-go/clientset/versioned/fake"
+	cmdutil "sigs.k8s.io/kjob/pkg/cmd/helpers"
 	cmdtesting "sigs.k8s.io/kjob/pkg/cmd/testing"
-	cmdutil "sigs.k8s.io/kjob/pkg/cmd/util"
 	"sigs.k8s.io/kjob/pkg/constants"
 	"sigs.k8s.io/kjob/pkg/testing/wrappers"
 )

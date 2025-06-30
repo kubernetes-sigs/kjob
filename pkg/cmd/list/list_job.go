@@ -33,7 +33,7 @@ import (
 
 	"sigs.k8s.io/kjob/apis/v1alpha1"
 	"sigs.k8s.io/kjob/pkg/cmd/completion"
-	"sigs.k8s.io/kjob/pkg/cmd/util"
+	"sigs.k8s.io/kjob/pkg/cmd/helpers"
 	"sigs.k8s.io/kjob/pkg/constants"
 )
 
@@ -72,7 +72,7 @@ func NewJobOptions(streams genericiooptions.IOStreams, clock clock.Clock) *JobOp
 	}
 }
 
-func NewJobCmd(clientGetter util.ClientGetter, streams genericiooptions.IOStreams, clock clock.Clock) *cobra.Command {
+func NewJobCmd(clientGetter helpers.ClientGetter, streams genericiooptions.IOStreams, clock clock.Clock) *cobra.Command {
 	o := NewJobOptions(streams, clock)
 
 	cmd := &cobra.Command{
@@ -97,11 +97,11 @@ func NewJobCmd(clientGetter util.ClientGetter, streams genericiooptions.IOStream
 
 	o.PrintFlags.AddFlags(cmd)
 
-	util.AddAllNamespacesFlagVar(cmd, &o.AllNamespaces)
-	util.AddFieldSelectorFlagVar(cmd, &o.FieldSelector)
-	util.AddLabelSelectorFlagVar(cmd, &o.LabelSelector)
-	util.AddProfileFlagVar(cmd, &o.ProfileFilter)
-	util.AddLocalQueueFlagVar(cmd, &o.LocalQueueFilter)
+	helpers.AddAllNamespacesFlagVar(cmd, &o.AllNamespaces)
+	helpers.AddFieldSelectorFlagVar(cmd, &o.FieldSelector)
+	helpers.AddLabelSelectorFlagVar(cmd, &o.LabelSelector)
+	helpers.AddProfileFlagVar(cmd, &o.ProfileFilter)
+	helpers.AddLocalQueueFlagVar(cmd, &o.LocalQueueFilter)
 
 	cobra.CheckErr(cmd.RegisterFlagCompletionFunc("profile", completion.ApplicationProfileNameFunc(clientGetter)))
 	cobra.CheckErr(cmd.RegisterFlagCompletionFunc("localqueue", completion.LocalQueueNameFunc(clientGetter)))
@@ -110,7 +110,7 @@ func NewJobCmd(clientGetter util.ClientGetter, streams genericiooptions.IOStream
 }
 
 // Complete completes all the required options
-func (o *JobOptions) Complete(clientGetter util.ClientGetter) error {
+func (o *JobOptions) Complete(clientGetter helpers.ClientGetter) error {
 	var err error
 
 	o.Limit, err = listRequestLimit()

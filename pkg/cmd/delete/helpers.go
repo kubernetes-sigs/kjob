@@ -22,7 +22,7 @@ import (
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"sigs.k8s.io/kjob/pkg/cmd/util"
+	"sigs.k8s.io/kjob/pkg/cmd/helpers"
 )
 
 const (
@@ -38,7 +38,7 @@ func addCascadingFlag(cmd *cobra.Command) {
 }
 
 func getCascadingStrategy(cmd *cobra.Command) (metav1.DeletionPropagation, error) {
-	cascadingFlag := util.FlagString(cmd, cascadingFlagName)
+	cascadingFlag := helpers.FlagString(cmd, cascadingFlagName)
 	switch cascadingFlag {
 	case "orphan":
 		return metav1.DeletePropagationOrphan, nil

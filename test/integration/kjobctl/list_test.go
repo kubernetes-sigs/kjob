@@ -35,7 +35,7 @@ import (
 	"sigs.k8s.io/kjob/pkg/cmd"
 	"sigs.k8s.io/kjob/pkg/cmd/list"
 	"sigs.k8s.io/kjob/pkg/testing/wrappers"
-	"sigs.k8s.io/kjob/test/util"
+	"sigs.k8s.io/kjob/test/helpers"
 )
 
 var _ = ginkgo.Describe("Kjobctl List", ginkgo.Ordered, ginkgo.ContinueOnFailure, func() {
@@ -47,7 +47,7 @@ var _ = ginkgo.Describe("Kjobctl List", ginkgo.Ordered, ginkgo.ContinueOnFailure
 	})
 
 	ginkgo.AfterEach(func() {
-		gomega.Expect(util.DeleteNamespace(ctx, k8sClient, ns)).To(gomega.Succeed())
+		gomega.Expect(helpers.DeleteNamespace(ctx, k8sClient, ns)).To(gomega.Succeed())
 		os.Unsetenv(list.KjobctlListRequestLimitEnvName)
 	})
 
