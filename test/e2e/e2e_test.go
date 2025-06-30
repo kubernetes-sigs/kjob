@@ -24,7 +24,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"sigs.k8s.io/kjob/test/util"
+	"sigs.k8s.io/kjob/test/helpers"
 )
 
 var _ = ginkgo.Describe("kjobctl", ginkgo.Ordered, func() {
@@ -39,15 +39,15 @@ var _ = ginkgo.Describe("kjobctl", ginkgo.Ordered, func() {
 		gomega.Expect(k8sClient.Create(ctx, ns)).To(gomega.Succeed())
 	})
 	ginkgo.AfterEach(func() {
-		gomega.Expect(util.DeleteNamespace(ctx, k8sClient, ns)).To(gomega.Succeed())
+		gomega.Expect(helpers.DeleteNamespace(ctx, k8sClient, ns)).To(gomega.Succeed())
 	})
 
 	ginkgo.It("Should print kjobctl information", func() {
 		cmd := exec.Command(kjobctlPath, "--help")
-		out, err := util.Run(cmd)
+		out, err := helpers.Run(cmd)
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
-		info := util.GetNonEmptyLines(string(out))
+		info := helpers.GetNonEmptyLines(string(out))
 		gomega.Expect(info[0]).To(gomega.Equal("ML/AI/Batch Jobs Made Easy"))
 	})
 })

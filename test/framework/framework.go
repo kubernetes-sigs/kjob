@@ -30,7 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
 	"sigs.k8s.io/kjob/apis/v1alpha1"
-	"sigs.k8s.io/kjob/test/util"
+	"sigs.k8s.io/kjob/test/helpers"
 )
 
 type Framework struct {
@@ -41,7 +41,7 @@ type Framework struct {
 }
 
 var setupLogger = sync.OnceFunc(func() {
-	ctrl.SetLogger(util.NewTestingLogger(ginkgo.GinkgoWriter, -3))
+	ctrl.SetLogger(helpers.NewTestingLogger(ginkgo.GinkgoWriter, -3))
 })
 
 func (f *Framework) Init() *rest.Config {

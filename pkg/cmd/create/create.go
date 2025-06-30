@@ -56,7 +56,7 @@ import (
 	"sigs.k8s.io/kjob/apis/v1alpha1"
 	"sigs.k8s.io/kjob/pkg/builder"
 	"sigs.k8s.io/kjob/pkg/cmd/completion"
-	"sigs.k8s.io/kjob/pkg/cmd/util"
+	"sigs.k8s.io/kjob/pkg/cmd/helpers"
 	"sigs.k8s.io/kjob/pkg/parser"
 )
 
@@ -183,7 +183,7 @@ type CreateOptions struct {
 	Attach     attach.RemoteAttach
 	AttachFunc func(*CreateOptions, *corev1.Container, remotecommand.TerminalSizeQueue, *corev1.Pod) func() error
 
-	DryRunStrategy util.DryRunStrategy
+	DryRunStrategy helpers.DryRunStrategy
 
 	Namespace          string
 	ProfileName        string
@@ -271,13 +271,13 @@ func NewCreateOptions(streams genericiooptions.IOStreams) *CreateOptions {
 
 type modeSubcommand struct {
 	ModeName v1alpha1.ApplicationProfileMode
-	Setup    func(clientGetter util.ClientGetter, subcmd *cobra.Command, o *CreateOptions)
+	Setup    func(clientGetter helpers.ClientGetter, subcmd *cobra.Command, o *CreateOptions)
 }
 
 var createModeSubcommands = map[string]modeSubcommand{
 	"job": {
 		ModeName: v1alpha1.JobMode,
-		Setup: func(clientGetter util.ClientGetter, subcmd *cobra.Command, o *CreateOptions) {
+		Setup: func(clientGetter helpers.ClientGetter, subcmd *cobra.Command, o *CreateOptions) {
 			subcmd.Use += " [--cmd COMMAND]" +
 				" [--request RESOURCE_NAME=QUANTITY]" +
 				" [--parallelism PARALLELISM]" +
@@ -300,7 +300,7 @@ var createModeSubcommands = map[string]modeSubcommand{
 	},
 	"interactive": {
 		ModeName: v1alpha1.InteractiveMode,
-		Setup: func(clientGetter util.ClientGetter, subcmd *cobra.Command, o *CreateOptions) {
+		Setup: func(clientGetter helpers.ClientGetter, subcmd *cobra.Command, o *CreateOptions) {
 			subcmd.Use += " [--cmd COMMAND]" +
 				" [--request RESOURCE_NAME=QUANTITY]" +
 				" [--pod-running-timeout DURATION]" +
@@ -323,7 +323,7 @@ var createModeSubcommands = map[string]modeSubcommand{
 	},
 	"rayjob": {
 		ModeName: v1alpha1.RayJobMode,
-		Setup: func(clientGetter util.ClientGetter, subcmd *cobra.Command, o *CreateOptions) {
+		Setup: func(clientGetter helpers.ClientGetter, subcmd *cobra.Command, o *CreateOptions) {
 			subcmd.Use += " [--cmd COMMAND]" +
 				" [--replicas [WORKER_GROUP]=REPLICAS]" +
 				" [--min-replicas [WORKER_GROUP]=MIN_REPLICAS]" +
@@ -354,7 +354,7 @@ var createModeSubcommands = map[string]modeSubcommand{
 	},
 	"raycluster": {
 		ModeName: v1alpha1.RayClusterMode,
-		Setup: func(clientGetter util.ClientGetter, subcmd *cobra.Command, o *CreateOptions) {
+		Setup: func(clientGetter helpers.ClientGetter, subcmd *cobra.Command, o *CreateOptions) {
 			subcmd.Use += " [--replicas [WORKER_GROUP]=REPLICAS]" +
 				" [--min-replicas [WORKER_GROUP]=MIN_REPLICAS]" +
 				" [--max-replicas [WORKER_GROUP]=MAX_REPLICAS]" +
@@ -375,7 +375,7 @@ var createModeSubcommands = map[string]modeSubcommand{
 	},
 	"slurm": {
 		ModeName: v1alpha1.SlurmMode,
-		Setup: func(clientGetter util.ClientGetter, subcmd *cobra.Command, o *CreateOptions) {
+		Setup: func(clientGetter helpers.ClientGetter, subcmd *cobra.Command, o *CreateOptions) {
 			subcmd.Use += " [--ignore-unknown-flags]" +
 				" [--wait]" +
 				" [--wait-timeout]" +
@@ -467,7 +467,7 @@ The minimum index value is 0. The maximum index value is 2147483647.`)
 	},
 }
 
-func NewCreateCmd(clientGetter util.ClientGetter, streams genericiooptions.IOStreams, clock clock.Clock) *cobra.Command {
+func NewCreateCmd(clientGetter helpers.ClientGetter, streams genericiooptions.IOStreams, clock clock.Clock) *cobra.Command {
 	o := NewCreateOptions(streams)
 
 	cmd := &cobra.Command{
@@ -523,7 +523,7 @@ func NewCreateCmd(clientGetter util.ClientGetter, streams genericiooptions.IOStr
 
 		modeSubcommand.Setup(clientGetter, subcmd, o)
 
-		util.AddDryRunFlag(subcmd)
+		helpers.AddDryRunFlag(subcmd)
 
 		_ = subcmd.MarkFlagRequired(profileFlagName)
 
@@ -536,7 +536,7 @@ func NewCreateCmd(clientGetter util.ClientGetter, streams genericiooptions.IOStr
 	return cmd
 }
 
-func (o *CreateOptions) Complete(clientGetter util.ClientGetter, cmd *cobra.Command, args []string) error {
+func (o *CreateOptions) Complete(clientGetter helpers.ClientGetter, cmd *cobra.Command, args []string) error {
 	currentSubcommand := createModeSubcommands[cmd.Name()]
 	o.ModeName = currentSubcommand.ModeName
 
@@ -676,12 +676,12 @@ func (o *CreateOptions) Complete(clientGetter util.ClientGetter, cmd *cobra.Comm
 		o.NTasksPerNode = &o.UserSpecifiedNTasksPerNode
 	}
 
-	o.DryRunStrategy, err = util.GetDryRunStrategy(cmd)
+	o.DryRunStrategy, err = helpers.GetDryRunStrategy(cmd)
 	if err != nil {
 		return err
 	}
 
-	err = util.PrintFlagsWithDryRunStrategy(o.PrintFlags, o.DryRunStrategy)
+	err = helpers.PrintFlagsWithDryRunStrategy(o.PrintFlags, o.DryRunStrategy)
 	if err != nil {
 		return err
 	}
@@ -706,7 +706,7 @@ func (o *CreateOptions) Complete(clientGetter util.ClientGetter, cmd *cobra.Comm
 	return nil
 }
 
-func (o *CreateOptions) Run(ctx context.Context, clientGetter util.ClientGetter, runTime time.Time) error {
+func (o *CreateOptions) Run(ctx context.Context, clientGetter helpers.ClientGetter, runTime time.Time) error {
 	rootObj, childObjs, err := builder.NewBuilder(clientGetter, runTime).
 		WithNamespace(o.Namespace).
 		WithProfileName(o.ProfileName).
@@ -753,7 +753,7 @@ func (o *CreateOptions) Run(ctx context.Context, clientGetter util.ClientGetter,
 		return err
 	}
 
-	if o.DryRunStrategy != util.DryRunClient {
+	if o.DryRunStrategy != helpers.DryRunClient {
 		rootObj, err = o.createObject(ctx, clientGetter, rootObj, nil)
 		if err != nil {
 			return err
@@ -766,7 +766,7 @@ func (o *CreateOptions) Run(ctx context.Context, clientGetter util.ClientGetter,
 	}
 
 	for i := range childObjs {
-		if o.DryRunStrategy != util.DryRunClient {
+		if o.DryRunStrategy != helpers.DryRunClient {
 			childObjs[i], err = o.createObject(ctx, clientGetter, childObjs[i], rootObj)
 			if err != nil {
 				return err
@@ -779,7 +779,7 @@ func (o *CreateOptions) Run(ctx context.Context, clientGetter util.ClientGetter,
 		}
 	}
 
-	if o.DryRunStrategy == util.DryRunNone && o.ModeName == v1alpha1.InteractiveMode {
+	if o.DryRunStrategy == helpers.DryRunNone && o.ModeName == v1alpha1.InteractiveMode {
 		pod := rootObj.(*corev1.Pod)
 		return o.RunInteractivePod(ctx, clientGetter, pod.Name)
 	}
@@ -792,9 +792,9 @@ func (o *CreateOptions) Run(ctx context.Context, clientGetter util.ClientGetter,
 	return nil
 }
 
-func (o *CreateOptions) createObject(ctx context.Context, clientGetter util.ClientGetter, obj runtime.Object, owner runtime.Object) (runtime.Object, error) {
+func (o *CreateOptions) createObject(ctx context.Context, clientGetter helpers.ClientGetter, obj runtime.Object, owner runtime.Object) (runtime.Object, error) {
 	options := metav1.CreateOptions{}
-	if o.DryRunStrategy == util.DryRunServer {
+	if o.DryRunStrategy == helpers.DryRunServer {
 		options.DryRun = []string{metav1.DryRunAll}
 	}
 
@@ -850,7 +850,7 @@ func (o *CreateOptions) createObject(ctx context.Context, clientGetter util.Clie
 	return createdObj, nil
 }
 
-func (o *CreateOptions) RunInteractivePod(ctx context.Context, clientGetter util.ClientGetter, podName string) error {
+func (o *CreateOptions) RunInteractivePod(ctx context.Context, clientGetter helpers.ClientGetter, podName string) error {
 	k8sClient, err := clientGetter.K8sClientset()
 	if err != nil {
 		return err
@@ -931,7 +931,7 @@ func defaultAttachFunc(o *CreateOptions, containerToAttach *corev1.Container, si
 	}
 }
 
-func (o *CreateOptions) watchJobAndStreamLogs(ctx context.Context, clientGetter util.ClientGetter, jobName string) error {
+func (o *CreateOptions) watchJobAndStreamLogs(ctx context.Context, clientGetter helpers.ClientGetter, jobName string) error {
 	k8sClient, err := clientGetter.K8sClientset()
 	if err != nil {
 		return err
@@ -1002,7 +1002,7 @@ func (o *CreateOptions) removeObject(ctx context.Context, clientset kubernetes.I
 	return nil
 }
 
-func (o *CreateOptions) watchJobPods(ctx context.Context, clientGetter util.ClientGetter, jobName string) error {
+func (o *CreateOptions) watchJobPods(ctx context.Context, clientGetter helpers.ClientGetter, jobName string) error {
 	k8sClient, err := clientGetter.K8sClientset()
 	if err != nil {
 		return err
@@ -1034,7 +1034,7 @@ func (o *CreateOptions) watchJobPods(ctx context.Context, clientGetter util.Clie
 	return nil
 }
 
-func (o *CreateOptions) streamLogsFromPod(ctx context.Context, clientGetter util.ClientGetter, pod *corev1.Pod) {
+func (o *CreateOptions) streamLogsFromPod(ctx context.Context, clientGetter helpers.ClientGetter, pod *corev1.Pod) {
 	_, loaded := o.activeStreams.LoadOrStore(pod.Name, true)
 	if loaded {
 		// pod is already streaming logs
@@ -1057,7 +1057,7 @@ func (o *CreateOptions) streamLogsFromPod(ctx context.Context, clientGetter util
 	}
 }
 
-func (o *CreateOptions) streamLogsFromPodContainer(ctx context.Context, clientGetter util.ClientGetter, pod *corev1.Pod, containerIndex int) error {
+func (o *CreateOptions) streamLogsFromPodContainer(ctx context.Context, clientGetter helpers.ClientGetter, pod *corev1.Pod, containerIndex int) error {
 	k8sClient, err := clientGetter.K8sClientset()
 	if err != nil {
 		return err

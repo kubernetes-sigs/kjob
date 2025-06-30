@@ -39,7 +39,7 @@ import (
 	kjobctlconstants "sigs.k8s.io/kjob/pkg/constants"
 	"sigs.k8s.io/kjob/pkg/testing/wrappers"
 	utilmaps "sigs.k8s.io/kjob/pkg/util/maps"
-	"sigs.k8s.io/kjob/test/util"
+	"sigs.k8s.io/kjob/test/helpers"
 )
 
 const (
@@ -65,7 +65,7 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, ginkgo.ContinueOnFailure, func(
 		jobTemplate = wrappers.MakeJobTemplate("job-template", ns.Name).
 			RestartPolicy(corev1.RestartPolicyNever).
 			BackoffLimitPerIndex(0).
-			WithContainer(*wrappers.MakeContainer("c1", util.E2eTestBashImage).Obj()).
+			WithContainer(*wrappers.MakeContainer("c1", helpers.E2eTestBashImage).Obj()).
 			Obj()
 		gomega.Expect(k8sClient.Create(ctx, jobTemplate)).To(gomega.Succeed())
 
@@ -76,7 +76,7 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, ginkgo.ContinueOnFailure, func(
 	})
 
 	ginkgo.AfterEach(func() {
-		gomega.Expect(util.DeleteNamespace(ctx, k8sClient, ns)).To(gomega.Succeed())
+		gomega.Expect(helpers.DeleteNamespace(ctx, k8sClient, ns)).To(gomega.Succeed())
 	})
 
 	ginkgo.DescribeTable("should be created", func(
@@ -105,7 +105,7 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, ginkgo.ContinueOnFailure, func(
 			cmdArgs = append(cmdArgs, slurmArgs...)
 
 			cmd := exec.Command(kjobctlPath, cmdArgs...)
-			out, err := util.Run(cmd)
+			out, err := helpers.Run(cmd)
 			gomega.Expect(err).NotTo(gomega.HaveOccurred(), "%s: %s", err, out)
 			gomega.Expect(out).NotTo(gomega.BeEmpty())
 
@@ -145,7 +145,7 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, ginkgo.ContinueOnFailure, func(
 					if completionIndex == 0 {
 						firstPod = &podList.Items[0]
 					}
-				}, util.LongTimeout, util.Interval).Should(gomega.Succeed())
+				}, helpers.LongTimeout, helpers.Interval).Should(gomega.Succeed())
 			})
 
 			pod := podList.Items[0]
@@ -158,7 +158,7 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, ginkgo.ContinueOnFailure, func(
 					}
 
 					gomega.Eventually(func(g gomega.Gomega) {
-						out, outErr, err := util.KExecute(ctx, cfg, restClient, ns.Name, pod.Name, containerName, []string{"cat", "/env.out"})
+						out, outErr, err := helpers.KExecute(ctx, cfg, restClient, ns.Name, pod.Name, containerName, []string{"cat", "/env.out"})
 						g.Expect(err).NotTo(gomega.HaveOccurred())
 						g.Expect(string(outErr)).To(gomega.BeEmpty())
 						g.Expect(parseSlurmEnvOutput(out)).To(gomega.BeComparableTo(wantOut,
@@ -170,7 +170,7 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, ginkgo.ContinueOnFailure, func(
 								return replaced
 							}),
 						))
-					}, util.Timeout, util.Interval).Should(gomega.Succeed())
+					}, helpers.Timeout, helpers.Interval).Should(gomega.Succeed())
 				})
 			}
 
@@ -494,7 +494,7 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, ginkgo.ContinueOnFailure, func(
 				cmdArgs = append(cmdArgs, "--", script.Name())
 
 				cmd := exec.Command(kjobctlPath, cmdArgs...)
-				out, err := util.Run(cmd)
+				out, err := helpers.Run(cmd)
 				gomega.Expect(err).NotTo(gomega.HaveOccurred(), "%s: %s", err, out)
 				gomega.Expect(out).NotTo(gomega.BeEmpty())
 
@@ -517,7 +517,7 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, ginkgo.ContinueOnFailure, func(
 
 			ginkgo.By("Delete slurm", func() {
 				cmd := exec.Command(kjobctlPath, "delete", "slurm", "-n", ns.Name, jobName)
-				out, err := util.Run(cmd)
+				out, err := helpers.Run(cmd)
 				gomega.Expect(err).NotTo(gomega.HaveOccurred(), "%s: %s", err, out)
 				gomega.Expect(string(out)).To(gomega.Equal(fmt.Sprintf("job.batch/%s deleted\n", jobName)))
 			})
@@ -527,7 +527,7 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, ginkgo.ContinueOnFailure, func(
 					g.Expect(errors.IsNotFound(k8sClient.Get(ctx, client.ObjectKeyFromObject(job), job))).To(gomega.BeTrue())
 					g.Expect(errors.IsNotFound(k8sClient.Get(ctx, client.ObjectKeyFromObject(configMap), configMap))).To(gomega.BeTrue())
 					g.Expect(errors.IsNotFound(k8sClient.Get(ctx, client.ObjectKeyFromObject(service), service))).To(gomega.BeTrue())
-				}, util.Timeout, util.Interval).Should(gomega.Succeed())
+				}, helpers.Timeout, helpers.Interval).Should(gomega.Succeed())
 			})
 		})
 	})
@@ -570,7 +570,7 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, ginkgo.ContinueOnFailure, func(
 				g.Expect(jobList.Items).To(gomega.HaveLen(1))
 				job = &jobList.Items[0]
 				g.Expect(job.Status.Active).To(gomega.Equal(int32(1)))
-			}, util.Timeout, util.Interval).Should(gomega.Succeed())
+			}, helpers.Timeout, helpers.Interval).Should(gomega.Succeed())
 		})
 
 		ginkgo.By("Remove job", func() {
@@ -580,7 +580,7 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, ginkgo.ContinueOnFailure, func(
 		ginkgo.By("Ensure that log streaming has stopped", func() {
 			gomega.Eventually(func(g gomega.Gomega) {
 				g.Expect(out.String()).To(gomega.ContainSubstring("Job logs streaming finished."))
-			}, util.Timeout, util.Interval).Should(gomega.Succeed())
+			}, helpers.Timeout, helpers.Interval).Should(gomega.Succeed())
 		})
 	})
 
@@ -603,7 +603,7 @@ var _ = ginkgo.Describe("Slurm", ginkgo.Ordered, ginkgo.ContinueOnFailure, func(
 				cmdArgs = append(cmdArgs, "--", script.Name())
 
 				cmd := exec.Command(kjobctlPath, cmdArgs...)
-				out, err = util.Run(cmd)
+				out, err = helpers.Run(cmd)
 				gomega.Expect(err).NotTo(gomega.HaveOccurred(), "%s: %s", err, out)
 				gomega.Expect(out).NotTo(gomega.BeEmpty())
 			})
@@ -635,7 +635,7 @@ Job logs streaming finished\.
 							Status: corev1.ConditionTrue,
 						},
 						cmpopts.IgnoreFields(batchv1.JobCondition{}, "LastTransitionTime", "LastProbeTime", "Reason", "Message"))))
-				}, util.Timeout, util.Interval).Should(gomega.Succeed())
+				}, helpers.Timeout, helpers.Interval).Should(gomega.Succeed())
 			})
 		})
 
@@ -670,7 +670,7 @@ Job logs streaming finished\.
 					g.Expect(k8sClient.List(ctx, jobList, client.InNamespace(ns.Name))).To(gomega.Succeed())
 					g.Expect(jobList.Items).To(gomega.HaveLen(1))
 					job = &jobList.Items[0]
-				}, util.Timeout, util.Interval).Should(gomega.Succeed())
+				}, helpers.Timeout, helpers.Interval).Should(gomega.Succeed())
 			})
 
 			ginkgo.By("Interrupt execution", func() {
@@ -685,7 +685,7 @@ Job logs streaming finished\.
 			ginkgo.By("Check job is deleted", func() {
 				gomega.Eventually(func(g gomega.Gomega) {
 					g.Expect(errors.IsNotFound(k8sClient.Get(ctx, client.ObjectKeyFromObject(job), job))).To(gomega.BeTrue())
-				}, util.Timeout, util.Interval).Should(gomega.Succeed())
+				}, helpers.Timeout, helpers.Interval).Should(gomega.Succeed())
 			})
 		})
 
@@ -728,7 +728,7 @@ Job logs streaming finished\.
 					g.Expect(k8sClient.List(ctx, jobList, client.InNamespace(ns.Name))).To(gomega.Succeed())
 					g.Expect(jobList.Items).To(gomega.HaveLen(1))
 					job = &jobList.Items[0]
-				}, util.Timeout, util.Interval).Should(gomega.Succeed())
+				}, helpers.Timeout, helpers.Interval).Should(gomega.Succeed())
 			})
 
 			ginkgo.By("Wait for timeout", func() {
@@ -741,7 +741,7 @@ Job logs streaming finished\.
 			ginkgo.By("Check job is deleted", func() {
 				gomega.Eventually(func(g gomega.Gomega) {
 					g.Expect(errors.IsNotFound(k8sClient.Get(ctx, client.ObjectKeyFromObject(job), job))).To(gomega.BeTrue())
-				}, util.Timeout, util.Interval).Should(gomega.Succeed())
+				}, helpers.Timeout, helpers.Interval).Should(gomega.Succeed())
 			})
 		})
 
@@ -764,7 +764,7 @@ Job logs streaming finished\.
 				cmdArgs = append(cmdArgs, "--", "-n=2", script.Name())
 
 				cmd := exec.Command(kjobctlPath, cmdArgs...)
-				out, err = util.Run(cmd)
+				out, err = helpers.Run(cmd)
 				gomega.Expect(err).NotTo(gomega.HaveOccurred(), "%s: %s", err, out)
 				gomega.Expect(out).NotTo(gomega.BeEmpty())
 			})
@@ -797,7 +797,7 @@ Job logs streaming finished\.`,
 							Status: corev1.ConditionTrue,
 						},
 						cmpopts.IgnoreFields(batchv1.JobCondition{}, "LastTransitionTime", "LastProbeTime", "Reason", "Message"))))
-				}, util.Timeout, util.Interval).Should(gomega.Succeed())
+				}, helpers.Timeout, helpers.Interval).Should(gomega.Succeed())
 			})
 		})
 	})
@@ -843,25 +843,25 @@ Job logs streaming finished\.`,
 					g.Expect(podList.Items[0].Spec.Containers).To(gomega.HaveLen(1))
 					g.Expect(podList.Items[0].Status.Phase).To(gomega.Equal(corev1.PodRunning))
 					pod = &podList.Items[0]
-				}, util.Timeout, util.Interval).Should(gomega.Succeed())
+				}, helpers.Timeout, helpers.Interval).Should(gomega.Succeed())
 			})
 
 			ginkgo.By("Wait for output logs", func() {
 				gomega.Eventually(func(g gomega.Gomega) {
-					out, outErr, err := util.KExecute(ctx, cfg, restClient, ns.Name, pod.Name, pod.Spec.Containers[0].Name, []string{"cat", outputFile})
+					out, outErr, err := helpers.KExecute(ctx, cfg, restClient, ns.Name, pod.Name, pod.Spec.Containers[0].Name, []string{"cat", outputFile})
 					g.Expect(err).NotTo(gomega.HaveOccurred())
 					g.Expect(string(outErr)).To(gomega.BeEmpty())
 					g.Expect(string(out)).To(gomega.Equal("stdout message\n"))
-				}, util.Timeout, util.Interval).Should(gomega.Succeed())
+				}, helpers.Timeout, helpers.Interval).Should(gomega.Succeed())
 			})
 
 			ginkgo.By("Wait for error logs", func() {
 				gomega.Eventually(func(g gomega.Gomega) {
-					out, outErr, err := util.KExecute(ctx, cfg, restClient, ns.Name, pod.Name, pod.Spec.Containers[0].Name, []string{"cat", errorFile})
+					out, outErr, err := helpers.KExecute(ctx, cfg, restClient, ns.Name, pod.Name, pod.Spec.Containers[0].Name, []string{"cat", errorFile})
 					g.Expect(err).NotTo(gomega.HaveOccurred())
 					g.Expect(string(outErr)).To(gomega.BeEmpty())
 					g.Expect(string(out)).To(gomega.Equal("stderr message\n"))
-				}, util.Timeout, util.Interval).Should(gomega.Succeed())
+				}, helpers.Timeout, helpers.Interval).Should(gomega.Succeed())
 			})
 
 			ginkgo.By("Interrupt execution", func() {

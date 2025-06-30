@@ -38,7 +38,7 @@ import (
 
 	"sigs.k8s.io/kjob/apis/v1alpha1"
 	"sigs.k8s.io/kjob/client-go/clientset/versioned"
-	"sigs.k8s.io/kjob/pkg/cmd/util"
+	"sigs.k8s.io/kjob/pkg/cmd/helpers"
 	"sigs.k8s.io/kjob/pkg/constants"
 	"sigs.k8s.io/kjob/pkg/parser"
 )
@@ -91,7 +91,7 @@ type builder interface {
 }
 
 type Builder struct {
-	clientGetter     util.ClientGetter
+	clientGetter     helpers.ClientGetter
 	kjobctlClientset versioned.Interface
 	k8sClientset     k8s.Interface
 	kueueClientset   kueueversioned.Interface
@@ -145,7 +145,7 @@ type Builder struct {
 	buildTime time.Time
 }
 
-func NewBuilder(clientGetter util.ClientGetter, buildTime time.Time) *Builder {
+func NewBuilder(clientGetter helpers.ClientGetter, buildTime time.Time) *Builder {
 	return &Builder{clientGetter: clientGetter, buildTime: buildTime}
 }
 

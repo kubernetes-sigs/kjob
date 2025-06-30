@@ -28,9 +28,9 @@ import (
 	"sigs.k8s.io/kjob/pkg/cmd/create"
 	deletecmd "sigs.k8s.io/kjob/pkg/cmd/delete"
 	"sigs.k8s.io/kjob/pkg/cmd/describe"
+	"sigs.k8s.io/kjob/pkg/cmd/helpers"
 	"sigs.k8s.io/kjob/pkg/cmd/list"
 	crds "sigs.k8s.io/kjob/pkg/cmd/printcrds"
-	"sigs.k8s.io/kjob/pkg/cmd/util"
 	"sigs.k8s.io/kjob/pkg/cmd/version"
 )
 
@@ -71,7 +71,7 @@ func NewKjobctlCmd(o KjobctlOptions) *cobra.Command {
 	}
 	configFlags.AddFlags(flags)
 
-	clientGetter := util.NewClientGetter(configFlags)
+	clientGetter := helpers.NewClientGetter(configFlags)
 
 	cobra.CheckErr(cmd.RegisterFlagCompletionFunc("namespace", completion.NamespaceNameFunc(clientGetter)))
 	cobra.CheckErr(cmd.RegisterFlagCompletionFunc("context", completion.ContextsFunc(clientGetter)))

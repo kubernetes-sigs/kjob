@@ -32,7 +32,7 @@ import (
 	kueueconstants "sigs.k8s.io/kueue/pkg/controller/constants"
 
 	"sigs.k8s.io/kjob/pkg/cmd/completion"
-	"sigs.k8s.io/kjob/pkg/cmd/util"
+	"sigs.k8s.io/kjob/pkg/cmd/helpers"
 	"sigs.k8s.io/kjob/pkg/constants"
 )
 
@@ -72,7 +72,7 @@ func NewInteractiveOptions(streams genericiooptions.IOStreams, clock clock.Clock
 	}
 }
 
-func NewInteractiveCmd(clientGetter util.ClientGetter, streams genericiooptions.IOStreams, clock clock.Clock) *cobra.Command {
+func NewInteractiveCmd(clientGetter helpers.ClientGetter, streams genericiooptions.IOStreams, clock clock.Clock) *cobra.Command {
 	o := NewInteractiveOptions(streams, clock)
 
 	cmd := &cobra.Command{
@@ -97,11 +97,11 @@ func NewInteractiveCmd(clientGetter util.ClientGetter, streams genericiooptions.
 
 	o.PrintFlags.AddFlags(cmd)
 
-	util.AddAllNamespacesFlagVar(cmd, &o.AllNamespaces)
-	util.AddFieldSelectorFlagVar(cmd, &o.FieldSelector)
-	util.AddLabelSelectorFlagVar(cmd, &o.LabelSelector)
-	util.AddProfileFlagVar(cmd, &o.ProfileFilter)
-	util.AddLocalQueueFlagVar(cmd, &o.LocalQueueFilter)
+	helpers.AddAllNamespacesFlagVar(cmd, &o.AllNamespaces)
+	helpers.AddFieldSelectorFlagVar(cmd, &o.FieldSelector)
+	helpers.AddLabelSelectorFlagVar(cmd, &o.LabelSelector)
+	helpers.AddProfileFlagVar(cmd, &o.ProfileFilter)
+	helpers.AddLocalQueueFlagVar(cmd, &o.LocalQueueFilter)
 
 	cobra.CheckErr(cmd.RegisterFlagCompletionFunc("profile", completion.ApplicationProfileNameFunc(clientGetter)))
 	cobra.CheckErr(cmd.RegisterFlagCompletionFunc("localqueue", completion.LocalQueueNameFunc(clientGetter)))
@@ -110,7 +110,7 @@ func NewInteractiveCmd(clientGetter util.ClientGetter, streams genericiooptions.
 }
 
 // Complete completes all the required options
-func (o *InteractiveOptions) Complete(clientGetter util.ClientGetter) error {
+func (o *InteractiveOptions) Complete(clientGetter helpers.ClientGetter) error {
 	var err error
 
 	o.Limit, err = listRequestLimit()

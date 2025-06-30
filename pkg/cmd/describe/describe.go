@@ -37,7 +37,7 @@ import (
 	"k8s.io/kubectl/pkg/util/templates"
 
 	"sigs.k8s.io/kjob/apis/v1alpha1"
-	"sigs.k8s.io/kjob/pkg/cmd/util"
+	"sigs.k8s.io/kjob/pkg/cmd/helpers"
 	"sigs.k8s.io/kjob/pkg/constants"
 )
 
@@ -88,7 +88,7 @@ func NewDescribeOptions(streams genericiooptions.IOStreams) *DescribeOptions {
 	}
 }
 
-func NewDescribeCmd(clientGetter util.ClientGetter, streams genericiooptions.IOStreams) *cobra.Command {
+func NewDescribeCmd(clientGetter helpers.ClientGetter, streams genericiooptions.IOStreams) *cobra.Command {
 	o := NewDescribeOptions(streams)
 
 	cmd := &cobra.Command{
@@ -110,14 +110,14 @@ func NewDescribeCmd(clientGetter util.ClientGetter, streams genericiooptions.IOS
 		},
 	}
 
-	util.AddAllNamespacesFlagVar(cmd, &o.AllNamespaces)
-	util.AddLabelSelectorFlagVar(cmd, &o.LabelSelector)
-	util.AddProfileFlagVar(cmd, &o.ProfileName)
+	helpers.AddAllNamespacesFlagVar(cmd, &o.AllNamespaces)
+	helpers.AddLabelSelectorFlagVar(cmd, &o.LabelSelector)
+	helpers.AddProfileFlagVar(cmd, &o.ProfileName)
 
 	return cmd
 }
 
-func (o *DescribeOptions) Complete(clientGetter util.ClientGetter, args []string) error {
+func (o *DescribeOptions) Complete(clientGetter helpers.ClientGetter, args []string) error {
 	var err error
 
 	o.findArgsFormat(args)
