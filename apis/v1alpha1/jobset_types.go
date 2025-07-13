@@ -34,7 +34,7 @@ type JobSetTemplate struct {
 
 // +kubebuilder:object:root=true
 
-// JobTemplateList contains a list of JobSetTemplate
+// JobSetTemplateList contains a list of JobSetTemplate
 type JobSetTemplateList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

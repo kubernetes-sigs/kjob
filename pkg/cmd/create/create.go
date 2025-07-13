@@ -315,7 +315,7 @@ var createModeSubcommands = map[string]modeSubcommand{
 	},
 	"jobset": {
 		ModeName: v1alpha1.JobSetMode,
-		Setup: func(clientGetter util.ClientGetter, subcmd *cobra.Command, o *CreateOptions) {
+		Setup: func(clientGetter helpers.ClientGetter, subcmd *cobra.Command, o *CreateOptions) {
 			subcmd.Use += " [--replicas =REPLICAS]" +
 				" [--time TIME_LIMIT]"
 			subcmd.Short = "Create a jobSet"
