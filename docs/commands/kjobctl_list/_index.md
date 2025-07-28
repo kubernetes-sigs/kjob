@@ -222,6 +222,7 @@ Display resources
 * [kjobctl](../kjobctl.md)	 - ML/AI/Batch Jobs Made Easy
 * [kjobctl list interactive](kjobctl_list_interactive.md)	 - List Interactive
 * [kjobctl list job](kjobctl_list_job.md)	 - List Job
+* [kjobctl list jobset](kjobctl_list_jobset.md)	 - List JobSet
 * [kjobctl list raycluster](kjobctl_list_raycluster.md)	 - List RayCluster
 * [kjobctl list rayjob](kjobctl_list_rayjob.md)	 - List RayJob
 * [kjobctl list slurm](kjobctl_list_slurm.md)	 - List Slurm

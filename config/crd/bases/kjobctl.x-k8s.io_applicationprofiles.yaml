@@ -46,10 +46,11 @@ spec:
                     name:
                       description: |-
                         name determines which template will be used and which object will eventually be created.
-                        Possible values are Interactive, Job, RayJob, RayCluster and Slurm.
+                        Possible values are Interactive, Job, JobSet, RayJob, RayCluster and Slurm.
                       enum:
                       - Interactive
                       - Job
+                      - JobSet
                       - RayJob
                       - RayCluster
                       - Slurm
@@ -111,6 +112,7 @@ spec:
                           - on RayJob mode it must be kjobctl.x-k8s.io/v1alpha1/RayJobTemplate
                           - on RayCluster mode it must be kjobctl.x-k8s.io/v1alpha1/RayClusterTemplate
                           - on Slurm mode it must be kjobctl.x-k8s.io/v1alpha1/JobTemplate
+                          - on JobSet mode it must be kjobctl.x-k8s.io/v1alpha1/JobSetTemplate
                       maxLength: 253
                       pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
                       type: string
@@ -119,10 +121,10 @@ spec:
                   - template
                   type: object
                   x-kubernetes-validations:
-                  - message: replicas flag can be used only on RayJob and RayCluster
-                      modes
+                  - message: replicas flag can be used only on JobSet, RayJob, and
+                      RayCluster modes
                     rule: '!has(self.requiredFlags) || !(''replicas'' in self.requiredFlags)
-                      || self.name in [''RayJob'', ''RayCluster'']'
+                      || self.name in [''JobSet'', ''RayJob'', ''RayCluster'']'
                   - message: min-replicas flag can be used only on RayJob and RayCluster
                       modes
                     rule: '!has(self.requiredFlags) || !(''min-replicas'' in self.requiredFlags)
@@ -131,14 +133,14 @@ spec:
                       modes
                     rule: '!has(self.requiredFlags) || !(''max-replicas'' in self.requiredFlags)
                       || self.name in [''RayJob'', ''RayCluster'']'
-                  - message: request flag can be used only on Job and Interactive
+                  - message: request flag can be used only on Job, JobSet and Interactive
                       modes
                     rule: '!has(self.requiredFlags) || !(''request'' in self.requiredFlags)
-                      || self.name in [''Job'', ''Interactive'', ''RayJob'']'
-                  - message: cmd flag can be used only on Job, Interactive and RayJob
-                      modes
+                      || self.name in [''Job'', ''JobSet'', ''Interactive'', ''RayJob'']'
+                  - message: cmd flag can be used only on Job, JobSet, Interactive
+                      and RayJob modes
                     rule: '!has(self.requiredFlags) || !(''cmd'' in self.requiredFlags)
-                      || self.name in [''Job'', ''Interactive'', ''RayJob'']'
+                      || self.name in [''Job'', ''JobSet'', ''Interactive'', ''RayJob'']'
                   - message: raycluster flag can be used only on RayJob mode
                     rule: '!has(self.requiredFlags) || !(''raycluster'' in self.requiredFlags)
                       || self.name == ''RayJob'''
