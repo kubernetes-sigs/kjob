@@ -6,7 +6,7 @@ require (
 	github.com/golangci/golangci-lint/v2 v2.3.1
 	github.com/onsi/ginkgo/v2 v2.23.4
 	gotest.tools/gotestsum v1.12.3
-	k8s.io/code-generator v0.33.3
+	k8s.io/code-generator v0.33.4
 	sigs.k8s.io/controller-runtime/tools/setup-envtest v0.0.0-20250407161039-6ad5c1dd4418
 	sigs.k8s.io/controller-tools v0.18.0
 	sigs.k8s.io/kind v0.29.0
@@ -62,7 +62,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/apiextensions-apiserver v0.33.0 // indirect
-	k8s.io/apimachinery v0.33.3 // indirect
+	k8s.io/apimachinery v0.33.4 // indirect
 	k8s.io/gengo/v2 v2.0.0-20250207200755-1244d31929d7 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff // indirect
