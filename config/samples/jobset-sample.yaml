@@ -1,0 +1,46 @@
+---
+apiVersion: kjobctl.x-k8s.io/v1alpha1
+kind: ApplicationProfile
+metadata:
+  name: job-set-profile
+  namespace: default
+spec:
+  supportedModes:
+    - name: JobSet
+      template: jobset-template
+---
+apiVersion: kjobctl.x-k8s.io/v1alpha1
+kind: JobSetTemplate
+metadata:
+  name: jobset-template
+  namespace: default
+template:
+  spec:
+    replicatedJobs:
+    - name: workers
+      template:
+        spec:
+          parallelism: 4
+          completions: 4
+          backoffLimit: 0
+          template:
+            spec:
+              containers:
+              - name: sleep
+                image: gcr.io/k8s-staging-perf-tests/sleep:v0.1.0
+                args:
+                - 100s
+    - name: driver
+      template:
+        spec:
+          parallelism: 1
+          completions: 1
+          backoffLimit: 0
+          template:
+            spec:
+              containers:
+              - name: sleep
+                image: gcr.io/k8s-staging-perf-tests/sleep:v0.1.0
+                args:
+                - 100s
+
