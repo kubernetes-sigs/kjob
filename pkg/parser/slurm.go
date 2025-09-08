@@ -241,7 +241,7 @@ func SlurmValidateAndReplaceScript(script string, nTasks int32) (string, error) 
 			args := splitBySpaceWithIgnoreInQuotes(line[index:])[1:]
 
 			srunFlagSet := pflag.NewFlagSet(srunCommand, pflag.ContinueOnError)
-			srunFlagSet.ParseErrorsWhitelist.UnknownFlags = true
+			srunFlagSet.ParseErrorsAllowlist.UnknownFlags = true
 
 			err := srunFlagSet.Parse(args)
 			if err != nil {
