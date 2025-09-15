@@ -89,6 +89,7 @@ sudo rm /usr/local/bin/kubectl-kjob
     [1.31](https://testgrid.k8s.io/sig-apps#periodic-kjob-test-e2e-main-1-31),
     [1.32](https://testgrid.k8s.io/sig-apps#periodic-kjob-test-e2e-main-1-32),
     [1.33](https://testgrid.k8s.io/sig-apps#periodic-kjob-test-e2e-main-1-33),
+    [1.34](https://testgrid.k8s.io/sig-apps#periodic-kjob-test-e2e-main-1-34),
     on Kind.
 
 ## License
