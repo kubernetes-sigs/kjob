@@ -44,6 +44,7 @@ func NewDeleteCmd(clientGetter helpers.ClientGetter, streams genericiooptions.IO
 	cmd.AddCommand(NewRayJobCmd(clientGetter, streams))
 	cmd.AddCommand(NewRayClusterCmd(clientGetter, streams))
 	cmd.AddCommand(NewSlurmCmd(clientGetter, streams))
+	cmd.AddCommand(NewJobSetCmd(clientGetter, streams))
 
 	return cmd
 }

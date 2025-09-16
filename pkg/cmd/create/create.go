@@ -52,6 +52,7 @@ import (
 	"k8s.io/kubectl/pkg/util/templates"
 	"k8s.io/utils/clock"
 	"k8s.io/utils/ptr"
+	jobsetapi "sigs.k8s.io/jobset/api/jobset/v1alpha2"
 
 	"sigs.k8s.io/kjob/apis/v1alpha1"
 	"sigs.k8s.io/kjob/pkg/builder"
@@ -164,6 +165,19 @@ var (
 		--max-replicas small-group=5 \
 		--localqueue my-local-queue-name
 	`)
+	createJobSetLong = templates.LongDesc(`
+		Create a jobset.
+
+		JobSet is required for JobSet.
+		How to install JobSet you can find here https://jobset.sigs.k8s.io/.
+	`)
+	createJobSetExample = templates.Examples(`
+		# Create jobset 
+  		kjobctl create jobset \
+		--profile my-application-profile \
+		--replicas small-group=1 \
+		--localqueue my-local-queue-name
+	`)
 	createSlurmExample = templates.Examples(`
 		# Create slurm 
 		kjobctl create slurm --profile my-application-profile -- \
@@ -257,6 +271,7 @@ func NewCreateOptions(streams genericiooptions.IOStreams) *CreateOptions {
 	scheme := runtime.NewScheme()
 	utilruntime.Must(k8sscheme.AddToScheme(scheme))
 	utilruntime.Must(rayv1.AddToScheme(scheme))
+	utilruntime.Must(jobsetapi.AddToScheme(scheme))
 
 	return &CreateOptions{
 		PrintFlags: genericclioptions.NewPrintFlags("created").WithTypeSetter(scheme),
@@ -295,6 +310,20 @@ var createModeSubcommands = map[string]modeSubcommand{
 			subcmd.Flags().Int32Var(&o.UserSpecifiedCompletions, completionsFlagName, 0,
 				"Completions specifies the desired number of successfully finished pods.")
 
+			withTimeFlag(subcmd.Flags(), &o.TimeLimit)
+		},
+	},
+	"jobset": {
+		ModeName: v1alpha1.JobSetMode,
+		Setup: func(clientGetter helpers.ClientGetter, subcmd *cobra.Command, o *CreateOptions) {
+			subcmd.Use += " [--replicas =REPLICAS]" +
+				" [--time TIME_LIMIT]"
+			subcmd.Short = "Create a jobSet"
+			subcmd.Long = createJobSetLong
+			subcmd.Example = createJobSetExample
+
+			subcmd.Flags().StringToIntVar(&o.Replicas, replicasFlagName, nil,
+				"Replicas is the number of desired jobs for this replicated job.")
 			withTimeFlag(subcmd.Flags(), &o.TimeLimit)
 		},
 	},
@@ -473,12 +502,13 @@ func NewCreateCmd(clientGetter helpers.ClientGetter, streams genericiooptions.IO
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create a task",
-		Example: fmt.Sprintf("%s\n\n%s\n\n%s\n\n%s\n\n%s",
+		Example: fmt.Sprintf("%s\n\n%s\n\n%s\n\n%s\n\n%s\n\n%s",
 			createJobExample,
 			createInteractiveExample,
 			createRayJobExample,
 			createRayClusterExample,
 			createSlurmExample,
+			createJobSetExample,
 		),
 	}
 
