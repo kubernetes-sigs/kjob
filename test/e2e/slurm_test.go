@@ -24,6 +24,7 @@ import (
 	"os/exec"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/onsi/ginkgo/v2"
@@ -886,6 +887,11 @@ Job logs streaming finished\.`,
 })
 
 func parseSlurmCreateOutput(output []byte, profileName string) (string, string, string, string, error) {
+	// We have a warning about spec.SessionAffinity being ignored when creating a headless Service.
+	// This was fixed in https://github.com/kubernetes/kubernetes/issues/134040.
+	// Waiting for the fix to be cherry-picked and included in new releases.
+	filteredOutput := filterWarningLines(output)
+
 	pattern := fmt.Sprintf(
 		`(?s)job.batch\/(%[1]s-slurm-.{5}) created\n`+
 			`configmap\/(%[1]s-slurm-.{5}) created\n`+
@@ -895,12 +901,25 @@ func parseSlurmCreateOutput(output []byte, profileName string) (string, string, 
 	)
 	re := regexp.MustCompile(pattern)
 
-	matches := re.FindSubmatch(output)
+	matches := re.FindSubmatch(filteredOutput)
 	if len(matches) < 5 {
-		return "", "", "", "", fmt.Errorf("unexpected output format: %s", output)
+		return "", "", "", "", fmt.Errorf("unexpected output format: %s", filteredOutput)
 	}
 
 	return string(matches[1]), string(matches[2]), string(matches[3]), string(matches[4]), nil
+}
+
+func filterWarningLines(output []byte) []byte {
+	lines := strings.Split(string(output), "\n")
+	var filteredLines []string
+	for _, line := range lines {
+		if !strings.Contains(line, "Warning: ") {
+			filteredLines = append(filteredLines, line)
+		} else {
+			ginkgo.GinkgoLogr.Info(line)
+		}
+	}
+	return []byte(strings.Join(filteredLines, "\n"))
 }
 
 func parseSlurmEnvOutput(output []byte) map[string]string {
