@@ -12,6 +12,7 @@ SBATCH_JOB_NAME={{.SbatchJobName}}
 
 export $(cat {{.EnvsPath}}/{{.SlurmEnvFilename}} | xargs)
 
-{{- if .ChangeDir }}cd {{.ChangeDir}}{{end}}
+{{- if .ChangeDir }}
+cd {{.ChangeDir}}{{end}}
 
 {{.BuildEntrypointCommand}}
