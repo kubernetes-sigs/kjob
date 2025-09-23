@@ -471,7 +471,8 @@ fi
 
 SBATCH_JOB_NAME=job-name
 
-export $(cat /slurm/env/slurm.env | xargs)cd /mydir
+export $(cat /slurm/env/slurm.env | xargs)
+cd /mydir
 
 /slurm/scripts/script </home/%u/%x/stderr%%-%A-%a-%j-%N-%n-%t.out 1> >(tee /home/${USER_ID}/${SBATCH_JOB_NAME}/stdout%-${SLURM_ARRAY_JOB_ID}-${SLURM_ARRAY_TASK_ID}-${SLURM_JOB_ID}-${HOSTNAME}-${JOB_COMPLETION_INDEX}-${SLURM_ARRAY_TASK_ID}.out) 2> >(tee /home/${USER_ID}/${SBATCH_JOB_NAME}/stderr%-${SLURM_ARRAY_JOB_ID}-${SLURM_ARRAY_TASK_ID}-${SLURM_JOB_ID}-${HOSTNAME}-${JOB_COMPLETION_INDEX}-${SLURM_ARRAY_TASK_ID}.out >&2)
 `).
