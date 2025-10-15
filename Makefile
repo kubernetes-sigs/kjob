@@ -53,7 +53,12 @@ SHELL = /usr/bin/env bash -o pipefail
 # For local testing, we should allow user to use different kind cluster name
 # Default will delete default kind cluster
 KIND_CLUSTER_NAME ?= kind
-E2E_KIND_VERSION ?= kindest/node:v1.33.1
+E2E_K8S_VERSIONS ?= 1.31.12 1.32.8 1.33.4
+E2E_K8S_VERSION ?= 1.33
+E2E_K8S_FULL_VERSION ?= $(filter $(E2E_K8S_VERSION).%,$(E2E_K8S_VERSIONS))
+# Default to E2E_K8S_VERSION.0 if no match is found
+E2E_K8S_FULL_VERSION := $(or $(E2E_K8S_FULL_VERSION),$(E2E_K8S_VERSION).0)
+E2E_KIND_VERSION ?= kindest/node:v$(E2E_K8S_FULL_VERSION)
 K8S_VERSION = $(E2E_KIND_VERSION:kindest/node:v%=%)
 
 GIT_TAG ?= $(shell git describe --tags --dirty --always)
