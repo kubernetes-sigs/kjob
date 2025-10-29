@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/golangci/golangci-lint/v2 v2.5.0
-	github.com/onsi/ginkgo/v2 v2.26.0
+	github.com/onsi/ginkgo/v2 v2.27.1
 	gotest.tools/gotestsum v1.13.0
 	k8s.io/code-generator v0.34.1
 	sigs.k8s.io/controller-runtime/tools/setup-envtest v0.0.0-20250407161039-6ad5c1dd4418
