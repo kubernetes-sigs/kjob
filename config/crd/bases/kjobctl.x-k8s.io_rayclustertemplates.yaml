@@ -1431,11 +1431,27 @@ spec:
                                 type: object
                             type: object
                         type: object
+                      labels:
+                        additionalProperties:
+                          type: string
+                        description: |-
+                          Labels specifies the Ray node labels for the head group.
+                          These labels will also be added to the Pods of this head group and override the `--labels`
+                          argument passed to `rayStartParams`.
+                        type: object
                       rayStartParams:
                         additionalProperties:
                           type: string
                         description: 'RayStartParams are the params of the start command:
                           node-manager-port, object-store-memory, ...'
+                        type: object
+                      resources:
+                        additionalProperties:
+                          type: string
+                        description: |-
+                          Resources specifies the resource quantities for the head group.
+                          These values override the resources passed to `rayStartParams` for the group, but
+                          have no effect on the resources set at the K8s Pod container level.
                         type: object
                       serviceType:
                         description: ServiceType is Kubernetes service type of the
@@ -10058,6 +10074,14 @@ spec:
                             This value is only used with the Ray Autoscaler enabled and defaults to the value set by the AutoscalingConfig if not specified for this worker group.
                           format: int32
                           type: integer
+                        labels:
+                          additionalProperties:
+                            type: string
+                          description: |-
+                            Labels specifies the Ray node labels for this worker group.
+                            These labels will also be added to the Pods of this worker group and override the `--labels`
+                            argument passed to `rayStartParams`.
+                          type: object
                         maxReplicas:
                           default: 2147483647
                           description: MaxReplicas denotes the maximum number of desired
@@ -10090,6 +10114,14 @@ spec:
                             optional.
                           format: int32
                           type: integer
+                        resources:
+                          additionalProperties:
+                            type: string
+                          description: |-
+                            Resources specifies the resource quantities for this worker group.
+                            These values override the resources passed to `rayStartParams` for the group, but
+                            have no effect on the resources set at the K8s Pod container level.
+                          type: object
                         scaleStrategy:
                           description: ScaleStrategy defines which pods to remove
                           properties:
@@ -10103,7 +10135,7 @@ spec:
                           description: |-
                             Suspend indicates whether a worker group should be suspended.
                             A suspended worker group will have all pods deleted.
-                            This is not a user-facing API and is only used by RayJob DeletionPolicy.
+                            This is not a user-facing API and is only used by RayJob DeletionStrategy.
                           type: boolean
                         template:
                           description: Template is a pod template for the worker
