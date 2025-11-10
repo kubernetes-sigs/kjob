@@ -3,7 +3,7 @@ module sigs.k8s.io/kjob/hack/tools
 go 1.25.0
 
 require (
-	github.com/golangci/golangci-lint/v2 v2.6.0
+	github.com/golangci/golangci-lint/v2 v2.6.1
 	github.com/onsi/ginkgo/v2 v2.27.2
 	gotest.tools/gotestsum v1.13.0
 	k8s.io/code-generator v0.34.1
