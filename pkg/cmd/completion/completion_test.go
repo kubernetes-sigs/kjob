@@ -26,6 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	k8sfake "k8s.io/client-go/kubernetes/fake"
+	jobsetfake "sigs.k8s.io/jobset/client-go/clientset/versioned/fake"
 	"sigs.k8s.io/kueue/apis/kueue/v1beta1"
 	kueuefake "sigs.k8s.io/kueue/client-go/clientset/versioned/fake"
 
@@ -179,6 +180,32 @@ func TestRayClusterNameCompletionFunc(t *testing.T) {
 	tcg.WithRayClientset(rayfake.NewSimpleClientset(objs...))
 
 	complFn := RayClusterNameFunc(tcg)
+	names, directive := complFn(&cobra.Command{}, args, "")
+	if diff := cmp.Diff(wantNames, names); diff != "" {
+		t.Errorf("Unexpected names (-want/+got)\n%s", diff)
+	}
+
+	if diff := cmp.Diff(wantDirective, directive); diff != "" {
+		t.Errorf("Unexpected directive (-want/+got)\n%s", diff)
+	}
+}
+
+func TestJobSetCompletionFunc(t *testing.T) {
+	args := []string{"job-set-1"}
+	objs := []runtime.Object{
+		wrappers.MakeJobSet("job-set-1", metav1.NamespaceDefault).Profile("p1").Obj(),
+		wrappers.MakeJobSet("job-set-2", metav1.NamespaceDefault).Profile("p1").Obj(),
+		wrappers.MakeJobSet("job-set-3", "test").Profile("p1").Obj(),
+		wrappers.MakeJobSet("job-set-4", metav1.NamespaceDefault).Obj(),
+	}
+
+	wantNames := []string{"job-set-2"}
+	wantDirective := cobra.ShellCompDirectiveNoFileComp
+
+	tcg := cmdtesting.NewTestClientGetter()
+	tcg.WithJobSetClientset(jobsetfake.NewSimpleClientset(objs...))
+
+	complFn := JobSetNameFunc(tcg)
 	names, directive := complFn(&cobra.Command{}, args, "")
 	if diff := cmp.Diff(wantNames, names); diff != "" {
 		t.Errorf("Unexpected names (-want/+got)\n%s", diff)

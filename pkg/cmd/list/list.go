@@ -41,6 +41,7 @@ func NewListCmd(clientGetter helpers.ClientGetter, streams genericiooptions.IOSt
 	}
 
 	cmd.AddCommand(NewJobCmd(clientGetter, streams, clock))
+	cmd.AddCommand(NewJobSetCmd(clientGetter, streams, clock))
 	cmd.AddCommand(NewInteractiveCmd(clientGetter, streams, clock))
 	cmd.AddCommand(NewRayJobCmd(clientGetter, streams, clock))
 	cmd.AddCommand(NewRayClusterCmd(clientGetter, streams, clock))

@@ -231,6 +231,7 @@ Delete resources
 * [kjobctl](../kjobctl.md)	 - ML/AI/Batch Jobs Made Easy
 * [kjobctl delete interactive](kjobctl_delete_interactive.md)	 - Delete interactive shell
 * [kjobctl delete job](kjobctl_delete_job.md)	 - Delete Job
+* [kjobctl delete jobset](kjobctl_delete_jobset.md)	 - Delete JobSet
 * [kjobctl delete raycluster](kjobctl_delete_raycluster.md)	 - Delete RayCluster
 * [kjobctl delete rayjob](kjobctl_delete_rayjob.md)	 - Delete RayJob
 * [kjobctl delete slurm](kjobctl_delete_slurm.md)	 - Delete Slurm

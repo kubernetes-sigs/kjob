@@ -3,54 +3,24 @@ The file is auto-generated from the Go source code of the component using the
 [generator](https://github.com/kubernetes-sigs/kueue/tree/main/cmd/experimental/kjobctl/cmd/kjobctl-docs).
 -->
 
-# kjobctl create
+# kjobctl create jobset
 
 
 ## Synopsis
 
 
-Create a task
+Create a jobset.
+
+ JobSet is required for JobSet. How to install JobSet you can find here https://jobset.sigs.k8s.io/.
+
+```
+kjobctl create jobset --profile APPLICATION_PROFILE_NAME [--localqueue LOCAL_QUEUE_NAME] [--skip-localqueue-validation] [--priority NAME] [--skip-priority-validation] [--replicas =REPLICAS] [--time TIME_LIMIT]
+```
 
 
 ## Examples
 
 ```
-  # Create job
-  kjobctl create job \
-  --profile my-application-profile \
-  --cmd "sleep 5" \
-  --parallelism 4 \
-  --completions 4 \
-  --request cpu=500m,memory=4Gi \
-  --localqueue my-local-queue-name
-
-  # Create interactive
-  kjobctl create interactive \
-  --profile my-application-profile  \
-  --pod-running-timeout 30s \
-  --rm
-
-  # Create rayjob
-  kjobctl create rayjob \
-  --profile my-application-profile \
-  --cmd "python /home/ray/samples/sample_code.py" \
-  --replicas small-group=1 \
-  --min-replicas small-group=1 \
-  --max-replicas small-group=5 \
-  --localqueue my-local-queue-name
-
-  # Create raycluster
-  kjobctl create raycluster \
-  --profile my-application-profile \
-  --replicas small-group=1 \
-  --min-replicas small-group=1 \
-  --max-replicas small-group=5 \
-  --localqueue my-local-queue-name
-
-  # Create slurm
-  kjobctl create slurm --profile my-application-profile -- \
-  --array 0-5 --nodes 3 --ntasks 1 ./script.sh
-
   # Create jobset
   kjobctl create jobset \
   --profile my-application-profile \
@@ -69,12 +39,142 @@ Create a task
     </colgroup>
     <tbody>
     <tr>
+        <td colspan="2">--allow-missing-template-keys&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default: true</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td style="line-height: 130%; word-wrap: break-word;">
+            <p>If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats.</p>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">--dry-run string&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default: &#34;none&#34;</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td style="line-height: 130%; word-wrap: break-word;">
+            <p>Must be &#34;none&#34;, &#34;server&#34;, or &#34;client&#34;. If client strategy, only print the object that would be sent, without sending it. If server strategy, submit server-side request without persisting the resource.</p>
+        </td>
+    </tr>
+    <tr>
         <td colspan="2">-h, --help</td>
     </tr>
     <tr>
         <td></td>
         <td style="line-height: 130%; word-wrap: break-word;">
-            <p>help for create</p>
+            <p>help for jobset</p>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">--localqueue string</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td style="line-height: 130%; word-wrap: break-word;">
+            <p>Kueue localqueue name which is associated with the resource.</p>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">-o, --output string</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td style="line-height: 130%; word-wrap: break-word;">
+            <p>Output format. One of: (json, yaml, name, go-template, go-template-file, template, templatefile, jsonpath, jsonpath-as-json, jsonpath-file).</p>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">--pod-template-annotation &lt;comma-separated &#39;key=value&#39; pairs&gt;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default: []</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td style="line-height: 130%; word-wrap: break-word;">
+            <p>Specifies one or more annotations for the Pod template.</p>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">--pod-template-label &lt;comma-separated &#39;key=value&#39; pairs&gt;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default: []</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td style="line-height: 130%; word-wrap: break-word;">
+            <p>Specifies one or more labels for the Pod template.</p>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">--priority string</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td style="line-height: 130%; word-wrap: break-word;">
+            <p>Apply priority for the entire workload.</p>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">-p, --profile string</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td style="line-height: 130%; word-wrap: break-word;">
+            <p>Application profile contains a template (with defaults set) for running a specific type of application.</p>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">--replicas &lt;comma-separated &#39;key=int&#39; pairs&gt;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default: []</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td style="line-height: 130%; word-wrap: break-word;">
+            <p>Replicas is the number of desired jobs for this replicated job.</p>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">--show-managed-fields</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td style="line-height: 130%; word-wrap: break-word;">
+            <p>If true, keep the managedFields when printing objects in JSON or YAML format.</p>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">--skip-localqueue-validation</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td style="line-height: 130%; word-wrap: break-word;">
+            <p>Skip local queue validation. Add local queue even if the queue does not exist.</p>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">--skip-priority-validation</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td style="line-height: 130%; word-wrap: break-word;">
+            <p>Skip workload priority class validation. Add priority class label even if the class does not exist.</p>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">--template string</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td style="line-height: 130%; word-wrap: break-word;">
+            <p>Template string or path to template file to use when -o=go-template, -o=go-template-file. The template format is golang templates [http://golang.org/pkg/text/template/#pkg-overview].</p>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">-t, --time string</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td style="line-height: 130%; word-wrap: break-word;">
+            <p>Set a limit on the total run time of the job. 
+A time limit of zero requests that no time limit be imposed. 
+Acceptable time formats include &#34;minutes&#34;, &#34;minutes:seconds&#34;, 
+&#34;hours:minutes:seconds&#34;, &#34;days-hours&#34;, &#34;days-hours:minutes&#34; 
+and &#34;days-hours:minutes:seconds&#34;.</p>
         </td>
     </tr>
     </tbody>
@@ -258,11 +358,5 @@ Create a task
 
 ## See Also
 
-* [kjobctl](../kjobctl.md)	 - ML/AI/Batch Jobs Made Easy
-* [kjobctl create interactive](kjobctl_create_interactive.md)	 - Create an interactive shell
-* [kjobctl create job](kjobctl_create_job.md)	 - Create a job
-* [kjobctl create jobset](kjobctl_create_jobset.md)	 - Create a jobSet
-* [kjobctl create raycluster](kjobctl_create_raycluster.md)	 - Create a raycluster
-* [kjobctl create rayjob](kjobctl_create_rayjob.md)	 - Create a rayjob
-* [kjobctl create slurm](kjobctl_create_slurm.md)	 - Create a slurm job
+* [kjobctl_create](_index.md)	 - Create a task
 
