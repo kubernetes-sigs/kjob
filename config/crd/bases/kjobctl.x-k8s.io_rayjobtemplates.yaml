@@ -211,6 +211,20 @@ spec:
                     description: RayClusterSpec is the cluster template to run the
                       job
                     properties:
+                      authOptions:
+                        description: AuthOptions specifies the authentication options
+                          for the RayCluster.
+                        properties:
+                          mode:
+                            description: |-
+                              Mode specifies the authentication mode.
+                              Supported values are "disabled" and "token".
+                              Defaults to "token".
+                            enum:
+                            - disabled
+                            - token
+                            type: string
+                        type: object
                       autoscalerOptions:
                         description: AutoscalerOptions specifies optional configuration
                           for the Ray autoscaler.
