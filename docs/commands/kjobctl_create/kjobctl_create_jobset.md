@@ -14,7 +14,7 @@ Create a jobset.
  JobSet is required for JobSet. How to install JobSet you can find here https://jobset.sigs.k8s.io/.
 
 ```
-kjobctl create jobset --profile APPLICATION_PROFILE_NAME [--localqueue LOCAL_QUEUE_NAME] [--skip-localqueue-validation] [--priority NAME] [--skip-priority-validation] [--replicas =REPLICAS] [--time TIME_LIMIT]
+kjobctl create jobset --profile APPLICATION_PROFILE_NAME [--localqueue LOCAL_QUEUE_NAME] [--skip-localqueue-validation] [--priority NAME] [--skip-priority-validation] [--cmd COMMAND] [--request RESOURCE_NAME=QUANTITY] [--replicas =REPLICAS] [--time TIME_LIMIT]
 ```
 
 
@@ -45,6 +45,15 @@ kjobctl create jobset --profile APPLICATION_PROFILE_NAME [--localqueue LOCAL_QUE
         <td></td>
         <td style="line-height: 130%; word-wrap: break-word;">
             <p>If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats.</p>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">--cmd string</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td style="line-height: 130%; word-wrap: break-word;">
+            <p>Command which is associated with the resource.</p>
         </td>
     </tr>
     <tr>
@@ -126,6 +135,15 @@ kjobctl create jobset --profile APPLICATION_PROFILE_NAME [--localqueue LOCAL_QUE
         <td></td>
         <td style="line-height: 130%; word-wrap: break-word;">
             <p>Replicas is the number of desired jobs for this replicated job.</p>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">--request &lt;comma-separated &#39;key=value&#39; pairs&gt;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default: []</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td style="line-height: 130%; word-wrap: break-word;">
+            <p>Request is a set of (resource name, quantity) pairs.</p>
         </td>
     </tr>
     <tr>

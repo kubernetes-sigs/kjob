@@ -51,9 +51,21 @@ func (b *jobSetBuilder) build(ctx context.Context) (runtime.Object, []runtime.Ob
 		Spec:       template.Template.Spec,
 	}
 
-	b.buildJobSetSpec(&jobSet.Spec)
+	b.buildJobSetSpec(jobSet)
 
 	return jobSet, nil, nil
+}
+
+func (b *jobSetBuilder) buildJobSetSpec(jobSet *jobsetapi.JobSet) {
+	for i := range jobSet.Spec.ReplicatedJobs {
+		rj := &jobSet.Spec.ReplicatedJobs[i]
+
+		if replicas, ok := b.replicas[rj.Name]; ok {
+			rj.Replicas = int32(replicas)
+		}
+
+		b.buildPodTemplateSpec(&rj.Template.Spec.Template)
+	}
 }
 
 func newJobSetBuilder(b *Builder) *jobSetBuilder {

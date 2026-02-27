@@ -26,7 +26,7 @@ import (
 // JobSetTemplateWrapper wraps a JobSetTemplate.
 type JobSetTemplateWrapper struct{ v1alpha1.JobSetTemplate }
 
-// MakeRayClusterTemplate creates a wrapper for a RayClusterTemplate
+// MakeJobSetTemplate creates a wrapper for a JobSetTemplate
 func MakeJobSetTemplate(name, ns string) *JobSetTemplateWrapper {
 	return &JobSetTemplateWrapper{
 		JobSetTemplate: v1alpha1.JobSetTemplate{
@@ -38,33 +38,33 @@ func MakeJobSetTemplate(name, ns string) *JobSetTemplateWrapper {
 	}
 }
 
-// Obj returns the inner RayClusterTemplate.
+// Obj returns the inner JobSetTemplate.
 func (w *JobSetTemplateWrapper) Obj() *v1alpha1.JobSetTemplate {
 	return &w.JobSetTemplate
 }
 
-// Clone RayClusterTemplateWrapper.
+// Clone JobSetTemplateWrapper.
 func (w *JobSetTemplateWrapper) Clone() *JobSetTemplateWrapper {
 	return &JobSetTemplateWrapper{
-		JobSetTemplate: *w.JobSetTemplate.DeepCopy(),
+		JobSetTemplate: *w.DeepCopy(),
 	}
 }
 
 // Label sets the label key and value.
 func (w *JobSetTemplateWrapper) Label(key, value string) *JobSetTemplateWrapper {
-	if w.Template.ObjectMeta.Labels == nil {
-		w.Template.ObjectMeta.Labels = make(map[string]string)
+	if w.Template.Labels == nil {
+		w.Template.Labels = make(map[string]string)
 	}
-	w.Template.ObjectMeta.Labels[key] = value
+	w.Template.Labels[key] = value
 	return w
 }
 
 // Annotation sets the label key and value.
 func (w *JobSetTemplateWrapper) Annotation(key, value string) *JobSetTemplateWrapper {
-	if w.Template.ObjectMeta.Annotations == nil {
-		w.Template.ObjectMeta.Annotations = make(map[string]string)
+	if w.Template.Annotations == nil {
+		w.Template.Annotations = make(map[string]string)
 	}
-	w.Template.ObjectMeta.Annotations[key] = value
+	w.Template.Annotations[key] = value
 	return w
 }
 

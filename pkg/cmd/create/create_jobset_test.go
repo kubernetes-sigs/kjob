@@ -18,11 +18,16 @@ package create
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -32,16 +37,43 @@ import (
 	k8sscheme "k8s.io/client-go/kubernetes/scheme"
 	clocktesting "k8s.io/utils/clock/testing"
 	jobsetapi "sigs.k8s.io/jobset/api/jobset/v1alpha2"
+	kueue "sigs.k8s.io/kueue/apis/kueue/v1beta1"
 	kueuefake "sigs.k8s.io/kueue/client-go/clientset/versioned/fake"
 
 	"sigs.k8s.io/kjob/apis/v1alpha1"
 	kjobctlfake "sigs.k8s.io/kjob/client-go/clientset/versioned/fake"
 	cmdtesting "sigs.k8s.io/kjob/pkg/cmd/testing"
+	"sigs.k8s.io/kjob/pkg/constants"
 	"sigs.k8s.io/kjob/pkg/testing/wrappers"
 )
 
+func makeExampleJobSetSpec() jobsetapi.JobSetSpec {
+	return jobsetapi.JobSetSpec{
+		ReplicatedJobs: []jobsetapi.ReplicatedJob{
+			{
+				Name: "rj",
+				Template: batchv1.JobTemplateSpec{
+					Spec: batchv1.JobSpec{
+						Template: corev1.PodTemplateSpec{
+							Spec: corev1.PodSpec{
+								Containers: []corev1.Container{
+									{Name: "c1", Image: "busybox"},
+									{Name: "c2", Image: "busybox"},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func TestCreateJobSetCmd(t *testing.T) {
 	testStartTime := time.Now()
+	userID := os.Getenv(constants.SystemEnvVarNameUser)
+
+	jobSetGVK := schema.GroupVersionKind{Group: "jobset.x-k8s.io", Version: "v1alpha2", Kind: "JobSet"}
 
 	testCases := map[string]struct {
 		ns          string
@@ -62,7 +94,7 @@ func TestCreateJobSetCmd(t *testing.T) {
 					WithSupportedMode(*wrappers.MakeSupportedMode(v1alpha1.JobSetMode, "jobSet").Obj()).
 					Obj(),
 			},
-			gvks: []schema.GroupVersionKind{{Group: "jobset.x-k8s.io", Version: "v1alpha2", Kind: "JobSet"}},
+			gvks: []schema.GroupVersionKind{jobSetGVK},
 			wantLists: []runtime.Object{
 				&jobsetapi.JobSetList{
 					TypeMeta: metav1.TypeMeta{Kind: "JobSetList", APIVersion: "jobset.x-k8s.io/v1alpha2"},
@@ -77,6 +109,232 @@ func TestCreateJobSetCmd(t *testing.T) {
 			},
 			// Fake dynamic client not generating name. That's why we have <unknown>.
 			wantOut: "jobset.jobset.x-k8s.io/<unknown> created\n",
+		},
+		"should create jobSet with localqueue": {
+			args: []string{"jobset", "--profile", "profile", "--localqueue", "lq1"},
+			kjobctlObjs: []runtime.Object{
+				wrappers.MakeJobSetTemplate("jobSet", metav1.NamespaceDefault).Obj(),
+				wrappers.MakeApplicationProfile("profile", metav1.NamespaceDefault).
+					WithSupportedMode(*wrappers.MakeSupportedMode(v1alpha1.JobSetMode, "jobSet").Obj()).
+					Obj(),
+			},
+			kueueObjs: []runtime.Object{
+				&kueue.LocalQueue{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: metav1.NamespaceDefault,
+						Name:      "lq1",
+					},
+				},
+			},
+			gvks: []schema.GroupVersionKind{jobSetGVK},
+			wantLists: []runtime.Object{
+				&jobsetapi.JobSetList{
+					TypeMeta: metav1.TypeMeta{Kind: "JobSetList", APIVersion: "jobset.x-k8s.io/v1alpha2"},
+					Items: []jobsetapi.JobSet{
+						*wrappers.MakeJobSet("", metav1.NamespaceDefault).
+							GenerateName("profile-jobset-").
+							Profile("profile").
+							Mode(v1alpha1.JobSetMode).
+							LocalQueue("lq1").
+							Obj(),
+					},
+				},
+			},
+			wantOut: "jobset.jobset.x-k8s.io/<unknown> created\n",
+		},
+		"should create jobSet with priority": {
+			args: []string{"jobset", "--profile", "profile", "--priority", "sample-priority"},
+			kjobctlObjs: []runtime.Object{
+				wrappers.MakeJobSetTemplate("jobSet", metav1.NamespaceDefault).Obj(),
+				wrappers.MakeApplicationProfile("profile", metav1.NamespaceDefault).
+					WithSupportedMode(*wrappers.MakeSupportedMode(v1alpha1.JobSetMode, "jobSet").Obj()).
+					Obj(),
+			},
+			kueueObjs: []runtime.Object{
+				&kueue.WorkloadPriorityClass{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "sample-priority",
+					},
+				},
+			},
+			gvks: []schema.GroupVersionKind{jobSetGVK},
+			wantLists: []runtime.Object{
+				&jobsetapi.JobSetList{
+					TypeMeta: metav1.TypeMeta{Kind: "JobSetList", APIVersion: "jobset.x-k8s.io/v1alpha2"},
+					Items: []jobsetapi.JobSet{
+						*wrappers.MakeJobSet("", metav1.NamespaceDefault).
+							GenerateName("profile-jobset-").
+							Profile("profile").
+							Mode(v1alpha1.JobSetMode).
+							Priority("sample-priority").
+							Obj(),
+					},
+				},
+			},
+			wantOut: "jobset.jobset.x-k8s.io/<unknown> created\n",
+		},
+		"should create jobSet with replicas": {
+			args: []string{"jobset", "--profile", "profile", "--replicas", "rj=5"},
+			kjobctlObjs: []runtime.Object{
+				wrappers.MakeJobSetTemplate("jobSet", metav1.NamespaceDefault).
+					Spec(makeExampleJobSetSpec()).
+					Obj(),
+				wrappers.MakeApplicationProfile("profile", metav1.NamespaceDefault).
+					WithSupportedMode(*wrappers.MakeSupportedMode(v1alpha1.JobSetMode, "jobSet").Obj()).
+					Obj(),
+			},
+			gvks: []schema.GroupVersionKind{jobSetGVK},
+			wantLists: []runtime.Object{
+				&jobsetapi.JobSetList{
+					TypeMeta: metav1.TypeMeta{Kind: "JobSetList", APIVersion: "jobset.x-k8s.io/v1alpha2"},
+					Items: []jobsetapi.JobSet{
+						*wrappers.MakeJobSet("", metav1.NamespaceDefault).
+							GenerateName("profile-jobset-").
+							Profile("profile").
+							Mode(v1alpha1.JobSetMode).
+							Spec(makeExampleJobSetSpec()).
+							Replicas("rj", 5).
+							WithEnvVar(corev1.EnvVar{Name: constants.EnvVarNameUserID, Value: userID}).
+							WithEnvVar(corev1.EnvVar{Name: constants.EnvVarTaskName, Value: "default_profile"}).
+							WithEnvVar(corev1.EnvVar{
+								Name:  constants.EnvVarTaskID,
+								Value: fmt.Sprintf("%s_%s_default_profile", userID, testStartTime.Format(time.RFC3339)),
+							}).
+							WithEnvVar(corev1.EnvVar{Name: "PROFILE", Value: "default_profile"}).
+							WithEnvVar(corev1.EnvVar{Name: "TIMESTAMP", Value: testStartTime.Format(time.RFC3339)}).
+							Obj(),
+					},
+				},
+			},
+			wantOut: "jobset.jobset.x-k8s.io/<unknown> created\n",
+		},
+		"should create jobSet with command": {
+			args: []string{"jobset", "--profile", "profile", "--cmd", "sleep 15s"},
+			kjobctlObjs: []runtime.Object{
+				wrappers.MakeJobSetTemplate("jobSet", metav1.NamespaceDefault).
+					Spec(makeExampleJobSetSpec()).
+					Obj(),
+				wrappers.MakeApplicationProfile("profile", metav1.NamespaceDefault).
+					WithSupportedMode(*wrappers.MakeSupportedMode(v1alpha1.JobSetMode, "jobSet").Obj()).
+					Obj(),
+			},
+			gvks: []schema.GroupVersionKind{jobSetGVK},
+			wantLists: []runtime.Object{
+				&jobsetapi.JobSetList{
+					TypeMeta: metav1.TypeMeta{Kind: "JobSetList", APIVersion: "jobset.x-k8s.io/v1alpha2"},
+					Items: []jobsetapi.JobSet{
+						*wrappers.MakeJobSet("", metav1.NamespaceDefault).
+							GenerateName("profile-jobset-").
+							Profile("profile").
+							Mode(v1alpha1.JobSetMode).
+							Spec(makeExampleJobSetSpec()).
+							Command([]string{"sleep", "15s"}).
+							WithEnvVar(corev1.EnvVar{Name: constants.EnvVarNameUserID, Value: userID}).
+							WithEnvVar(corev1.EnvVar{Name: constants.EnvVarTaskName, Value: "default_profile"}).
+							WithEnvVar(corev1.EnvVar{
+								Name:  constants.EnvVarTaskID,
+								Value: fmt.Sprintf("%s_%s_default_profile", userID, testStartTime.Format(time.RFC3339)),
+							}).
+							WithEnvVar(corev1.EnvVar{Name: "PROFILE", Value: "default_profile"}).
+							WithEnvVar(corev1.EnvVar{Name: "TIMESTAMP", Value: testStartTime.Format(time.RFC3339)}).
+							Obj(),
+					},
+				},
+			},
+			wantOut: "jobset.jobset.x-k8s.io/<unknown> created\n",
+		},
+		"should create jobSet with request": {
+			args: []string{"jobset", "--profile", "profile", "--request", "cpu=100m"},
+			kjobctlObjs: []runtime.Object{
+				wrappers.MakeJobSetTemplate("jobSet", metav1.NamespaceDefault).
+					Spec(makeExampleJobSetSpec()).
+					Obj(),
+				wrappers.MakeApplicationProfile("profile", metav1.NamespaceDefault).
+					WithSupportedMode(*wrappers.MakeSupportedMode(v1alpha1.JobSetMode, "jobSet").Obj()).
+					Obj(),
+			},
+			gvks: []schema.GroupVersionKind{jobSetGVK},
+			wantLists: []runtime.Object{
+				&jobsetapi.JobSetList{
+					TypeMeta: metav1.TypeMeta{Kind: "JobSetList", APIVersion: "jobset.x-k8s.io/v1alpha2"},
+					Items: []jobsetapi.JobSet{
+						*wrappers.MakeJobSet("", metav1.NamespaceDefault).
+							GenerateName("profile-jobset-").
+							Profile("profile").
+							Mode(v1alpha1.JobSetMode).
+							Spec(makeExampleJobSetSpec()).
+							Request(corev1.ResourceCPU, resource.MustParse("100m")).
+							WithEnvVar(corev1.EnvVar{Name: constants.EnvVarNameUserID, Value: userID}).
+							WithEnvVar(corev1.EnvVar{Name: constants.EnvVarTaskName, Value: "default_profile"}).
+							WithEnvVar(corev1.EnvVar{
+								Name:  constants.EnvVarTaskID,
+								Value: fmt.Sprintf("%s_%s_default_profile", userID, testStartTime.Format(time.RFC3339)),
+							}).
+							WithEnvVar(corev1.EnvVar{Name: "PROFILE", Value: "default_profile"}).
+							WithEnvVar(corev1.EnvVar{Name: "TIMESTAMP", Value: testStartTime.Format(time.RFC3339)}).
+							Obj(),
+					},
+				},
+			},
+			wantOut: "jobset.jobset.x-k8s.io/<unknown> created\n",
+		},
+		"should create jobSet with pod template labels and annotations": {
+			args: []string{
+				"jobset",
+				"--profile", "profile",
+				"--pod-template-label", "foo=bar",
+				"--pod-template-annotation", "foo=baz",
+			},
+			kjobctlObjs: []runtime.Object{
+				wrappers.MakeJobSetTemplate("jobSet", metav1.NamespaceDefault).
+					Spec(makeExampleJobSetSpec()).
+					Obj(),
+				wrappers.MakeApplicationProfile("profile", metav1.NamespaceDefault).
+					WithSupportedMode(*wrappers.MakeSupportedMode(v1alpha1.JobSetMode, "jobSet").Obj()).
+					Obj(),
+			},
+			gvks: []schema.GroupVersionKind{jobSetGVK},
+			wantLists: []runtime.Object{
+				&jobsetapi.JobSetList{
+					TypeMeta: metav1.TypeMeta{Kind: "JobSetList", APIVersion: "jobset.x-k8s.io/v1alpha2"},
+					Items: []jobsetapi.JobSet{
+						*wrappers.MakeJobSet("", metav1.NamespaceDefault).
+							GenerateName("profile-jobset-").
+							Profile("profile").
+							Mode(v1alpha1.JobSetMode).
+							Spec(makeExampleJobSetSpec()).
+							PodTemplateLabel("foo", "bar").
+							PodTemplateAnnotation("foo", "baz").
+							WithEnvVar(corev1.EnvVar{Name: constants.EnvVarNameUserID, Value: userID}).
+							WithEnvVar(corev1.EnvVar{Name: constants.EnvVarTaskName, Value: "default_profile"}).
+							WithEnvVar(corev1.EnvVar{
+								Name:  constants.EnvVarTaskID,
+								Value: fmt.Sprintf("%s_%s_default_profile", userID, testStartTime.Format(time.RFC3339)),
+							}).
+							WithEnvVar(corev1.EnvVar{Name: "PROFILE", Value: "default_profile"}).
+							WithEnvVar(corev1.EnvVar{Name: "TIMESTAMP", Value: testStartTime.Format(time.RFC3339)}).
+							Obj(),
+					},
+				},
+			},
+			wantOut: "jobset.jobset.x-k8s.io/<unknown> created\n",
+		},
+		"should create jobSet with client dry run": {
+			args: []string{"jobset", "--profile", "profile", "--dry-run", "client"},
+			kjobctlObjs: []runtime.Object{
+				wrappers.MakeJobSetTemplate("jobSet", metav1.NamespaceDefault).Obj(),
+				wrappers.MakeApplicationProfile("profile", metav1.NamespaceDefault).
+					WithSupportedMode(*wrappers.MakeSupportedMode(v1alpha1.JobSetMode, "jobSet").Obj()).
+					Obj(),
+			},
+			gvks: []schema.GroupVersionKind{jobSetGVK},
+			wantLists: []runtime.Object{
+				&jobsetapi.JobSetList{
+					TypeMeta: metav1.TypeMeta{Kind: "JobSetList", APIVersion: "jobset.x-k8s.io/v1alpha2"},
+					Items:    []jobsetapi.JobSet{},
+				},
+			},
+			wantOut: "jobset.jobset.x-k8s.io/<unknown> created (client dry run)\n",
 		},
 	}
 	for name, tc := range testCases {

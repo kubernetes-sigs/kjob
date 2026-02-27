@@ -316,12 +316,18 @@ var createModeSubcommands = map[string]modeSubcommand{
 	"jobset": {
 		ModeName: v1alpha1.JobSetMode,
 		Setup: func(clientGetter helpers.ClientGetter, subcmd *cobra.Command, o *CreateOptions) {
-			subcmd.Use += " [--replicas =REPLICAS]" +
+			subcmd.Use += " [--cmd COMMAND]" +
+				" [--request RESOURCE_NAME=QUANTITY]" +
+				" [--replicas =REPLICAS]" +
 				" [--time TIME_LIMIT]"
 			subcmd.Short = "Create a jobSet"
 			subcmd.Long = createJobSetLong
 			subcmd.Example = createJobSetExample
 
+			subcmd.Flags().StringVar(&o.UserSpecifiedCommand, commandFlagName, "",
+				"Command which is associated with the resource.")
+			subcmd.Flags().StringToStringVar(&o.UserSpecifiedRequest, requestFlagName, nil,
+				"Request is a set of (resource name, quantity) pairs.")
 			subcmd.Flags().StringToIntVar(&o.Replicas, replicasFlagName, nil,
 				"Replicas is the number of desired jobs for this replicated job.")
 			withTimeFlag(subcmd.Flags(), &o.TimeLimit)

@@ -92,8 +92,8 @@ func (p *listJobSetPrinter) printJobSet(jobSet *jobsetapi.JobSet) metav1.TableRo
 	}
 	row.Cells = []any{
 		jobSet.Name,
-		jobSet.ObjectMeta.Labels[constants.ProfileLabel],
-		jobSet.ObjectMeta.Labels[kueueconstants.QueueLabel],
+		jobSet.Labels[constants.ProfileLabel],
+		jobSet.Labels[kueueconstants.QueueLabel],
 	}
 	return row
 }

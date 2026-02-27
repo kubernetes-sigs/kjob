@@ -33,7 +33,6 @@ import (
 	utilrand "k8s.io/apimachinery/pkg/util/rand"
 	k8s "k8s.io/client-go/kubernetes"
 	"k8s.io/utils/ptr"
-	jobsetapi "sigs.k8s.io/jobset/api/jobset/v1alpha2"
 	kueueversioned "sigs.k8s.io/kueue/client-go/clientset/versioned"
 	kueueconstants "sigs.k8s.io/kueue/pkg/controller/constants"
 
@@ -721,12 +720,6 @@ func (b *Builder) buildRayClusterSpec(spec *rayv1.RayClusterSpec) {
 		}
 
 		b.buildPodSpecVolumesAndEnv(&workerGroupSpec.Template.Spec)
-	}
-}
-
-func (b *Builder) buildJobSetSpec(jobSetSpec *jobsetapi.JobSetSpec) {
-	for _, val := range jobSetSpec.ReplicatedJobs {
-		b.buildPodSpecVolumesAndEnv(&val.Template.Spec.Template.Spec)
 	}
 }
 
