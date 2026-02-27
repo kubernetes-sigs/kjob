@@ -45,7 +45,7 @@ func TestNamespaceNameFunc(t *testing.T) {
 	wantDirective := cobra.ShellCompDirectiveNoFileComp
 
 	tcg := cmdtesting.NewTestClientGetter()
-	tcg.WithK8sClientset(k8sfake.NewSimpleClientset(objs...))
+	tcg.WithK8sClientset(k8sfake.NewClientset(objs...))
 
 	complFn := NamespaceNameFunc(tcg)
 	names, directive := complFn(&cobra.Command{}, []string{}, "")
@@ -124,7 +124,7 @@ func TestJobNameCompletionFunc(t *testing.T) {
 	wantDirective := cobra.ShellCompDirectiveNoFileComp
 
 	tcg := cmdtesting.NewTestClientGetter()
-	tcg.WithK8sClientset(k8sfake.NewSimpleClientset(objs...))
+	tcg.WithK8sClientset(k8sfake.NewClientset(objs...))
 
 	complFn := JobNameFunc(tcg, mode)
 	names, directive := complFn(&cobra.Command{}, args, "")
@@ -202,7 +202,7 @@ func TestPodNameCompletionFunc(t *testing.T) {
 	wantDirective := cobra.ShellCompDirectiveNoFileComp
 
 	tcg := cmdtesting.NewTestClientGetter()
-	tcg.WithK8sClientset(k8sfake.NewSimpleClientset(objs...))
+	tcg.WithK8sClientset(k8sfake.NewClientset(objs...))
 
 	complFn := PodNameFunc(tcg)
 	names, directive := complFn(&cobra.Command{}, args, "")

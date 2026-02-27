@@ -213,7 +213,7 @@ func TestInteractiveBuilder(t *testing.T) {
 
 			tcg := cmdtesting.NewTestClientGetter().
 				WithKjobctlClientset(kjobctlfake.NewSimpleClientset(tc.kjobctlObjs...)).
-				WithK8sClientset(k8sfake.NewSimpleClientset(tc.k8sObjs...))
+				WithK8sClientset(k8sfake.NewClientset(tc.k8sObjs...))
 
 			gotRootObj, gotChildObjs, gotErr := NewBuilder(tcg, testStartTime).
 				WithNamespace(tc.namespace).

@@ -181,7 +181,7 @@ default     rc2    profile2   lq2           2                 3                 
 				tcg.WithNamespace(tc.ns)
 			}
 
-			tcg.WithK8sClientset(k8sfake.NewSimpleClientset(tc.k8sObjs...))
+			tcg.WithK8sClientset(k8sfake.NewClientset(tc.k8sObjs...))
 			tcg.WithRayClientset(rayfake.NewSimpleClientset(tc.rayObjs...))
 
 			cmd := NewListCmd(tcg, streams, testingclock.NewFakeClock(testStartTime))
