@@ -19,6 +19,8 @@ package v1alpha1
 
 type ApplicationProfileExpansion interface{}
 
+type JobSetTemplateExpansion interface{}
+
 type JobTemplateExpansion interface{}
 
 type RayClusterTemplateExpansion interface{}

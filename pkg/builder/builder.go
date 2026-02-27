@@ -544,6 +544,8 @@ func (b *Builder) Do(ctx context.Context) (runtime.Object, []runtime.Object, err
 		bImpl = newRayClusterBuilder(b)
 	case v1alpha1.SlurmMode:
 		bImpl = newSlurmBuilder(b)
+	case v1alpha1.JobSetMode:
+		bImpl = newJobSetBuilder(b)
 	}
 
 	if bImpl == nil {

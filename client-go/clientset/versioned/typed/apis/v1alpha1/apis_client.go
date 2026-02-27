@@ -28,6 +28,7 @@ import (
 type KjobctlV1alpha1Interface interface {
 	RESTClient() rest.Interface
 	ApplicationProfilesGetter
+	JobSetTemplatesGetter
 	JobTemplatesGetter
 	RayClusterTemplatesGetter
 	RayJobTemplatesGetter
@@ -41,6 +42,10 @@ type KjobctlV1alpha1Client struct {
 
 func (c *KjobctlV1alpha1Client) ApplicationProfiles(namespace string) ApplicationProfileInterface {
 	return newApplicationProfiles(c, namespace)
+}
+
+func (c *KjobctlV1alpha1Client) JobSetTemplates(namespace string) JobSetTemplateInterface {
+	return newJobSetTemplates(c, namespace)
 }
 
 func (c *KjobctlV1alpha1Client) JobTemplates(namespace string) JobTemplateInterface {
