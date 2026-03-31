@@ -685,7 +685,7 @@ Worker Groups:
 
 			tcg := cmdtesting.NewTestClientGetter()
 			if tc.withK8sClientSet {
-				tcg.WithK8sClientset(k8sfake.NewSimpleClientset(tc.objs...))
+				tcg.WithK8sClientset(k8sfake.NewClientset(tc.objs...))
 			}
 
 			if len(tc.mapperKinds) != 0 {

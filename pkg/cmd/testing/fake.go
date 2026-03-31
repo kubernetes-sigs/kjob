@@ -60,7 +60,7 @@ func NewTestClientGetter() *TestClientGetter {
 	return &TestClientGetter{
 		ClientGetter:     helpers.NewClientGetter(configFlags),
 		kjobctlClientset: kjobctlfake.NewSimpleClientset(),
-		k8sClientset:     k8sfake.NewSimpleClientset(),
+		k8sClientset:     k8sfake.NewClientset(),
 		restConfig:       restConfig,
 		configFlags:      configFlags,
 	}

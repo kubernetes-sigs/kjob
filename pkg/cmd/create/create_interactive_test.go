@@ -206,7 +206,7 @@ func TestCreateOptionsRunInteractive(t *testing.T) {
 			}
 			tc.options.PrintObj = printer.PrintObj
 
-			k8sClientset := k8sfake.NewSimpleClientset(tc.k8sObjs...)
+			k8sClientset := k8sfake.NewClientset(tc.k8sObjs...)
 			kjobctlClientset := kjobctlfake.NewSimpleClientset(tc.kjobctlObjs...)
 			dynamicClient := fake.NewSimpleDynamicClient(k8sscheme.Scheme)
 			restMapper := meta.NewDefaultRESTMapper([]schema.GroupVersion{})
@@ -258,7 +258,7 @@ func TestCreateOptionsRunInteractive(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			defaultCmpOpts := []cmp.Option{cmpopts.IgnoreFields(metav1.ObjectMeta{}, "Name")}
+			defaultCmpOpts := []cmp.Option{cmpopts.IgnoreFields(metav1.ObjectMeta{}, "Name", "ManagedFields")}
 			if diff := cmp.Diff(tc.wantPodList, gotPodList, defaultCmpOpts...); diff != "" {
 				t.Errorf("Unexpected error (-want/+got)\n%s", diff)
 			}

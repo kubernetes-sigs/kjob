@@ -342,7 +342,7 @@ j1     profile1   lq1           3/3           60m        60m
 		t.Run(name, func(t *testing.T) {
 			streams, _, out, outErr := genericiooptions.NewTestIOStreams()
 
-			clientset := fake.NewSimpleClientset(tc.objs...)
+			clientset := fake.NewClientset(tc.objs...)
 			clientset.PrependReactor("list", "jobs", func(action kubetesting.Action) (handled bool, ret runtime.Object, err error) {
 				listAction := action.(kubetesting.ListActionImpl)
 				fieldsSelector := listAction.GetListRestrictions().Fields

@@ -133,7 +133,7 @@ func TestInteractiveCmd(t *testing.T) {
 
 			streams, _, out, outErr := genericiooptions.NewTestIOStreams()
 
-			clientset := k8sfake.NewSimpleClientset(tc.objs...)
+			clientset := k8sfake.NewClientset(tc.objs...)
 			clientset.PrependReactor("delete", "pods", func(action kubetesting.Action) (handled bool, ret runtime.Object, err error) {
 				if slices.Contains(action.(kubetesting.DeleteAction).GetDeleteOptions().DryRun, metav1.DryRunAll) {
 					handled = true

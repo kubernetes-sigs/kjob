@@ -50,6 +50,7 @@ import (
 	"k8s.io/kubectl/pkg/cmd/attach"
 	"k8s.io/kubectl/pkg/cmd/exec"
 	"k8s.io/kubectl/pkg/util/templates"
+	"k8s.io/kubectl/pkg/util/term"
 	"k8s.io/utils/clock"
 	"k8s.io/utils/ptr"
 
@@ -885,6 +886,20 @@ func (o *CreateOptions) RunInteractivePod(ctx context.Context, clientGetter help
 	return nil
 }
 
+// terminalSizeQueueAdapter adapts term.TerminalSizeQueue to remotecommand.TerminalSizeQueue.
+// These interfaces were decoupled in k8s 0.35 and are structurally identical but in different packages.
+type terminalSizeQueueAdapter struct {
+	queue term.TerminalSizeQueue
+}
+
+func (a *terminalSizeQueueAdapter) Next() *remotecommand.TerminalSize {
+	size := a.queue.Next()
+	if size == nil {
+		return nil
+	}
+	return &remotecommand.TerminalSize{Width: size.Width, Height: size.Height}
+}
+
 func attachTTY(o *CreateOptions, pod *corev1.Pod) error {
 	o.Stdin = true
 	o.TTY = true
@@ -898,7 +913,7 @@ func attachTTY(o *CreateOptions, pod *corev1.Pod) error {
 	var sizeQueue remotecommand.TerminalSizeQueue
 	if tty.Raw {
 		// this call spawns a goroutine to monitor/update the terminal size
-		sizeQueue = tty.MonitorSize(tty.GetSize())
+		sizeQueue = &terminalSizeQueueAdapter{queue: tty.MonitorSize(tty.GetSize())}
 
 		// unset p.Err if it was previously set because both stdout and stderr go over p.Out when tty is true
 		o.ErrOut = nil
