@@ -6,6 +6,6 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Update new version in krew-index
-        uses: rajatjindal/krew-release-bot@v0.0.47
+        uses: rajatjindal/krew-release-bot@3d9faef30a82761d610544f62afddca00993eef9 # v0.0.47
